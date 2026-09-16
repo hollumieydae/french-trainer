@@ -1060,11 +1060,15 @@ function getAllItems(){
   const items = [];
   allVocab().forEach(v=>{
     items.push({key:'vocab:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:false});
-    items.push({key:'vocab:rev:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:true});
+    if(getItemProgress('vocab:'+v.fr).box >= 2){
+      items.push({key:'vocab:rev:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:true});
+    }
   });
   allSentences().forEach(s=>{
     items.push({key:'sent:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:false});
-    items.push({key:'sent:rev:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:true});
+    if(getItemProgress('sent:'+s.fr).box >= 2){
+      items.push({key:'sent:rev:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:true});
+    }
   });
   VERBS.forEach(verb=>{
     ['present','pc'].forEach(mode=>{
@@ -1091,10 +1095,19 @@ function buildSession(maxSize){
   let all = getAllItems();
   if(!sentencesUnlocked()) all = all.filter(i=>i.source!=='Phrases');
   if(!conversationUnlocked()) all = all.filter(i=>i.source!=='Conversation');
+
+  // Pending is a hard gate: as long as ANY item is flagged pending, every
+  // session shows ONLY pending items — nothing else — until they're all
+  // cleared (answered correctly). Only then does normal due content resume.
+  const pendingItems = all.filter(i=>getItemProgress(i.key).pending);
+  if(pendingItems.length > 0){
+    return { queue: pendingItems.slice(0, maxSize), totalDue: pendingItems.length, pendingMode: true };
+  }
+
   const due = all.filter(i=>isDue(i.key));
   const reviews = due.filter(i=>getItemProgress(i.key).box>0);
   const fresh = due.filter(i=>getItemProgress(i.key).box===0);
-  return { queue: reviews.concat(fresh).slice(0, maxSize), totalDue: due.length };
+  return { queue: reviews.concat(fresh).slice(0, maxSize), totalDue: due.length, pendingMode: false };
 }
 
 /* ---------- Progression gate: Vocab -> Sentences -> Conversation (TCF/TEF) ----------
@@ -1166,9 +1179,15 @@ function countSolidVerbs(minBox){
   minBox = minBox===undefined ? 1 : minBox;
   return getAllItems().filter(i=>i.key.startsWith('verb:') && getItemProgress(i.key).box>=minBox).length;
 }
-function sentencesUnlocked(){ return countSolidVocab(2) >= UNLOCK.sentences.vocabSolid; }
+function anyPending(prefixes){
+  return getAllItems().some(i=> prefixes.some(p=>i.key.startsWith(p)) && getItemProgress(i.key).pending);
+}
+function sentencesUnlocked(){
+  return countSolidVocab(2) >= UNLOCK.sentences.vocabSolid && !anyPending(['vocab:']);
+}
 function conversationUnlocked(){
-  return countSolidSentences(2) >= UNLOCK.conversation.sentSolid && countSolidVerbs(1) >= UNLOCK.conversation.verbSolid;
+  return countSolidSentences(2) >= UNLOCK.conversation.sentSolid && countSolidVerbs(1) >= UNLOCK.conversation.verbSolid
+    && !anyPending(['sent:', 'verb:']);
 }
 function lockedCard(main, title, current, needed, explain, goTab, goLabel){
   main.innerHTML = '';
@@ -1193,6 +1212,7 @@ function lockedCard(main, title, current, needed, explain, goTab, goLabel){
 /* ---------- Router ---------- */
 let currentTab = 'home';
 let sessionQueue = [];
+let sessionPendingMode = false;
 let sessionIdx = 0;
 let sessionCorrect = 0;
 let vocabCat = 'Tous';
@@ -1333,7 +1353,7 @@ function renderHome(main, nav){
   nav.innerHTML = '';
   const meta = touchStreak();
   const all = getAllItems();
-  const { totalDue } = buildSession(20);
+  const { totalDue, pendingMode } = buildSession(20);
   const mastered = all.filter(i=>getItemProgress(i.key).box===5).length;
 
   const bySource = {};
@@ -1342,7 +1362,11 @@ function renderHome(main, nav){
   main.innerHTML = '';
   const card = document.createElement('div');
   card.className = 'card';
-  card.innerHTML = `
+  card.innerHTML = pendingMode ? `
+    <p class="item-en" style="margin-bottom:0;">⏳ Pending words need mastering first.</p>
+    <div class="hero-num">${totalDue}</div>
+    <div class="hero-label">pending — nothing else shows until these are cleared</div>
+  ` : `
     <p class="item-en" style="margin-bottom:0;">Bonjour ! Here's where you stand today.</p>
     <div class="hero-num">${totalDue}</div>
     <div class="hero-label">due for review right now</div>
@@ -1350,12 +1374,13 @@ function renderHome(main, nav){
 
   const btn = document.createElement('button');
   btn.className = 'big-btn';
-  btn.textContent = totalDue > 0 ? "▶ Start Today's Session" : "✅ All caught up — practice anyway";
+  btn.textContent = pendingMode ? '▶ Master pending words' : (totalDue > 0 ? "▶ Start Today's Session" : "✅ All caught up — practice anyway");
   btn.onclick = ()=>{
-    const { queue } = buildSession(20);
+    const { queue, pendingMode: pm } = buildSession(20);
     sessionQueue = queue.length ? queue : all.slice(0, 15);
     sessionIdx = 0;
     sessionCorrect = 0;
+    sessionPendingMode = pm;
     currentTab = 'session';
     render();
   };
@@ -1481,11 +1506,11 @@ function renderSession(main, nav){
   main.innerHTML = '';
 
   if(sessionIdx >= sessionQueue.length){
-    const { queue: nextQueue, totalDue } = buildSession(20);
+    const { queue: nextQueue, totalDue, pendingMode: nextPending } = buildSession(20);
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
-      <p class="item-en" style="margin-bottom:0;">🎉 Batch complete</p>
+      <p class="item-en" style="margin-bottom:0;">${sessionPendingMode ? '⏳ Pending batch complete' : '🎉 Batch complete'}</p>
       <div class="hero-num">${sessionCorrect}/${sessionQueue.length}</div>
       <div class="hero-label">correct this batch</div>
     `;
@@ -1493,13 +1518,16 @@ function renderSession(main, nav){
       const p = document.createElement('p');
       p.className = 'small';
       p.style.marginBottom = '10px';
-      p.textContent = totalDue + ' more still due today.';
+      p.textContent = nextPending
+        ? totalDue + ' pending item(s) still need clearing before anything else unlocks.'
+        : totalDue + ' more still due today.';
       card.appendChild(p);
       const contBtn = document.createElement('button');
       contBtn.className = 'big-btn';
-      contBtn.textContent = '▶ Continue — next batch';
+      contBtn.textContent = nextPending ? '▶ Continue clearing pending' : '▶ Continue — next batch';
       contBtn.onclick = ()=>{
         sessionQueue = nextQueue;
+        sessionPendingMode = nextPending;
         sessionIdx = 0;
         sessionCorrect = 0;
         render();
@@ -1529,6 +1557,13 @@ function renderSession(main, nav){
   bar.className = 'session-bar-track';
   bar.innerHTML = `<div class="session-bar-fill" style="width:${pct}%"></div>`;
   main.appendChild(bar);
+
+  if(sessionPendingMode){
+    const warn = document.createElement('div');
+    warn.className = 'warn';
+    warn.innerHTML = '⏳ Clearing pending backlog — everything else is paused until these are mastered.';
+    main.appendChild(warn);
+  }
 
   const card = document.createElement('div');
   card.className = 'card';
@@ -1604,6 +1639,7 @@ function renderSession(main, nav){
 /* ---------- Vocab tab ---------- */
 function renderVocab(main, nav){
   function progKey(item){ return vocabReverse ? 'vocab:rev:'+item.fr : 'vocab:'+item.fr; }
+  function eligible(v){ return !vocabReverse || getItemProgress('vocab:'+v.fr).box >= 2; }
 
   const cats = ['Tous', ...new Set(allVocab().map(v=>v.cat))];
   cats.forEach(c=>{
@@ -1614,14 +1650,14 @@ function renderVocab(main, nav){
     nav.appendChild(b);
   });
   const dueBtn = document.createElement('button');
-  const dueCount = allVocab().filter(v=>isDue(progKey(v))).length;
+  const dueCount = allVocab().filter(eligible).filter(v=>isDue(progKey(v))).length;
   dueBtn.textContent = '📅 Due (' + dueCount + ')';
   if(vocabDueOnly) dueBtn.classList.add('active');
   dueBtn.onclick = ()=>{ vocabDueOnly=true; vocabPendingOnly=false; vocabIndex=0; render(); };
   nav.appendChild(dueBtn);
 
   const pendingBtn = document.createElement('button');
-  const pendingCount = allVocab().filter(v=>getItemProgress(progKey(v)).pending).length;
+  const pendingCount = allVocab().filter(eligible).filter(v=>getItemProgress(progKey(v)).pending).length;
   pendingBtn.textContent = '⏳ Pending (' + pendingCount + ')';
   if(vocabPendingOnly) pendingBtn.classList.add('active');
   pendingBtn.onclick = ()=>{ vocabPendingOnly=true; vocabDueOnly=false; vocabIndex=0; render(); };
@@ -1634,14 +1670,16 @@ function renderVocab(main, nav){
   nav.appendChild(revBtn);
 
   let list = vocabCat==='Tous' ? allVocab() : allVocab().filter(v=>v.cat===vocabCat);
-  if(vocabDueOnly) list = allVocab().filter(v=>isDue(progKey(v)));
-  if(vocabPendingOnly) list = allVocab().filter(v=>getItemProgress(progKey(v)).pending);
+  list = list.filter(eligible);
+  if(vocabDueOnly) list = allVocab().filter(eligible).filter(v=>isDue(progKey(v)));
+  if(vocabPendingOnly) list = allVocab().filter(eligible).filter(v=>getItemProgress(progKey(v)).pending);
   if(vocabIndex>=list.length) vocabIndex=0;
   const item = list[vocabIndex];
 
   main.innerHTML = '';
   if(!item){
     let msg = 'No words yet in this category.';
+    if(vocabReverse) msg = "No words ready for recall practice yet in this category — read them correctly twice in normal mode first, then they'll unlock here.";
     if(vocabDueOnly) msg = "Nothing due right now — nice work staying on top of reviews.";
     if(vocabPendingOnly) msg = "No pending words — anything you've struggled with 3+ times shows up here.";
     main.innerHTML = `<div class="card"><p class="item-en">${msg}</p></div>`;
@@ -1793,14 +1831,18 @@ function renderVerbs(main, nav){
 function renderSentences(main, nav){
   nav.innerHTML = '';
   if(!sentencesUnlocked()){
+    const pendingBlock = anyPending(['vocab:']);
     lockedCard(main, 'Sentences', countSolidVocab(), UNLOCK.sentences.vocabSolid,
-      "Get more vocabulary solid first — and \"solid\" means both directions: read it aloud correctly, AND recall it from English using 🔀 Test me on the Vocab tab. Sentences are built from words you actually know, not just words you can read.",
+      pendingBlock
+        ? "You've got pending vocabulary that hasn't been demonstrated yet — clear those first (Start Today's Session will show only pending words until they're gone)."
+        : "Get more vocabulary solid first — and \"solid\" means both directions: read it aloud correctly, AND recall it from English using 🔀 Test me on the Vocab tab. Sentences are built from words you actually know, not just words you can read.",
       'vocab', 'Go practice Vocab');
     return;
   }
   function progKey(s){ return sentReverse ? 'sent:rev:'+s.fr : 'sent:'+s.fr; }
-  const dueCount = allSentences().filter(s=>isDue(progKey(s))).length;
-  const pendingCount = allSentences().filter(s=>getItemProgress(progKey(s)).pending).length;
+  function eligible(s){ return !sentReverse || getItemProgress('sent:'+s.fr).box >= 2; }
+  const dueCount = allSentences().filter(eligible).filter(s=>isDue(progKey(s))).length;
+  const pendingCount = allSentences().filter(eligible).filter(s=>getItemProgress(progKey(s)).pending).length;
   nav.innerHTML = '<span class="small" style="padding:8px 4px;">Full sentences from your lessons</span>';
   const dueBtn = document.createElement('button');
   dueBtn.textContent = '📅 Due (' + dueCount + ')';
@@ -1820,7 +1862,7 @@ function renderSentences(main, nav){
   revBtn.onclick = ()=>{ sentReverse = !sentReverse; sentIndex=0; render(); };
   nav.appendChild(revBtn);
 
-  let list = allSentences();
+  let list = allSentences().filter(eligible);
   if(sentDueOnly) list = list.filter(s=>isDue(progKey(s)));
   if(sentPendingOnly) list = list.filter(s=>getItemProgress(progKey(s)).pending);
   if(sentIndex>=list.length) sentIndex=0;
@@ -1828,7 +1870,9 @@ function renderSentences(main, nav){
 
   main.innerHTML = '';
   if(!s){
-    let msg = 'Nothing due right now — check back later.';
+    let msg = sentReverse
+      ? "No sentences ready for recall practice yet — read them correctly twice in normal mode first, then they'll unlock here."
+      : 'Nothing due right now — check back later.';
     if(sentPendingOnly) msg = "No pending sentences — anything you've struggled with 3+ times shows up here.";
     main.innerHTML = `<div class="card"><p class="item-en">${msg}</p></div>`;
     return;
@@ -1890,10 +1934,13 @@ function renderSentences(main, nav){
 function renderConversation(main, nav){
   nav.innerHTML = '';
   if(!conversationUnlocked()){
+    const pendingBlock = anyPending(['sent:', 'verb:']);
     lockedCard(main, 'Conversation (TCF/TEF)',
       countSolidSentences() + countSolidVerbs(),
       UNLOCK.conversation.sentSolid + UNLOCK.conversation.verbSolid,
-      "Real conversation needs sentences that are solid both ways — read aloud AND recalled from English (🔀 Test me on Sentences) — plus solid verb conjugation. Get those locked in and this unlocks automatically.",
+      pendingBlock
+        ? "You've got pending sentences or verb forms that haven't been demonstrated yet — clear those first (Start Today's Session will show only pending items until they're gone)."
+        : "Real conversation needs sentences that are solid both ways — read aloud AND recalled from English (🔀 Test me on Sentences) — plus solid verb conjugation. Get those locked in and this unlocks automatically.",
       'sentences', 'Go practice Sentences');
     return;
   }
