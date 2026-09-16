@@ -83,6 +83,7 @@ button.action{
   border:none; border-radius:3px; padding:12px 16px; font-size:0.95rem; font-family:var(--sans);
   cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px;
 }
+button.action:disabled{ opacity:0.4; cursor:not-allowed;}
 .btn-play{ background:var(--chip); color:var(--ink); border:1px solid var(--line);}
 .btn-mic{ background:var(--ink); color:var(--card);}
 .btn-mic.listening{ background:var(--margin); animation:pulse 1s infinite;}
@@ -1000,6 +1001,19 @@ function isDue(key){
 /* ---------- Rough French -> English-spelling phonetic approximation ----------
    Not real IPA — a best-effort "sounds like" fallback shown only after 3 misses
    on the same item, so the person has something to anchor pronunciation to. */
+/* ---------- Skipping without answering = not demonstrated ----------
+   Skip is not a neutral "pass" — it counts as a miss (box resets, same as
+   a wrong answer) AND is flagged pending right away, since not attempting
+   is at least as strong a signal as attempting and getting it wrong. The
+   correct pronunciation plays so the person still hears it before moving on. */
+function skipAsUnknown(key, targetText){
+  if(key){
+    updateProgress(key, false);
+    if(progress[key]){ progress[key].pending = true; saveProgress(progress); }
+  }
+  if(targetText) speak(targetText);
+}
+
 function approxPhonetic(text){
   let s = ' ' + text.toLowerCase() + ' ';
   const rules = [
@@ -1248,6 +1262,7 @@ function practiceWidget(targetText, onCorrect, opts){
   micBtn.onclick = ()=>{
     if(recognizing) return;
     recognizing = true;
+    playBtn.disabled = true;
     micBtn.classList.add('listening');
     micBtn.innerHTML = '🔴 Listening...';
     const rec = getRecognizer((alts)=>{
@@ -1302,6 +1317,7 @@ function practiceWidget(targetText, onCorrect, opts){
     try{ rec.start(); }catch(e){ recognizing=false; }
     rec.onend = ()=>{
       recognizing = false;
+      playBtn.disabled = false;
       micBtn.classList.remove('listening');
       micBtn.innerHTML = '🎤 Say it';
     };
@@ -1578,7 +1594,7 @@ function renderSession(main, nav){
   const skipBtn = document.createElement('button');
   skipBtn.className = 'action btn-ghost';
   skipBtn.textContent = 'Skip →';
-  skipBtn.onclick = ()=>{ sessionIdx++; render(); };
+  skipBtn.onclick = ()=>{ skipAsUnknown(item.key, item.reverse ? item.fr : item.fr); setTimeout(()=>{ sessionIdx++; render(); }, 700); };
   skipRow.appendChild(skipBtn);
   card.appendChild(skipRow);
 
@@ -1682,7 +1698,7 @@ function renderVocab(main, nav){
   const skipBtn = document.createElement('button');
   skipBtn.className = 'action btn-ghost';
   skipBtn.textContent = 'Skip →';
-  skipBtn.onclick = ()=>{ vocabIndex=(vocabIndex+1)%list.length; render(); };
+  skipBtn.onclick = ()=>{ skipAsUnknown(key, item.fr); setTimeout(()=>{ vocabIndex=(vocabIndex+1)%list.length; render(); }, 700); };
   nextRow.appendChild(skipBtn);
   card.appendChild(nextRow);
 
@@ -1863,7 +1879,7 @@ function renderSentences(main, nav){
   const skipBtn = document.createElement('button');
   skipBtn.className = 'action btn-ghost';
   skipBtn.textContent = 'Skip →';
-  skipBtn.onclick = ()=>{ sentIndex=(sentIndex+1)%list.length; render(); };
+  skipBtn.onclick = ()=>{ skipAsUnknown(key, s.fr); setTimeout(()=>{ sentIndex=(sentIndex+1)%list.length; render(); }, 700); };
   nextRow.appendChild(skipBtn);
   card.appendChild(nextRow);
 
@@ -1994,6 +2010,90 @@ function renderAdd(main, nav){
   listCard.id = 'addListCard';
   main.appendChild(listCard);
   renderAddList();
+
+  const syncCard = document.createElement('div');
+  syncCard.className = 'card';
+  syncCard.innerHTML = `
+    <p class="item-en" style="margin-bottom:4px;">Sync across devices</p>
+    <p class="small" style="margin-bottom:12px;">
+      Progress lives only in this browser on this device — there's no server behind this app.
+      To bring it to another phone or computer: export here, then paste the same text into
+      Import on the other device. Whichever device is further ahead on each word wins the merge,
+      so it's safe to do this in either direction.
+    </p>
+    <div class="btn-row">
+      <button class="action btn-play" id="exportBtn">📤 Export progress</button>
+    </div>
+    <textarea id="exportBox" rows="3" style="display:none; margin-top:10px;" readonly></textarea>
+    <p class="small" id="exportHint" style="display:none;">Copy this text and send it to your other device (e.g. via WhatsApp/Notes to self).</p>
+    <div style="margin-top:16px; border-top:1px solid var(--line); padding-top:14px;">
+      <p class="item-en" style="margin-bottom:8px; font-size:0.95rem;">Import from another device</p>
+      <textarea id="importBox" rows="3" placeholder="Paste exported text here..."></textarea>
+      <div class="btn-row">
+        <button class="action btn-next" id="importBtn">📥 Import & merge</button>
+      </div>
+      <p class="small" id="importResult" style="margin-top:8px;"></p>
+    </div>
+  `;
+  main.appendChild(syncCard);
+
+  document.getElementById('exportBtn').onclick = ()=>{
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      progress: progress,
+      custom: custom,
+      stats: stats
+    };
+    const json = JSON.stringify(payload);
+    const box = document.getElementById('exportBox');
+    box.value = json;
+    box.style.display = 'block';
+    document.getElementById('exportHint').style.display = 'block';
+    box.focus();
+    box.select();
+    try{ document.execCommand('copy'); document.getElementById('exportHint').textContent = 'Copied to clipboard — paste it into Import on your other device.'; }
+    catch(e){ /* selection is shown either way, manual copy still works */ }
+  };
+
+  document.getElementById('importBtn').onclick = ()=>{
+    const resultEl = document.getElementById('importResult');
+    const raw = document.getElementById('importBox').value.trim();
+    if(!raw){ resultEl.textContent = 'Paste exported text first.'; return; }
+    let incoming;
+    try{ incoming = JSON.parse(raw); }
+    catch(e){ resultEl.textContent = "That doesn't look like valid exported text."; return; }
+
+    let updated = 0, kept = 0;
+    Object.keys(incoming.progress || {}).forEach(key=>{
+      const local = progress[key];
+      const inc = incoming.progress[key];
+      if(!local || (inc.box > local.box) || (inc.box === local.box && inc.nextDue > local.nextDue)){
+        progress[key] = inc;
+        updated++;
+      } else {
+        kept++;
+      }
+    });
+    saveProgress(progress);
+
+    let addedWords = 0;
+    (incoming.custom && incoming.custom.vocab || []).forEach(v=>{
+      if(!custom.vocab.some(x=>x.fr===v.fr)){ custom.vocab.push(v); addedWords++; }
+    });
+    (incoming.custom && incoming.custom.sentences || []).forEach(s=>{
+      if(!custom.sentences.some(x=>x.fr===s.fr)){ custom.sentences.push(s); addedWords++; }
+    });
+    saveCustom(custom);
+
+    if(incoming.stats){
+      stats.correct += (incoming.stats.correct||0);
+      stats.attempts += (incoming.stats.attempts||0);
+      saveStreak(stats);
+    }
+
+    resultEl.textContent = `Merged: ${updated} items updated, ${kept} already further ahead here, ${addedWords} custom entries added. Your streak stays local to this device.`;
+    document.getElementById('importBox').value = '';
+  };
 
   function renderAddList(){
     const lc = document.getElementById('addListCard');
