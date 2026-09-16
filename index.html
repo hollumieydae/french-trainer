@@ -960,6 +960,7 @@ function loadCustom(){
 }
 function saveCustom(data){
   try{ localStorage.setItem('frt_custom', JSON.stringify(data)); }catch(e){}
+  scheduleFileBackup();
 }
 let custom = loadCustom();
 
@@ -967,11 +968,133 @@ function loadStreak(){
   try{ return JSON.parse(localStorage.getItem('frt_stats')||'{"correct":0,"attempts":0}'); }
   catch(e){ return {correct:0,attempts:0}; }
 }
-function saveStreak(s){ try{ localStorage.setItem('frt_stats', JSON.stringify(s)); }catch(e){} }
+function saveStreak(s){ try{ localStorage.setItem('frt_stats', JSON.stringify(s)); }catch(e){} scheduleFileBackup(); }
 let stats = loadStreak();
 function recordAttempt(ok){
   stats.attempts++; if(ok) stats.correct++;
   saveStreak(stats);
+}
+
+/* ---------- On-device file backup (File System Access API) ----------
+   localStorage can be wiped by a browser "clear site data" action, storage
+   pressure, or private browsing — this writes the same data to a real file
+   the person picks (e.g. in Downloads), which survives all of that because
+   it isn't part of browser-controlled storage at all. Chrome/Edge on Android
+   and desktop only — Safari (iOS and macOS) has explicitly declined to
+   support this API, so this stays unavailable there; Export/Import remains
+   the cross-platform fallback. */
+const fileBackupSupported = (typeof window.showSaveFilePicker === 'function') && ('indexedDB' in window);
+let linkedFileHandle = null;
+let needsReconnect = false;
+let backupTimer = null;
+
+function idbOpen(){
+  return new Promise((resolve, reject)=>{
+    const req = indexedDB.open('frt_fsdb', 1);
+    req.onupgradeneeded = ()=>{ req.result.createObjectStore('handles'); };
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+async function idbSet(key, val){
+  const db = await idbOpen();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction('handles', 'readwrite');
+    tx.objectStore('handles').put(val, key);
+    tx.oncomplete = ()=> resolve();
+    tx.onerror = ()=> reject(tx.error);
+  });
+}
+async function idbGet(key){
+  const db = await idbOpen();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction('handles', 'readonly');
+    const req = tx.objectStore('handles').get(key);
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+
+async function writeBackupNow(){
+  if(!linkedFileHandle) return;
+  try{
+    const payload = { exportedAt: new Date().toISOString(), progress, custom, stats };
+    const writable = await linkedFileHandle.createWritable();
+    await writable.write(JSON.stringify(payload));
+    await writable.close();
+  }catch(e){ /* localStorage remains the source of truth either way */ }
+}
+function scheduleFileBackup(){
+  if(!linkedFileHandle) return;
+  clearTimeout(backupTimer);
+  backupTimer = setTimeout(writeBackupNow, 800);
+}
+
+async function linkBackupFile(){
+  try{
+    const handle = await window.showSaveFilePicker({
+      suggestedName: 'french-trainer-progress.json',
+      types: [{ description: 'JSON', accept: {'application/json': ['.json']} }]
+    });
+    linkedFileHandle = handle;
+    needsReconnect = false;
+    await idbSet('progressFileHandle', handle);
+    await writeBackupNow();
+    return true;
+  }catch(e){ return false; }
+}
+async function reconnectBackupFile(){
+  try{
+    const handle = await idbGet('progressFileHandle');
+    if(!handle) return false;
+    const perm = await handle.requestPermission({mode:'readwrite'});
+    if(perm !== 'granted') return false;
+    linkedFileHandle = handle;
+    needsReconnect = false;
+    return true;
+  }catch(e){ return false; }
+}
+
+// Same smart merge used by Import: whichever side is further ahead per item wins.
+function mergeIncoming(incoming){
+  let updated = 0, kept = 0, addedWords = 0;
+  Object.keys(incoming.progress || {}).forEach(key=>{
+    const local = progress[key];
+    const inc = incoming.progress[key];
+    if(!local || (inc.box > local.box) || (inc.box === local.box && inc.nextDue > local.nextDue)){
+      progress[key] = inc; updated++;
+    } else { kept++; }
+  });
+  saveProgress(progress);
+  (incoming.custom && incoming.custom.vocab || []).forEach(v=>{
+    if(!custom.vocab.some(x=>x.fr===v.fr)){ custom.vocab.push(v); addedWords++; }
+  });
+  (incoming.custom && incoming.custom.sentences || []).forEach(s=>{
+    if(!custom.sentences.some(x=>x.fr===s.fr)){ custom.sentences.push(s); addedWords++; }
+  });
+  saveCustom(custom);
+  if(incoming.stats){
+    stats.correct += (incoming.stats.correct||0);
+    stats.attempts += (incoming.stats.attempts||0);
+    saveStreak(stats);
+  }
+  return { updated, kept, addedWords };
+}
+
+async function tryRestoreLinkedFile(){
+  if(!fileBackupSupported) return null;
+  try{
+    const handle = await idbGet('progressFileHandle');
+    if(!handle) return null;
+    const perm = await handle.queryPermission({mode:'readwrite'});
+    if(perm !== 'granted'){ needsReconnect = true; return null; }
+    linkedFileHandle = handle;
+    const file = await handle.getFile();
+    const text = await file.text();
+    if(!text.trim()) return null;
+    const incoming = JSON.parse(text);
+    return mergeIncoming(incoming);
+  }catch(e){ return null; }
 }
 
 /* ---------- Spaced repetition (research-based intervals) ----------
@@ -985,7 +1108,7 @@ function loadProgress(){
   try{ return JSON.parse(localStorage.getItem('frt_progress')||'{}'); }
   catch(e){ return {}; }
 }
-function saveProgress(p){ try{ localStorage.setItem('frt_progress', JSON.stringify(p)); }catch(e){} }
+function saveProgress(p){ try{ localStorage.setItem('frt_progress', JSON.stringify(p)); }catch(e){} scheduleFileBackup(); }
 let progress = loadProgress();
 
 function getItemProgress(key){
@@ -2113,6 +2236,39 @@ function renderAdd(main, nav){
   main.appendChild(listCard);
   renderAddList();
 
+  const fileCard = document.createElement('div');
+  fileCard.className = 'card';
+  if(fileBackupSupported){
+    fileCard.innerHTML = `
+      <p class="item-en" style="margin-bottom:4px;">Local file backup</p>
+      <p class="small" style="margin-bottom:12px;">
+        Link a real file on this device (e.g. in Downloads). Every change auto-saves there too —
+        it survives a browser cache/site-data clear because it isn't stored inside the browser at all.
+        This is per-device, not cross-device — use Export/Import below to move progress between phones.
+      </p>
+      <p class="small" id="fileStatus" style="margin-bottom:10px;">${linkedFileHandle ? '🔗 Linked' : (needsReconnect ? '⚠️ Was linked — needs reconnecting' : 'Not linked yet')}</p>
+      <div class="btn-row">
+        <button class="action btn-play" id="linkFileBtn">${linkedFileHandle ? '🔗 Re-link a different file' : (needsReconnect ? '🔄 Reconnect backup file' : '📁 Set up local file backup')}</button>
+      </div>
+    `;
+  } else {
+    fileCard.innerHTML = `
+      <p class="item-en" style="margin-bottom:4px;">Local file backup</p>
+      <p class="small">Not available in this browser (Safari/iOS doesn't support it). Use Export/Import below instead.</p>
+    `;
+  }
+  main.appendChild(fileCard);
+  if(fileBackupSupported){
+    document.getElementById('linkFileBtn').onclick = async ()=>{
+      const statusEl = document.getElementById('fileStatus');
+      let ok;
+      if(needsReconnect){ ok = await reconnectBackupFile(); if(ok) await writeBackupNow(); }
+      else { ok = await linkBackupFile(); }
+      statusEl.textContent = ok ? '🔗 Linked' : 'Could not link — try again.';
+      renderAdd(main, nav);
+    };
+  }
+
   const syncCard = document.createElement('div');
   syncCard.className = 'card';
   syncCard.innerHTML = `
@@ -2165,34 +2321,7 @@ function renderAdd(main, nav){
     try{ incoming = JSON.parse(raw); }
     catch(e){ resultEl.textContent = "That doesn't look like valid exported text."; return; }
 
-    let updated = 0, kept = 0;
-    Object.keys(incoming.progress || {}).forEach(key=>{
-      const local = progress[key];
-      const inc = incoming.progress[key];
-      if(!local || (inc.box > local.box) || (inc.box === local.box && inc.nextDue > local.nextDue)){
-        progress[key] = inc;
-        updated++;
-      } else {
-        kept++;
-      }
-    });
-    saveProgress(progress);
-
-    let addedWords = 0;
-    (incoming.custom && incoming.custom.vocab || []).forEach(v=>{
-      if(!custom.vocab.some(x=>x.fr===v.fr)){ custom.vocab.push(v); addedWords++; }
-    });
-    (incoming.custom && incoming.custom.sentences || []).forEach(s=>{
-      if(!custom.sentences.some(x=>x.fr===s.fr)){ custom.sentences.push(s); addedWords++; }
-    });
-    saveCustom(custom);
-
-    if(incoming.stats){
-      stats.correct += (incoming.stats.correct||0);
-      stats.attempts += (incoming.stats.attempts||0);
-      saveStreak(stats);
-    }
-
+    const { updated, kept, addedWords } = mergeIncoming(incoming);
     resultEl.textContent = `Merged: ${updated} items updated, ${kept} already further ahead here, ${addedWords} custom entries added. Your streak stays local to this device.`;
     document.getElementById('importBox').value = '';
   };
@@ -2257,6 +2386,14 @@ try{
     '<div class="card"><p class="item-en">Something didn\'t load right: ' +
     (e && e.message ? e.message : 'unknown error') +
     '</p><p class="small">Try reloading the page.</p></div>';
+}
+
+if(fileBackupSupported){
+  tryRestoreLinkedFile().then(result=>{
+    if(result && (result.updated > 0 || result.addedWords > 0)){
+      try{ render(); }catch(e){}
+    }
+  }).catch(()=>{});
 }
 
 if('serviceWorker' in navigator){
