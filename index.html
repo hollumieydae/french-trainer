@@ -1908,13 +1908,18 @@ function renderSession(main, nav){
     const revealBtn = document.createElement('button');
     revealBtn.className = 'action btn-ghost';
     revealBtn.style.marginTop = '10px';
-    revealBtn.textContent = '👁 Reveal French';
+    revealBtn.textContent = '👁 Reveal French (won\'t count as known)';
     const revealBox = document.createElement('div');
-    revealBox.className = 'model-answer';
+    revealBox.className = 'model-answer show';
     revealBox.innerHTML = `<b>${item.fr}</b>`;
-    revealBtn.onclick = ()=>{ revealBox.classList.toggle('show'); };
+    revealBtn.onclick = ()=>{
+      revealBtn.disabled = true;
+      widget.querySelectorAll('button').forEach(b=>b.disabled=true);
+      skipAsUnknown(item.key, item.fr);
+      card.appendChild(revealBox);
+      setTimeout(()=>{ sessionIdx++; render(); }, 1400);
+    };
     card.appendChild(revealBtn);
-    card.appendChild(revealBox);
   }
 
   if(item.model){
@@ -2033,13 +2038,18 @@ function renderVocab(main, nav){
     const revealBtn = document.createElement('button');
     revealBtn.className = 'action btn-ghost';
     revealBtn.style.marginTop = '10px';
-    revealBtn.textContent = '👁 Reveal French spelling';
+    revealBtn.textContent = "👁 Reveal French spelling (won't count as known)";
     const revealBox = document.createElement('div');
-    revealBox.className = 'model-answer';
+    revealBox.className = 'model-answer show';
     revealBox.innerHTML = `<b>${item.fr}</b>`;
-    revealBtn.onclick = ()=>{ revealBox.classList.toggle('show'); };
+    revealBtn.onclick = ()=>{
+      revealBtn.disabled = true;
+      widget.querySelectorAll('button').forEach(b=>b.disabled=true);
+      skipAsUnknown(key, item.fr);
+      card.appendChild(revealBox);
+      setTimeout(()=>{ vocabIndex = (vocabIndex+1)%list.length; render(); }, 1400);
+    };
     card.appendChild(revealBtn);
-    card.appendChild(revealBox);
   }
 
   const nextRow = document.createElement('div');
@@ -2220,13 +2230,18 @@ function renderSentences(main, nav){
     const revealBtn = document.createElement('button');
     revealBtn.className = 'action btn-ghost';
     revealBtn.style.marginTop = '10px';
-    revealBtn.textContent = '👁 Reveal French';
+    revealBtn.textContent = "👁 Reveal French (won't count as known)";
     const revealBox = document.createElement('div');
-    revealBox.className = 'model-answer';
+    revealBox.className = 'model-answer show';
     revealBox.innerHTML = `<b>${s.fr}</b>`;
-    revealBtn.onclick = ()=>{ revealBox.classList.toggle('show'); };
+    revealBtn.onclick = ()=>{
+      revealBtn.disabled = true;
+      widget.querySelectorAll('button').forEach(b=>b.disabled=true);
+      skipAsUnknown(key, s.fr);
+      card.appendChild(revealBox);
+      setTimeout(()=>{ sentIndex=(sentIndex+1)%list.length; render(); }, 1400);
+    };
     card.appendChild(revealBtn);
-    card.appendChild(revealBox);
   }
 
   const nextRow = document.createElement('div');
