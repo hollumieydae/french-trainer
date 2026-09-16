@@ -220,263 +220,571 @@ function keywordMatch(said, keywordSets){
 
 /* ---------- Data ---------- */
 const VOCAB = [
-  {cat:"Maison", fr:"la porte", en:"the door"},
-  {cat:"Maison", fr:"la fenêtre", en:"the window"},
-  {cat:"Maison", fr:"la table", en:"the table"},
-  {cat:"Maison", fr:"la chaise", en:"the chair"},
-  {cat:"Maison", fr:"le canapé", en:"the sofa"},
-  {cat:"Maison", fr:"le fauteuil", en:"the armchair"},
-  {cat:"Maison", fr:"le rideau", en:"the curtain"},
-  {cat:"Maison", fr:"l'étagère", en:"the shelf"},
-  {cat:"Maison", fr:"le téléviseur", en:"the TV"},
-  {cat:"Maison", fr:"la lampe", en:"the lamp"},
-  {cat:"Maison", fr:"le tableau", en:"the painting"},
-  {cat:"Maison", fr:"la plante", en:"the plant"},
-  {cat:"Maison", fr:"le lit", en:"the bed"},
-  {cat:"Maison", fr:"l'armoire", en:"the wardrobe"},
-  {cat:"Maison", fr:"la commode", en:"the dresser"},
-  {cat:"Maison", fr:"l'oreiller", en:"the pillow"},
-  {cat:"Maison", fr:"le miroir", en:"the mirror"},
-  {cat:"Maison", fr:"le coussin", en:"the cushion"},
-  {cat:"Maison", fr:"le lavabo", en:"the sink"},
-  {cat:"Maison", fr:"la douche", en:"the shower"},
-  {cat:"Maison", fr:"le four", en:"the oven"},
-  {cat:"Maison", fr:"le réfrigérateur", en:"the fridge"},
-  {cat:"Maison", fr:"l'évier", en:"the kitchen sink"},
-  {cat:"Maison", fr:"le robinet", en:"the faucet"},
-  {cat:"Famille", fr:"le père", en:"the father"},
-  {cat:"Famille", fr:"la mère", en:"the mother"},
-  {cat:"Famille", fr:"le frère", en:"the brother"},
-  {cat:"Famille", fr:"la sœur", en:"the sister"},
-  {cat:"Famille", fr:"l'oncle", en:"the uncle"},
-  {cat:"Famille", fr:"la tante", en:"the aunt"},
-  {cat:"Famille", fr:"le grand-père", en:"the grandfather"},
-  {cat:"Famille", fr:"la grand-mère", en:"the grandmother"},
-  {cat:"Famille", fr:"le neveu", en:"the nephew"},
-  {cat:"Famille", fr:"la nièce", en:"the niece"},
-  {cat:"Famille", fr:"mes parents", en:"my parents"},
-  {cat:"Vêtements", fr:"les chaussures", en:"shoes"},
-  {cat:"Vêtements", fr:"le pantalon", en:"trousers"},
-  {cat:"Vêtements", fr:"la jupe", en:"skirt"},
-  {cat:"Vêtements", fr:"la chemise", en:"shirt"},
-  {cat:"Vêtements", fr:"le chemisier", en:"blouse"},
-  {cat:"Adjectifs", fr:"gentil", en:"kind (masc.)"},
-  {cat:"Adjectifs", fr:"gentille", en:"kind (fem.)"},
-  {cat:"Adjectifs", fr:"grand", en:"tall/big (masc.)"},
-  {cat:"Adjectifs", fr:"grande", en:"tall/big (fem.)"},
-  {cat:"Adjectifs", fr:"petit", en:"small (masc.)"},
-  {cat:"Adjectifs", fr:"petite", en:"small (fem.)"},
-  {cat:"Adjectifs", fr:"beau", en:"handsome"},
-  {cat:"Adjectifs", fr:"belle", en:"beautiful"},
-  {cat:"Adjectifs", fr:"fatigué", en:"tired (masc.)"},
-  {cat:"Adjectifs", fr:"fatiguée", en:"tired (fem.)"},
-  {cat:"Prépositions", fr:"sur", en:"on"},
-  {cat:"Prépositions", fr:"sous", en:"under"},
-  {cat:"Prépositions", fr:"à côté de", en:"beside"},
-  {cat:"Prépositions", fr:"devant", en:"in front of"},
-  {cat:"Prépositions", fr:"derrière", en:"behind"},
-  {cat:"Prépositions", fr:"dans", en:"in"},
-  {cat:"Prépositions", fr:"dehors", en:"outside"},
-  {cat:"Nombres", fr:"vingt", en:"20"},
-  {cat:"Nombres", fr:"soixante-dix", en:"70"},
-  {cat:"Nombres", fr:"quatre-vingts", en:"80"},
-  {cat:"Nombres", fr:"quatre-vingt-dix", en:"90"},
-  {cat:"Jours", fr:"lundi", en:"Monday"},
-  {cat:"Jours", fr:"mardi", en:"Tuesday"},
-  {cat:"Jours", fr:"mercredi", en:"Wednesday"},
-  {cat:"Jours", fr:"jeudi", en:"Thursday"},
-  {cat:"Jours", fr:"vendredi", en:"Friday"},
-  {cat:"Jours", fr:"samedi", en:"Saturday"},
-  {cat:"Jours", fr:"dimanche", en:"Sunday"},
-  {cat:"Mois", fr:"janvier", en:"January"},
-  {cat:"Mois", fr:"février", en:"February"},
-  {cat:"Mois", fr:"septembre", en:"September"},
-  {cat:"Mois", fr:"décembre", en:"December"},
-  {cat:"Mois", fr:"avril", en:"April"},
-  {cat:"Mois", fr:"mai", en:"May"},
-  {cat:"Mois", fr:"juin", en:"June"},
-  {cat:"Mois", fr:"juillet", en:"July"},
-  {cat:"Mois", fr:"août", en:"August"},
-  {cat:"Mois", fr:"octobre", en:"October"},
-  {cat:"Mois", fr:"novembre", en:"November"},
-  {cat:"Temps", fr:"aujourd'hui", en:"today"},
-  {cat:"Temps", fr:"demain", en:"tomorrow"},
-  {cat:"Temps", fr:"hier", en:"yesterday"},
-  {cat:"Temps", fr:"maintenant", en:"now"},
-  {cat:"Temps", fr:"bientôt", en:"soon"},
-  {cat:"Temps", fr:"toujours", en:"always"},
-  {cat:"Temps", fr:"jamais", en:"never"},
-  {cat:"Temps", fr:"souvent", en:"often"},
-  {cat:"Temps", fr:"parfois", en:"sometimes"},
-  {cat:"Temps", fr:"tôt", en:"early"},
-  {cat:"Temps", fr:"tard", en:"late"},
-  {cat:"Temps", fr:"une heure", en:"an hour / one o'clock"},
-  {cat:"Temps", fr:"une minute", en:"a minute"},
-  {cat:"Temps", fr:"la semaine", en:"the week"},
-  {cat:"Temps", fr:"le mois", en:"the month"},
-  {cat:"Temps", fr:"l'année", en:"the year"},
-  {cat:"Temps", fr:"le matin", en:"the morning"},
-  {cat:"Temps", fr:"l'après-midi", en:"the afternoon"},
-  {cat:"Temps", fr:"le soir", en:"the evening"},
-  {cat:"Temps", fr:"la nuit", en:"the night"},
-  {cat:"Questions", fr:"qui", en:"who"},
-  {cat:"Questions", fr:"quoi", en:"what"},
-  {cat:"Questions", fr:"pourquoi", en:"why"},
-  {cat:"Questions", fr:"comment", en:"how"},
-  {cat:"Questions", fr:"combien", en:"how much/many"},
-  {cat:"Questions", fr:"quel", en:"which (masc.)"},
-  {cat:"Questions", fr:"quelle", en:"which (fem.)"},
-  {cat:"Connecteurs", fr:"et", en:"and"},
-  {cat:"Connecteurs", fr:"mais", en:"but"},
-  {cat:"Connecteurs", fr:"ou", en:"or"},
-  {cat:"Connecteurs", fr:"donc", en:"so/therefore"},
-  {cat:"Connecteurs", fr:"parce que", en:"because"},
-  {cat:"Connecteurs", fr:"car", en:"because/for"},
-  {cat:"Connecteurs", fr:"quand", en:"when"},
-  {cat:"Connecteurs", fr:"si", en:"if"},
-  {cat:"Connecteurs", fr:"aussi", en:"also/too"},
-  {cat:"Connecteurs", fr:"puis", en:"then"},
-  {cat:"Connecteurs", fr:"ensuite", en:"next/then"},
-  {cat:"Connecteurs", fr:"cependant", en:"however"},
-  {cat:"Verbes courants", fr:"aller", en:"to go"},
-  {cat:"Verbes courants", fr:"faire", en:"to do/make"},
-  {cat:"Verbes courants", fr:"pouvoir", en:"to be able to / can"},
-  {cat:"Verbes courants", fr:"vouloir", en:"to want"},
-  {cat:"Verbes courants", fr:"devoir", en:"to have to / must"},
-  {cat:"Verbes courants", fr:"savoir", en:"to know (a fact)"},
-  {cat:"Verbes courants", fr:"connaître", en:"to know (a person/place)"},
-  {cat:"Verbes courants", fr:"voir", en:"to see"},
-  {cat:"Verbes courants", fr:"prendre", en:"to take"},
-  {cat:"Verbes courants", fr:"venir", en:"to come"},
-  {cat:"Verbes courants", fr:"sortir", en:"to go out"},
-  {cat:"Verbes courants", fr:"partir", en:"to leave"},
-  {cat:"Verbes courants", fr:"dire", en:"to say"},
-  {cat:"Verbes courants", fr:"parler", en:"to speak"},
-  {cat:"Verbes courants", fr:"penser", en:"to think"},
-  {cat:"Verbes courants", fr:"croire", en:"to believe"},
-  {cat:"Verbes courants", fr:"trouver", en:"to find"},
-  {cat:"Verbes courants", fr:"donner", en:"to give"},
-  {cat:"Verbes courants", fr:"demander", en:"to ask"},
-  {cat:"Verbes courants", fr:"répondre", en:"to answer"},
-  {cat:"Verbes courants", fr:"comprendre", en:"to understand"},
-  {cat:"Verbes courants", fr:"apprendre", en:"to learn"},
-  {cat:"Verbes courants", fr:"travailler", en:"to work"},
-  {cat:"Verbes courants", fr:"habiter", en:"to live (somewhere)"},
-  {cat:"Verbes courants", fr:"vivre", en:"to live/be alive"},
-  {cat:"Verbes courants", fr:"aimer", en:"to like/love"},
-  {cat:"Verbes courants", fr:"préférer", en:"to prefer"},
-  {cat:"Verbes courants", fr:"détester", en:"to hate"},
-  {cat:"Verbes courants", fr:"acheter", en:"to buy"},
-  {cat:"Verbes courants", fr:"vendre", en:"to sell"},
-  {cat:"Verbes courants", fr:"payer", en:"to pay"},
-  {cat:"Verbes courants", fr:"chercher", en:"to look for"},
-  {cat:"Verbes courants", fr:"attendre", en:"to wait"},
-  {cat:"Verbes courants", fr:"commencer", en:"to begin"},
-  {cat:"Verbes courants", fr:"finir", en:"to finish"},
-  {cat:"Verbes courants", fr:"continuer", en:"to continue"},
-  {cat:"Verbes courants", fr:"arrêter", en:"to stop"},
-  {cat:"Verbes courants", fr:"essayer", en:"to try"},
-  {cat:"Verbes courants", fr:"pouvoir aider", en:"to be able to help"},
-  {cat:"Verbes courants", fr:"utiliser", en:"to use"},
-  {cat:"Verbes courants", fr:"montrer", en:"to show"},
-  {cat:"Verbes courants", fr:"envoyer", en:"to send"},
-  {cat:"Verbes courants", fr:"recevoir", en:"to receive"},
-  {cat:"Verbes courants", fr:"ouvrir", en:"to open"},
-  {cat:"Verbes courants", fr:"fermer", en:"to close"},
-  {cat:"Verbes courants", fr:"entrer", en:"to enter"},
-  {cat:"Verbes courants", fr:"rester", en:"to stay"},
-  {cat:"Verbes courants", fr:"passer", en:"to pass/spend (time)"},
-  {cat:"Verbes courants", fr:"tomber", en:"to fall"},
-  {cat:"Verbes courants", fr:"devenir", en:"to become"},
-  {cat:"Verbes courants", fr:"sembler", en:"to seem"},
-  {cat:"Verbes courants", fr:"porter", en:"to wear/carry"},
-  {cat:"Verbes courants", fr:"appeler", en:"to call"},
-  {cat:"Verbes courants", fr:"jouer", en:"to play"},
-  {cat:"Verbes courants", fr:"gagner", en:"to win/earn"},
-  {cat:"Verbes courants", fr:"perdre", en:"to lose"},
-  {cat:"Verbes courants", fr:"dormir", en:"to sleep"},
-  {cat:"Verbes courants", fr:"se lever", en:"to get up"},
-  {cat:"Verbes courants", fr:"se coucher", en:"to go to bed"},
-  {cat:"Verbes courants", fr:"se laver", en:"to wash oneself"},
-  {cat:"Verbes courants", fr:"s'habiller", en:"to get dressed"},
-  {cat:"Nourriture", fr:"le pain", en:"bread"},
-  {cat:"Nourriture", fr:"le fromage", en:"cheese"},
-  {cat:"Nourriture", fr:"l'eau", en:"water"},
-  {cat:"Nourriture", fr:"le café", en:"coffee"},
-  {cat:"Nourriture", fr:"le thé", en:"tea"},
-  {cat:"Nourriture", fr:"le lait", en:"milk"},
-  {cat:"Nourriture", fr:"le sucre", en:"sugar"},
-  {cat:"Nourriture", fr:"le sel", en:"salt"},
-  {cat:"Nourriture", fr:"la viande", en:"meat"},
-  {cat:"Nourriture", fr:"le poisson", en:"fish"},
-  {cat:"Nourriture", fr:"le poulet", en:"chicken"},
-  {cat:"Nourriture", fr:"le riz", en:"rice"},
-  {cat:"Nourriture", fr:"les légumes", en:"vegetables"},
-  {cat:"Nourriture", fr:"les fruits", en:"fruits"},
-  {cat:"Nourriture", fr:"la pomme", en:"apple"},
-  {cat:"Nourriture", fr:"la banane", en:"banana"},
-  {cat:"Nourriture", fr:"l'orange", en:"orange"},
-  {cat:"Nourriture", fr:"le petit-déjeuner", en:"breakfast"},
-  {cat:"Nourriture", fr:"le déjeuner", en:"lunch"},
-  {cat:"Nourriture", fr:"le dîner", en:"dinner"},
-  {cat:"Nourriture", fr:"le restaurant", en:"restaurant"},
-  {cat:"Nourriture", fr:"l'addition", en:"the bill"},
-  {cat:"Corps", fr:"la tête", en:"head"},
-  {cat:"Corps", fr:"les yeux", en:"eyes"},
-  {cat:"Corps", fr:"la main", en:"hand"},
-  {cat:"Corps", fr:"le bras", en:"arm"},
-  {cat:"Corps", fr:"la jambe", en:"leg"},
-  {cat:"Corps", fr:"le pied", en:"foot"},
-  {cat:"Corps", fr:"le cœur", en:"heart"},
-  {cat:"Corps", fr:"le corps", en:"body"},
-  {cat:"Corps", fr:"le visage", en:"face"},
-  {cat:"Émotions", fr:"content", en:"happy (masc.)"},
-  {cat:"Émotions", fr:"contente", en:"happy (fem.)"},
-  {cat:"Émotions", fr:"triste", en:"sad"},
-  {cat:"Émotions", fr:"fâché", en:"angry (masc.)"},
-  {cat:"Émotions", fr:"fâchée", en:"angry (fem.)"},
-  {cat:"Émotions", fr:"inquiet", en:"worried (masc.)"},
-  {cat:"Émotions", fr:"inquiète", en:"worried (fem.)"},
-  {cat:"Émotions", fr:"surpris", en:"surprised (masc.)"},
-  {cat:"Émotions", fr:"surprise", en:"surprised (fem.)"},
-  {cat:"Émotions", fr:"heureux", en:"happy (masc.)"},
-  {cat:"Émotions", fr:"heureuse", en:"happy (fem.)"},
-  {cat:"Couleurs", fr:"rouge", en:"red"},
-  {cat:"Couleurs", fr:"bleu", en:"blue"},
-  {cat:"Couleurs", fr:"vert", en:"green"},
-  {cat:"Couleurs", fr:"jaune", en:"yellow"},
-  {cat:"Couleurs", fr:"noir", en:"black"},
-  {cat:"Couleurs", fr:"blanc", en:"white"},
-  {cat:"Couleurs", fr:"gris", en:"gray"},
-  {cat:"Couleurs", fr:"orange", en:"orange (color)"},
-  {cat:"Couleurs", fr:"rose", en:"pink"},
-  {cat:"Couleurs", fr:"violet", en:"purple"},
-  {cat:"Lieux", fr:"la ville", en:"the city"},
-  {cat:"Lieux", fr:"le pays", en:"the country"},
-  {cat:"Lieux", fr:"la rue", en:"the street"},
-  {cat:"Lieux", fr:"l'école", en:"the school"},
-  {cat:"Lieux", fr:"le travail", en:"work/the workplace"},
-  {cat:"Lieux", fr:"l'hôpital", en:"the hospital"},
-  {cat:"Lieux", fr:"la banque", en:"the bank"},
-  {cat:"Lieux", fr:"le magasin", en:"the store"},
-  {cat:"Lieux", fr:"l'aéroport", en:"the airport"},
-  {cat:"Lieux", fr:"la gare", en:"the train station"},
-  {cat:"Transport", fr:"la voiture", en:"the car"},
-  {cat:"Transport", fr:"le bus", en:"the bus"},
-  {cat:"Transport", fr:"le train", en:"the train"},
-  {cat:"Transport", fr:"l'avion", en:"the airplane"},
-  {cat:"Transport", fr:"le taxi", en:"the taxi"},
-  {cat:"Transport", fr:"à pied", en:"on foot"},
-  {cat:"Expressions", fr:"s'il vous plaît", en:"please (formal)"},
-  {cat:"Expressions", fr:"merci", en:"thank you"},
-  {cat:"Expressions", fr:"de rien", en:"you're welcome"},
-  {cat:"Expressions", fr:"pardon", en:"sorry/excuse me"},
-  {cat:"Expressions", fr:"excusez-moi", en:"excuse me (formal)"},
-  {cat:"Expressions", fr:"je ne sais pas", en:"I don't know"},
-  {cat:"Expressions", fr:"je ne comprends pas", en:"I don't understand"},
-  {cat:"Expressions", fr:"pas de problème", en:"no problem"},
-  {cat:"Expressions", fr:"bien sûr", en:"of course"},
-  {cat:"Expressions", fr:"peut-être", en:"maybe"},
+  {cat:"Maison", fr:"la porte", en:"the door", p:"lah port", lvl:"A1"},
+  {cat:"Maison", fr:"la fenêtre", en:"the window", p:"lah fuh-netr", lvl:"A1"},
+  {cat:"Maison", fr:"la table", en:"the table", p:"lah tahbl", lvl:"A1"},
+  {cat:"Maison", fr:"la chaise", en:"the chair", p:"lah shez", lvl:"A1"},
+  {cat:"Maison", fr:"le canapé", en:"the sofa", p:"luh kah-nah-pay", lvl:"A1"},
+  {cat:"Maison", fr:"le fauteuil", en:"the armchair", p:"luh foh-tuh-y", lvl:"A1"},
+  {cat:"Maison", fr:"le rideau", en:"the curtain", p:"luh ree-doh", lvl:"A1"},
+  {cat:"Maison", fr:"l'étagère", en:"the shelf", p:"lay-tah-zhair", lvl:"A1"},
+  {cat:"Maison", fr:"le téléviseur", en:"the TV", p:"luh tay-lay-vee-zuhr", lvl:"A1"},
+  {cat:"Maison", fr:"la lampe", en:"the lamp", p:"lah lahmp", lvl:"A1"},
+  {cat:"Maison", fr:"le tableau", en:"the painting", p:"luh tah-bloh", lvl:"A1"},
+  {cat:"Maison", fr:"la plante", en:"the plant", p:"lah plahnt", lvl:"A1"},
+  {cat:"Maison", fr:"le lit", en:"the bed", p:"luh lee", lvl:"A1"},
+  {cat:"Maison", fr:"l'armoire", en:"the wardrobe", p:"lar-mwahr", lvl:"A1"},
+  {cat:"Maison", fr:"la commode", en:"the dresser", p:"lah koh-mod", lvl:"A1"},
+  {cat:"Maison", fr:"l'oreiller", en:"the pillow", p:"loh-ray-yay", lvl:"A1"},
+  {cat:"Maison", fr:"le miroir", en:"the mirror", p:"luh meer-wahr", lvl:"A1"},
+  {cat:"Maison", fr:"le coussin", en:"the cushion", p:"luh koo-san", lvl:"A1"},
+  {cat:"Maison", fr:"le lavabo", en:"the sink", p:"luh lah-vah-boh", lvl:"A1"},
+  {cat:"Maison", fr:"la douche", en:"the shower", p:"lah doosh", lvl:"A1"},
+  {cat:"Maison", fr:"le four", en:"the oven", p:"luh foor", lvl:"A1"},
+  {cat:"Maison", fr:"le réfrigérateur", en:"the fridge", p:"luh ray-free-zhay-rah-tuhr", lvl:"A1"},
+  {cat:"Maison", fr:"l'évier", en:"the kitchen sink", p:"lay-vyay", lvl:"A1"},
+  {cat:"Maison", fr:"le robinet", en:"the faucet", p:"luh roh-bee-nay", lvl:"A1"},
+  {cat:"Famille", fr:"le père", en:"the father", p:"luh pair", lvl:"A1"},
+  {cat:"Famille", fr:"la mère", en:"the mother", p:"lah mair", lvl:"A1"},
+  {cat:"Famille", fr:"le frère", en:"the brother", p:"luh frair", lvl:"A1"},
+  {cat:"Famille", fr:"la sœur", en:"the sister", p:"lah suhr", lvl:"A1"},
+  {cat:"Famille", fr:"l'oncle", en:"the uncle", p:"lohnkl", lvl:"A1"},
+  {cat:"Famille", fr:"la tante", en:"the aunt", p:"lah tahnt", lvl:"A1"},
+  {cat:"Famille", fr:"le grand-père", en:"the grandfather", p:"luh grahn-pair", lvl:"A1"},
+  {cat:"Famille", fr:"la grand-mère", en:"the grandmother", p:"luh grahn-mair", lvl:"A1"},
+  {cat:"Famille", fr:"le neveu", en:"the nephew", p:"luh nuh-vuh", lvl:"A1"},
+  {cat:"Famille", fr:"la nièce", en:"the niece", p:"lah nyes", lvl:"A1"},
+  {cat:"Famille", fr:"mes parents", en:"my parents", p:"may pah-rahn", lvl:"A1"},
+  {cat:"Vêtements", fr:"les chaussures", en:"shoes", p:"lay shoh-sewr", lvl:"A1"},
+  {cat:"Vêtements", fr:"le pantalon", en:"trousers", p:"luh pahn-tah-lohn", lvl:"A1"},
+  {cat:"Vêtements", fr:"la jupe", en:"skirt", p:"lah zhoop", lvl:"A1"},
+  {cat:"Vêtements", fr:"la chemise", en:"shirt", p:"lah shuh-meez", lvl:"A1"},
+  {cat:"Vêtements", fr:"le chemisier", en:"blouse", p:"luh shuh-mee-zyay", lvl:"A1"},
+  {cat:"Adjectifs", fr:"gentil", en:"kind (masc.)", p:"zhahn-tee", lvl:"A1"},
+  {cat:"Adjectifs", fr:"gentille", en:"kind (fem.)", p:"zhahn-tee-y", lvl:"A1"},
+  {cat:"Adjectifs", fr:"grand", en:"tall/big (masc.)", p:"grahn", lvl:"A1"},
+  {cat:"Adjectifs", fr:"grande", en:"tall/big (fem.)", p:"grahnd", lvl:"A1"},
+  {cat:"Adjectifs", fr:"petit", en:"small (masc.)", p:"puh-tee", lvl:"A1"},
+  {cat:"Adjectifs", fr:"petite", en:"small (fem.)", p:"puh-teet", lvl:"A1"},
+  {cat:"Adjectifs", fr:"beau", en:"handsome", p:"boh", lvl:"A1"},
+  {cat:"Adjectifs", fr:"belle", en:"beautiful", p:"bel", lvl:"A1"},
+  {cat:"Adjectifs", fr:"fatigué", en:"tired (masc.)", p:"fah-tee-gay", lvl:"A1"},
+  {cat:"Adjectifs", fr:"fatiguée", en:"tired (fem.)", p:"fah-tee-gay", lvl:"A1"},
+  {cat:"Prépositions", fr:"sur", en:"on", p:"sewr", lvl:"A1"},
+  {cat:"Prépositions", fr:"sous", en:"under", p:"soo", lvl:"A1"},
+  {cat:"Prépositions", fr:"à côté de", en:"beside", p:"ah koh-tay duh", lvl:"A1"},
+  {cat:"Prépositions", fr:"devant", en:"in front of", p:"duh-vahn", lvl:"A1"},
+  {cat:"Prépositions", fr:"derrière", en:"behind", p:"dair-yair", lvl:"A1"},
+  {cat:"Prépositions", fr:"dans", en:"in", p:"dahn", lvl:"A1"},
+  {cat:"Prépositions", fr:"dehors", en:"outside", p:"duh-or", lvl:"A1"},
+  {cat:"Nombres", fr:"vingt", en:"20", p:"van", lvl:"A1"},
+  {cat:"Nombres", fr:"soixante-dix", en:"70", p:"swah-sahnt-dees", lvl:"A1"},
+  {cat:"Nombres", fr:"quatre-vingts", en:"80", p:"katr-van", lvl:"A1"},
+  {cat:"Nombres", fr:"quatre-vingt-dix", en:"90", p:"katr-van-dees", lvl:"A1"},
+  {cat:"Jours", fr:"lundi", en:"Monday", p:"luhn-dee", lvl:"A1"},
+  {cat:"Jours", fr:"mardi", en:"Tuesday", p:"mar-dee", lvl:"A1"},
+  {cat:"Jours", fr:"mercredi", en:"Wednesday", p:"mair-kruh-dee", lvl:"A1"},
+  {cat:"Jours", fr:"jeudi", en:"Thursday", p:"zhuh-dee", lvl:"A1"},
+  {cat:"Jours", fr:"vendredi", en:"Friday", p:"vahn-druh-dee", lvl:"A1"},
+  {cat:"Jours", fr:"samedi", en:"Saturday", p:"sahm-dee", lvl:"A1"},
+  {cat:"Jours", fr:"dimanche", en:"Sunday", p:"dee-mahnsh", lvl:"A1"},
+  {cat:"Mois", fr:"janvier", en:"January", p:"zhahn-vyay", lvl:"A1"},
+  {cat:"Mois", fr:"février", en:"February", p:"fay-vryay", lvl:"A1"},
+  {cat:"Mois", fr:"septembre", en:"September", p:"sep-tahmbr", lvl:"A1"},
+  {cat:"Mois", fr:"décembre", en:"December", p:"day-sahmbr", lvl:"A1"},
+  {cat:"Mois", fr:"avril", en:"April", p:"ah-vreel", lvl:"A1"},
+  {cat:"Mois", fr:"mai", en:"May", p:"may", lvl:"A1"},
+  {cat:"Mois", fr:"juin", en:"June", p:"zhwan", lvl:"A1"},
+  {cat:"Mois", fr:"juillet", en:"July", p:"zhwee-yeh", lvl:"A1"},
+  {cat:"Mois", fr:"août", en:"August", p:"oot", lvl:"A1"},
+  {cat:"Mois", fr:"octobre", en:"October", p:"ok-tobr", lvl:"A1"},
+  {cat:"Mois", fr:"novembre", en:"November", p:"noh-vahmbr", lvl:"A1"},
+  {cat:"Temps", fr:"aujourd'hui", en:"today", p:"oh-zhoor-dwee", lvl:"A1"},
+  {cat:"Temps", fr:"demain", en:"tomorrow", p:"duh-man", lvl:"A1"},
+  {cat:"Temps", fr:"hier", en:"yesterday", p:"yair", lvl:"A1"},
+  {cat:"Temps", fr:"maintenant", en:"now", p:"man-tuh-nahn", lvl:"A1"},
+  {cat:"Temps", fr:"bientôt", en:"soon", p:"byan-toh", lvl:"A1"},
+  {cat:"Temps", fr:"toujours", en:"always", p:"too-zhoor", lvl:"A1"},
+  {cat:"Temps", fr:"jamais", en:"never", p:"zha-meh", lvl:"A1"},
+  {cat:"Temps", fr:"souvent", en:"often", p:"soo-vahn", lvl:"A1"},
+  {cat:"Temps", fr:"parfois", en:"sometimes", p:"par-fwah", lvl:"A1"},
+  {cat:"Temps", fr:"tôt", en:"early", p:"toh", lvl:"A1"},
+  {cat:"Temps", fr:"tard", en:"late", p:"tar", lvl:"A1"},
+  {cat:"Temps", fr:"une heure", en:"an hour / one o'clock", p:"ewn uhr", lvl:"A1"},
+  {cat:"Temps", fr:"une minute", en:"a minute", p:"ewn mee-newt", lvl:"A1"},
+  {cat:"Temps", fr:"la semaine", en:"the week", p:"lah suh-men", lvl:"A1"},
+  {cat:"Temps", fr:"le mois", en:"the month", p:"luh mwah", lvl:"A1"},
+  {cat:"Temps", fr:"l'année", en:"the year", p:"lah-nay", lvl:"A1"},
+  {cat:"Temps", fr:"le matin", en:"the morning", p:"luh mah-tan", lvl:"A1"},
+  {cat:"Temps", fr:"l'après-midi", en:"the afternoon", p:"lah-preh-mee-dee", lvl:"A1"},
+  {cat:"Temps", fr:"le soir", en:"the evening", p:"luh swahr", lvl:"A1"},
+  {cat:"Temps", fr:"la nuit", en:"the night", p:"lah nwee", lvl:"A1"},
+  {cat:"Questions", fr:"qui", en:"who", p:"kee", lvl:"A1"},
+  {cat:"Questions", fr:"quoi", en:"what", p:"kwah", lvl:"A1"},
+  {cat:"Questions", fr:"pourquoi", en:"why", p:"poor-kwah", lvl:"A1"},
+  {cat:"Questions", fr:"comment", en:"how", p:"koh-mahn", lvl:"A1"},
+  {cat:"Questions", fr:"combien", en:"how much/many", p:"kohm-byan", lvl:"A1"},
+  {cat:"Questions", fr:"quel", en:"which (masc.)", p:"kel", lvl:"A1"},
+  {cat:"Questions", fr:"quelle", en:"which (fem.)", p:"kel", lvl:"A1"},
+  {cat:"Connecteurs", fr:"et", en:"and", p:"ay", lvl:"A1"},
+  {cat:"Connecteurs", fr:"mais", en:"but", p:"meh", lvl:"A1"},
+  {cat:"Connecteurs", fr:"ou", en:"or", p:"oo", lvl:"A1"},
+  {cat:"Connecteurs", fr:"donc", en:"so/therefore", p:"dohnk", lvl:"A1"},
+  {cat:"Connecteurs", fr:"parce que", en:"because", p:"pars kuh", lvl:"A1"},
+  {cat:"Connecteurs", fr:"car", en:"because/for", p:"kar", lvl:"A1"},
+  {cat:"Connecteurs", fr:"quand", en:"when", p:"kahn", lvl:"A1"},
+  {cat:"Connecteurs", fr:"si", en:"if", p:"see", lvl:"A1"},
+  {cat:"Connecteurs", fr:"aussi", en:"also/too", p:"oh-see", lvl:"A1"},
+  {cat:"Connecteurs", fr:"puis", en:"then", p:"pwee", lvl:"A1"},
+  {cat:"Connecteurs", fr:"ensuite", en:"next/then", p:"ahn-sweet", lvl:"A1"},
+  {cat:"Connecteurs", fr:"cependant", en:"however", p:"suh-pahn-dahn", lvl:"A2"},
+  {cat:"Verbes courants", fr:"aller", en:"to go", p:"ah-lay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"faire", en:"to do/make", p:"fair", lvl:"A1"},
+  {cat:"Verbes courants", fr:"pouvoir", en:"to be able to / can", p:"poo-vwahr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"vouloir", en:"to want", p:"voo-lwahr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"devoir", en:"to have to / must", p:"duh-vwahr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"savoir", en:"to know (a fact)", p:"sah-vwahr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"connaître", en:"to know (a person/place)", p:"koh-netr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"voir", en:"to see", p:"vwahr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"prendre", en:"to take", p:"prahndr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"venir", en:"to come", p:"vuh-neer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"sortir", en:"to go out", p:"sor-teer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"partir", en:"to leave", p:"par-teer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"dire", en:"to say", p:"deer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"parler", en:"to speak", p:"par-lay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"penser", en:"to think", p:"pahn-say", lvl:"A1"},
+  {cat:"Verbes courants", fr:"croire", en:"to believe", p:"krwahr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"trouver", en:"to find", p:"troo-vay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"donner", en:"to give", p:"doh-nay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"demander", en:"to ask", p:"duh-mahn-day", lvl:"A1"},
+  {cat:"Verbes courants", fr:"répondre", en:"to answer", p:"ray-pohndr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"comprendre", en:"to understand", p:"kohm-prahndr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"apprendre", en:"to learn", p:"ah-prahndr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"travailler", en:"to work", p:"trah-vah-yay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"habiter", en:"to live (somewhere)", p:"ah-bee-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"vivre", en:"to live/be alive", p:"veevr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"aimer", en:"to like/love", p:"ay-may", lvl:"A1"},
+  {cat:"Verbes courants", fr:"préférer", en:"to prefer", p:"pray-fay-ray", lvl:"A1"},
+  {cat:"Verbes courants", fr:"détester", en:"to hate", p:"day-tes-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"acheter", en:"to buy", p:"ash-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"vendre", en:"to sell", p:"vahndr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"payer", en:"to pay", p:"pay-yay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"chercher", en:"to look for", p:"shair-shay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"attendre", en:"to wait", p:"ah-tahndr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"commencer", en:"to begin", p:"koh-mahn-say", lvl:"A1"},
+  {cat:"Verbes courants", fr:"finir", en:"to finish", p:"fee-neer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"continuer", en:"to continue", p:"kohn-tee-new-ay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"arrêter", en:"to stop", p:"ah-reh-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"essayer", en:"to try", p:"eh-say-yay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"pouvoir aider", en:"to be able to help", p:"poo-vwahr eh-day", lvl:"A1"},
+  {cat:"Verbes courants", fr:"utiliser", en:"to use", p:"ew-tee-lee-zay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"montrer", en:"to show", p:"mohn-tray", lvl:"A1"},
+  {cat:"Verbes courants", fr:"envoyer", en:"to send", p:"ahn-vwah-yay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"recevoir", en:"to receive", p:"ruh-suh-vwahr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"ouvrir", en:"to open", p:"oo-vreer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"fermer", en:"to close", p:"fair-may", lvl:"A1"},
+  {cat:"Verbes courants", fr:"entrer", en:"to enter", p:"ahn-tray", lvl:"A1"},
+  {cat:"Verbes courants", fr:"rester", en:"to stay", p:"res-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"passer", en:"to pass/spend (time)", p:"pah-say", lvl:"A1"},
+  {cat:"Verbes courants", fr:"tomber", en:"to fall", p:"tohm-bay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"devenir", en:"to become", p:"duhv-neer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"sembler", en:"to seem", p:"sahm-blay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"porter", en:"to wear/carry", p:"por-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"appeler", en:"to call", p:"ah-play", lvl:"A1"},
+  {cat:"Verbes courants", fr:"jouer", en:"to play", p:"zhoo-ay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"gagner", en:"to win/earn", p:"gah-nyay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"perdre", en:"to lose", p:"pairdr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"dormir", en:"to sleep", p:"dor-meer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"se lever", en:"to get up", p:"suh luh-vay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"se coucher", en:"to go to bed", p:"suh koo-shay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"se laver", en:"to wash oneself", p:"suh lah-vay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"s'habiller", en:"to get dressed", p:"sah-bee-yay", lvl:"A1"},
+  {cat:"Nourriture", fr:"le pain", en:"bread", p:"luh pan", lvl:"A1"},
+  {cat:"Nourriture", fr:"le fromage", en:"cheese", p:"luh froh-mahzh", lvl:"A1"},
+  {cat:"Nourriture", fr:"l'eau", en:"water", p:"loh", lvl:"A1"},
+  {cat:"Nourriture", fr:"le café", en:"coffee", p:"luh kah-fay", lvl:"A1"},
+  {cat:"Nourriture", fr:"le thé", en:"tea", p:"luh tay", lvl:"A1"},
+  {cat:"Nourriture", fr:"le lait", en:"milk", p:"luh leh", lvl:"A1"},
+  {cat:"Nourriture", fr:"le sucre", en:"sugar", p:"luh sewkr", lvl:"A1"},
+  {cat:"Nourriture", fr:"le sel", en:"salt", p:"luh sel", lvl:"A1"},
+  {cat:"Nourriture", fr:"la viande", en:"meat", p:"lah vyahnd", lvl:"A1"},
+  {cat:"Nourriture", fr:"le poisson", en:"fish", p:"luh pwah-sohn", lvl:"A1"},
+  {cat:"Nourriture", fr:"le poulet", en:"chicken", p:"luh poo-leh", lvl:"A1"},
+  {cat:"Nourriture", fr:"le riz", en:"rice", p:"luh ree", lvl:"A1"},
+  {cat:"Nourriture", fr:"les légumes", en:"vegetables", p:"lay lay-gewm", lvl:"A1"},
+  {cat:"Nourriture", fr:"les fruits", en:"fruits", p:"lay frwee", lvl:"A1"},
+  {cat:"Nourriture", fr:"la pomme", en:"apple", p:"lah pom", lvl:"A1"},
+  {cat:"Nourriture", fr:"la banane", en:"banana", p:"lah bah-nan", lvl:"A1"},
+  {cat:"Nourriture", fr:"l'orange", en:"orange", p:"loh-rahnzh", lvl:"A1"},
+  {cat:"Nourriture", fr:"le petit-déjeuner", en:"breakfast", p:"luh puh-tee day-zhuh-nay", lvl:"A1"},
+  {cat:"Nourriture", fr:"le déjeuner", en:"lunch", p:"luh day-zhuh-nay", lvl:"A1"},
+  {cat:"Nourriture", fr:"le dîner", en:"dinner", p:"luh dee-nay", lvl:"A1"},
+  {cat:"Nourriture", fr:"le restaurant", en:"restaurant", p:"luh res-toh-rahn", lvl:"A1"},
+  {cat:"Nourriture", fr:"l'addition", en:"the bill", p:"lah-dee-syohn", lvl:"A1"},
+  {cat:"Corps", fr:"la tête", en:"head", p:"lah tet", lvl:"A1"},
+  {cat:"Corps", fr:"les yeux", en:"eyes", p:"lay zyuh", lvl:"A1"},
+  {cat:"Corps", fr:"la main", en:"hand", p:"lah man", lvl:"A1"},
+  {cat:"Corps", fr:"le bras", en:"arm", p:"luh brah", lvl:"A1"},
+  {cat:"Corps", fr:"la jambe", en:"leg", p:"lah zhahmb", lvl:"A1"},
+  {cat:"Corps", fr:"le pied", en:"foot", p:"luh pyay", lvl:"A1"},
+  {cat:"Corps", fr:"le cœur", en:"heart", p:"luh kuhr", lvl:"A1"},
+  {cat:"Corps", fr:"le corps", en:"body", p:"luh kor", lvl:"A1"},
+  {cat:"Corps", fr:"le visage", en:"face", p:"luh vee-zahzh", lvl:"A1"},
+  {cat:"Émotions", fr:"content", en:"happy (masc.)", p:"kohn-tahn", lvl:"A1"},
+  {cat:"Émotions", fr:"contente", en:"happy (fem.)", p:"kohn-tahnt", lvl:"A1"},
+  {cat:"Émotions", fr:"triste", en:"sad", p:"treest", lvl:"A1"},
+  {cat:"Émotions", fr:"fâché", en:"angry (masc.)", p:"fah-shay", lvl:"A1"},
+  {cat:"Émotions", fr:"fâchée", en:"angry (fem.)", p:"fah-shay", lvl:"A1"},
+  {cat:"Émotions", fr:"inquiet", en:"worried (masc.)", p:"an-kyeh", lvl:"A1"},
+  {cat:"Émotions", fr:"inquiète", en:"worried (fem.)", p:"an-kyet", lvl:"A1"},
+  {cat:"Émotions", fr:"surpris", en:"surprised (masc.)", p:"sewr-pree", lvl:"A1"},
+  {cat:"Émotions", fr:"surprise", en:"surprised (fem.)", p:"sewr-preez", lvl:"A1"},
+  {cat:"Émotions", fr:"heureux", en:"happy (masc.)", p:"uh-ruh", lvl:"A1"},
+  {cat:"Émotions", fr:"heureuse", en:"happy (fem.)", p:"uh-ruhz", lvl:"A1"},
+  {cat:"Couleurs", fr:"rouge", en:"red", p:"roozh", lvl:"A1"},
+  {cat:"Couleurs", fr:"bleu", en:"blue", p:"bluh", lvl:"A1"},
+  {cat:"Couleurs", fr:"vert", en:"green", p:"vair", lvl:"A1"},
+  {cat:"Couleurs", fr:"jaune", en:"yellow", p:"zhohn", lvl:"A1"},
+  {cat:"Couleurs", fr:"noir", en:"black", p:"nwahr", lvl:"A1"},
+  {cat:"Couleurs", fr:"blanc", en:"white", p:"blahn", lvl:"A1"},
+  {cat:"Couleurs", fr:"gris", en:"gray", p:"gree", lvl:"A1"},
+  {cat:"Couleurs", fr:"orange", en:"orange (color)", p:"oh-rahnzh", lvl:"A1"},
+  {cat:"Couleurs", fr:"rose", en:"pink", p:"rohz", lvl:"A1"},
+  {cat:"Couleurs", fr:"violet", en:"purple", p:"vyoh-leh", lvl:"A1"},
+  {cat:"Lieux", fr:"la ville", en:"the city", p:"lah veel", lvl:"A1"},
+  {cat:"Lieux", fr:"le pays", en:"the country", p:"luh pay-yee", lvl:"A1"},
+  {cat:"Lieux", fr:"la rue", en:"the street", p:"lah rew", lvl:"A1"},
+  {cat:"Lieux", fr:"l'école", en:"the school", p:"lay-kol", lvl:"A1"},
+  {cat:"Lieux", fr:"le travail", en:"work/the workplace", p:"luh trah-vah-y", lvl:"A1"},
+  {cat:"Lieux", fr:"l'hôpital", en:"the hospital", p:"loh-pee-tal", lvl:"A1"},
+  {cat:"Lieux", fr:"la banque", en:"the bank", p:"lah bahnk", lvl:"A1"},
+  {cat:"Lieux", fr:"le magasin", en:"the store", p:"luh mah-gah-zan", lvl:"A1"},
+  {cat:"Lieux", fr:"l'aéroport", en:"the airport", p:"lah-ay-roh-por", lvl:"A1"},
+  {cat:"Lieux", fr:"la gare", en:"the train station", p:"lah gar", lvl:"A1"},
+  {cat:"Transport", fr:"la voiture", en:"the car", p:"lah vwah-tewr", lvl:"A1"},
+  {cat:"Transport", fr:"le bus", en:"the bus", p:"luh bewss", lvl:"A1"},
+  {cat:"Transport", fr:"le train", en:"the train", p:"luh tran", lvl:"A1"},
+  {cat:"Transport", fr:"l'avion", en:"the airplane", p:"lah-vyohn", lvl:"A1"},
+  {cat:"Transport", fr:"le taxi", en:"the taxi", p:"luh tak-see", lvl:"A1"},
+  {cat:"Transport", fr:"à pied", en:"on foot", p:"ah pyay", lvl:"A1"},
+  {cat:"Expressions", fr:"s'il vous plaît", en:"please (formal)", p:"seel voo pleh", lvl:"A1"},
+  {cat:"Expressions", fr:"merci", en:"thank you", p:"mair-see", lvl:"A1"},
+  {cat:"Expressions", fr:"de rien", en:"you're welcome", p:"duh ryan", lvl:"A1"},
+  {cat:"Expressions", fr:"pardon", en:"sorry/excuse me", p:"par-dohn", lvl:"A1"},
+  {cat:"Expressions", fr:"excusez-moi", en:"excuse me (formal)", p:"ex-kew-zay mwah", lvl:"A1"},
+  {cat:"Expressions", fr:"je ne sais pas", en:"I don't know", p:"zhuh nuh say pah", lvl:"A1"},
+  {cat:"Expressions", fr:"je ne comprends pas", en:"I don't understand", p:"zhuh nuh kohm-prahn pah", lvl:"A1"},
+  {cat:"Expressions", fr:"pas de problème", en:"no problem", p:"pah duh proh-blem", lvl:"A1"},
+  {cat:"Expressions", fr:"bien sûr", en:"of course", p:"byan sewr", lvl:"A1"},
+  {cat:"Expressions", fr:"peut-être", en:"maybe", p:"puh-tetr", lvl:"A1"},
+  {cat:"Vêtements", fr:"le manteau", en:"coat", p:"luh mahn-toh", lvl:"A1"},
+  {cat:"Vêtements", fr:"le pull", en:"sweater", p:"luh pewl", lvl:"A1"},
+  {cat:"Vêtements", fr:"les gants", en:"gloves", p:"lay gahn", lvl:"A1"},
+  {cat:"Vêtements", fr:"le chapeau", en:"hat", p:"luh shah-poh", lvl:"A1"},
+  {cat:"Vêtements", fr:"la ceinture", en:"belt", p:"lah san-tewr", lvl:"A1"},
+  {cat:"Vêtements", fr:"le sac à main", en:"handbag", p:"luh sahk ah man", lvl:"A1"},
+  {cat:"Vêtements", fr:"les bottes", en:"boots", p:"lay bot", lvl:"A1"},
+  {cat:"Vêtements", fr:"la cravate", en:"tie", p:"lah krah-vaht", lvl:"A1"},
+  {cat:"Vêtements", fr:"les lunettes", en:"glasses", p:"lay lew-net", lvl:"A1"},
+  {cat:"Vêtements", fr:"la montre", en:"watch", p:"lah mohntr", lvl:"A1"},
+  {cat:"Vêtements", fr:"le maillot de bain", en:"swimsuit", p:"luh mah-yoh duh ban", lvl:"A1"},
+  {cat:"Vêtements", fr:"le bijou", en:"jewel", p:"luh bee-zhoo", lvl:"A1"},
+  {cat:"École & Travail", fr:"l'université", en:"university", p:"lew-nee-vair-see-tay", lvl:"A1"},
+  {cat:"École & Travail", fr:"le professeur", en:"teacher", p:"luh proh-feh-suhr", lvl:"A1"},
+  {cat:"École & Travail", fr:"l'élève", en:"pupil", p:"lay-lev", lvl:"A1"},
+  {cat:"École & Travail", fr:"l'étudiant", en:"student (masc.)", p:"lay-tew-dyahn", lvl:"A1"},
+  {cat:"École & Travail", fr:"l'étudiante", en:"student (fem.)", p:"lay-tew-dyahnt", lvl:"A1"},
+  {cat:"École & Travail", fr:"le stylo", en:"pen", p:"luh stee-loh", lvl:"A1"},
+  {cat:"École & Travail", fr:"le cahier", en:"notebook", p:"luh kah-yay", lvl:"A1"},
+  {cat:"École & Travail", fr:"le livre", en:"book", p:"luh leevr", lvl:"A1"},
+  {cat:"École & Travail", fr:"la classe", en:"class", p:"lah klahs", lvl:"A1"},
+  {cat:"École & Travail", fr:"l'examen", en:"exam", p:"leg-zah-man", lvl:"A1"},
+  {cat:"École & Travail", fr:"la note", en:"grade", p:"lah not", lvl:"A1"},
+  {cat:"École & Travail", fr:"le devoir", en:"homework", p:"luh duh-vwahr", lvl:"A1"},
+  {cat:"École & Travail", fr:"le bureau", en:"desk/office", p:"luh bew-roh", lvl:"A1"},
+  {cat:"École & Travail", fr:"l'ordinateur", en:"computer", p:"lor-dee-nah-tuhr", lvl:"A1"},
+  {cat:"École & Travail", fr:"l'employé", en:"employee", p:"lahm-plwah-yay", lvl:"A1"},
+  {cat:"École & Travail", fr:"le patron", en:"boss", p:"luh pah-trohn", lvl:"A1"},
+  {cat:"École & Travail", fr:"le salaire", en:"salary", p:"luh sah-lair", lvl:"A1"},
+  {cat:"École & Travail", fr:"la réunion", en:"meeting", p:"lah ray-ew-nyohn", lvl:"A1"},
+  {cat:"École & Travail", fr:"le collègue", en:"colleague", p:"luh koh-leg", lvl:"A1"},
+  {cat:"École & Travail", fr:"le client", en:"client", p:"luh klee-yahn", lvl:"A1"},
+  {cat:"Technologie", fr:"le téléphone", en:"phone", p:"luh tay-lay-fon", lvl:"A1"},
+  {cat:"Technologie", fr:"le portable", en:"cell phone", p:"luh por-tahbl", lvl:"A1"},
+  {cat:"Technologie", fr:"l'internet", en:"internet", p:"lan-tair-net", lvl:"A1"},
+  {cat:"Technologie", fr:"l'email", en:"email", p:"lee-mayl", lvl:"A1"},
+  {cat:"Technologie", fr:"le mot de passe", en:"password", p:"luh moh duh pahs", lvl:"A1"},
+  {cat:"Technologie", fr:"l'application", en:"app", p:"lah-plee-kah-syohn", lvl:"A1"},
+  {cat:"Technologie", fr:"le réseau", en:"network", p:"luh ray-zoh", lvl:"A1"},
+  {cat:"Technologie", fr:"la batterie", en:"battery", p:"lah baht-ree", lvl:"A1"},
+  {cat:"Technologie", fr:"l'écran", en:"screen", p:"lay-krahn", lvl:"A1"},
+  {cat:"Technologie", fr:"le clavier", en:"keyboard", p:"luh klah-vyay", lvl:"A1"},
+  {cat:"Technologie", fr:"la souris", en:"mouse", p:"lah soo-ree", lvl:"A1"},
+  {cat:"Technologie", fr:"le wifi", en:"wifi", p:"luh wee-fee", lvl:"A1"},
+  {cat:"Santé", fr:"le médecin", en:"doctor", p:"luh mayd-san", lvl:"A1"},
+  {cat:"Santé", fr:"l'infirmière", en:"nurse", p:"lan-feer-myair", lvl:"A1"},
+  {cat:"Santé", fr:"la pharmacie", en:"pharmacy", p:"lah far-mah-see", lvl:"A1"},
+  {cat:"Santé", fr:"le médicament", en:"medicine", p:"luh may-dee-kah-mahn", lvl:"A1"},
+  {cat:"Santé", fr:"la maladie", en:"illness", p:"lah mah-lah-dee", lvl:"A1"},
+  {cat:"Santé", fr:"la douleur", en:"pain", p:"lah doo-luhr", lvl:"A1"},
+  {cat:"Santé", fr:"la fièvre", en:"fever", p:"lah fyevr", lvl:"A1"},
+  {cat:"Santé", fr:"le rhume", en:"cold (illness)", p:"luh rewm", lvl:"A1"},
+  {cat:"Santé", fr:"la grippe", en:"flu", p:"lah greep", lvl:"A1"},
+  {cat:"Santé", fr:"l'ordonnance", en:"prescription", p:"lor-doh-nahns", lvl:"A1"},
+  {cat:"Santé", fr:"la clinique", en:"clinic", p:"lah klee-neek", lvl:"A1"},
+  {cat:"Santé", fr:"l'urgence", en:"emergency", p:"lewr-zhahns", lvl:"A1"},
+  {cat:"Santé", fr:"guérir", en:"to heal/recover", p:"gay-reer", lvl:"A1"},
+  {cat:"Météo", fr:"le soleil", en:"sun", p:"luh soh-lay", lvl:"A1"},
+  {cat:"Météo", fr:"la pluie", en:"rain", p:"lah plwee", lvl:"A1"},
+  {cat:"Météo", fr:"le vent", en:"wind", p:"luh vahn", lvl:"A1"},
+  {cat:"Météo", fr:"la neige", en:"snow", p:"lah nezh", lvl:"A1"},
+  {cat:"Météo", fr:"le nuage", en:"cloud", p:"luh new-ahzh", lvl:"A1"},
+  {cat:"Météo", fr:"l'orage", en:"storm", p:"loh-rahzh", lvl:"A1"},
+  {cat:"Météo", fr:"la température", en:"temperature", p:"lah tahm-pay-rah-tewr", lvl:"A1"},
+  {cat:"Météo", fr:"humide", en:"humid", p:"ew-meed", lvl:"A1"},
+  {cat:"Météo", fr:"sec", en:"dry", p:"sek", lvl:"A1"},
+  {cat:"Météo", fr:"il fait beau", en:"it's nice out", p:"eel feh boh", lvl:"A1"},
+  {cat:"Météo", fr:"il pleut", en:"it's raining", p:"eel pluh", lvl:"A1"},
+  {cat:"Météo", fr:"il neige", en:"it's snowing", p:"eel nezh", lvl:"A1"},
+  {cat:"Météo", fr:"il fait chaud", en:"it's hot", p:"eel feh shoh", lvl:"A1"},
+  {cat:"Météo", fr:"il fait froid", en:"it's cold", p:"eel feh frwah", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"l'argent", en:"money", p:"lar-zhahn", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"le prix", en:"price", p:"luh pree", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"la monnaie", en:"change/currency", p:"lah moh-nay", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"la carte bancaire", en:"bank card", p:"lah kart bahn-kair", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"le reçu", en:"receipt", p:"luh ruh-sew", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"la caisse", en:"checkout", p:"lah kes", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"le vendeur", en:"salesman", p:"luh vahn-duhr", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"la réduction", en:"discount", p:"lah ray-dewk-syohn", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"le solde", en:"sale", p:"luh sold", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"cher", en:"expensive", p:"shair", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"bon marché", en:"cheap", p:"bohn mar-shay", lvl:"A1"},
+  {cat:"Argent & Achats", fr:"gratuit", en:"free", p:"grah-twee", lvl:"A1"},
+  {cat:"Directions", fr:"tout droit", en:"straight ahead", p:"too drwah", lvl:"A1"},
+  {cat:"Directions", fr:"à gauche", en:"to the left", p:"ah gohsh", lvl:"A1"},
+  {cat:"Directions", fr:"à droite", en:"to the right", p:"ah drwaht", lvl:"A1"},
+  {cat:"Directions", fr:"près de", en:"near", p:"preh duh", lvl:"A1"},
+  {cat:"Directions", fr:"loin de", en:"far from", p:"lwan duh", lvl:"A1"},
+  {cat:"Directions", fr:"ici", en:"here", p:"ee-see", lvl:"A1"},
+  {cat:"Directions", fr:"là", en:"there", p:"lah", lvl:"A1"},
+  {cat:"Directions", fr:"en face de", en:"across from", p:"ahn fahs duh", lvl:"A1"},
+  {cat:"Directions", fr:"entre", en:"between", p:"ahntr", lvl:"A1"},
+  {cat:"Directions", fr:"le coin", en:"corner", p:"luh kwan", lvl:"A1"},
+  {cat:"Directions", fr:"le quartier", en:"neighborhood", p:"luh kar-tyay", lvl:"A1"},
+  {cat:"Directions", fr:"le centre-ville", en:"downtown", p:"luh sahntr-veel", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"le sport", en:"sport", p:"luh spor", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"le football", en:"soccer", p:"luh foot-bol", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"le basket", en:"basketball", p:"luh bahs-ket", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"le tennis", en:"tennis", p:"luh teh-nees", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"nager", en:"to swim", p:"nah-zhay", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"courir", en:"to run", p:"koo-reer", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"le cinéma", en:"cinema", p:"luh see-nay-mah", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"le film", en:"movie", p:"luh feelm", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"le concert", en:"concert", p:"luh kohn-sair", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"lire", en:"to read", p:"leer", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"écrire", en:"to write", p:"ay-kreer", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"dessiner", en:"to draw", p:"deh-see-nay", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"le jeu", en:"game", p:"luh zhuh", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"l'arbre", en:"tree", p:"lartr", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"la fleur", en:"flower", p:"lah fluhr", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"la forêt", en:"forest", p:"lah for-eh", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"la montagne", en:"mountain", p:"lah mohn-tah-nyuh", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"la mer", en:"sea", p:"lah mair", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"la plage", en:"beach", p:"lah plahzh", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"le lac", en:"lake", p:"luh lahk", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"la rivière", en:"river", p:"lah ree-vyair", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"le ciel", en:"sky", p:"luh syel", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"l'étoile", en:"star", p:"lay-twahl", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"la lune", en:"moon", p:"lah lewn", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"l'animal", en:"animal", p:"lah-nee-mal", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"l'oiseau", en:"bird", p:"lwah-zoh", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"la vache", en:"cow", p:"lah vahsh", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"le cheval", en:"horse", p:"luh shuh-vahl", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"la clé", en:"key", p:"lah klay", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"le parapluie", en:"umbrella", p:"luh pah-rah-plwee", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"la valise", en:"suitcase", p:"lah vah-leez", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"le cadeau", en:"gift", p:"luh kah-doh", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"la lettre", en:"letter", p:"lah letr", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"le journal", en:"newspaper", p:"luh zhoor-nahl", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"la photo", en:"photo", p:"lah foh-toh", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"l'appareil photo", en:"camera", p:"lah-pah-ray foh-toh", lvl:"A1"},
+  {cat:"Verbes courants", fr:"se réveiller", en:"to wake up", p:"suh ray-vay-yay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"se doucher", en:"to shower", p:"suh doo-shay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"se reposer", en:"to rest", p:"suh ruh-poh-zay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"voyager", en:"to travel", p:"vwah-yah-zhay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"visiter", en:"to visit", p:"vee-zee-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"réserver", en:"to book/reserve", p:"ray-zair-vay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"conduire", en:"to drive", p:"kohn-dweer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"marcher", en:"to walk", p:"mar-shay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"choisir", en:"to choose", p:"shwah-zeer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"remplir", en:"to fill (out)", p:"rahm-pleer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"signer", en:"to sign", p:"see-nyay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"décider", en:"to decide", p:"day-see-day", lvl:"A1"},
+  {cat:"Verbes courants", fr:"expliquer", en:"to explain", p:"ex-plee-kay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"discuter", en:"to discuss", p:"dees-kew-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"proposer", en:"to propose", p:"proh-poh-zay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"refuser", en:"to refuse", p:"ruh-few-zay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"accepter", en:"to accept", p:"ahk-sep-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"promettre", en:"to promise", p:"proh-metr", lvl:"A1"},
+  {cat:"Adjectifs", fr:"facile", en:"easy", p:"fah-seel", lvl:"A1"},
+  {cat:"Adjectifs", fr:"difficile", en:"difficult", p:"dee-fee-seel", lvl:"A1"},
+  {cat:"Adjectifs", fr:"important", en:"important", p:"an-por-tahn", lvl:"A1"},
+  {cat:"Adjectifs", fr:"intéressant", en:"interesting", p:"an-tay-reh-sahn", lvl:"A1"},
+  {cat:"Adjectifs", fr:"ennuyeux", en:"boring", p:"ahn-nwee-yuh", lvl:"A1"},
+  {cat:"Adjectifs", fr:"propre", en:"clean", p:"propr", lvl:"A1"},
+  {cat:"Adjectifs", fr:"sale", en:"dirty", p:"sahl", lvl:"A1"},
+  {cat:"Adjectifs", fr:"nouveau", en:"new", p:"noo-voh", lvl:"A1"},
+  {cat:"Adjectifs", fr:"rapide", en:"fast", p:"rah-peed", lvl:"A1"},
+  {cat:"Adjectifs", fr:"lent", en:"slow", p:"lahn", lvl:"A1"},
+  {cat:"Adjectifs", fr:"riche", en:"rich", p:"reesh", lvl:"A1"},
+  {cat:"Adjectifs", fr:"pauvre", en:"poor", p:"pohvr", lvl:"A1"},
+  {cat:"Personnes", fr:"le bébé", en:"baby", p:"luh bay-bay", lvl:"A1"},
+  {cat:"Personnes", fr:"l'adulte", en:"adult", p:"lah-dewlt", lvl:"A1"},
+  {cat:"Personnes", fr:"le voisin", en:"neighbor", p:"luh vwah-zan", lvl:"A1"},
+  {cat:"Personnes", fr:"l'invité", en:"guest", p:"lan-vee-tay", lvl:"A1"},
+  {cat:"Personnes", fr:"le monsieur", en:"gentleman/Mr.", p:"luh muh-syuh", lvl:"A1"},
+  {cat:"Personnes", fr:"la dame", en:"lady", p:"lah dahm", lvl:"A1"},
+  {cat:"Personnes", fr:"l'enfant", en:"child", p:"lahn-fahn", lvl:"A1"},
+  {cat:"Personnes", fr:"l'adolescent", en:"teenager", p:"lah-doh-leh-sahn", lvl:"A1"},
+  {cat:"Expressions", fr:"à bientôt", en:"see you soon", p:"ah byan-toh", lvl:"A1"},
+  {cat:"Expressions", fr:"à demain", en:"see you tomorrow", p:"ah duh-man", lvl:"A1"},
+  {cat:"Expressions", fr:"bon appétit", en:"enjoy your meal", p:"bohn ah-pay-tee", lvl:"A1"},
+  {cat:"Expressions", fr:"bonne chance", en:"good luck", p:"bon shahns", lvl:"A1"},
+  {cat:"Expressions", fr:"félicitations", en:"congratulations", p:"fay-lee-see-tah-syohn", lvl:"A1"},
+  {cat:"Expressions", fr:"bienvenue", en:"welcome", p:"byan-vuh-new", lvl:"A1"},
+  {cat:"Expressions", fr:"ça dépend", en:"it depends", p:"sah day-pahn", lvl:"A1"},
+  {cat:"Expressions", fr:"d'accord", en:"okay/agreed", p:"dah-kor", lvl:"A1"},
+  {cat:"Expressions", fr:"avec plaisir", en:"with pleasure", p:"ah-vek pleh-zeer", lvl:"A1"},
+  {cat:"Expressions", fr:"je suis désolé", en:"I am sorry", p:"zhuh swee day-zoh-lay", lvl:"A1"},
+  {cat:"Cuisine", fr:"la cuisine", en:"kitchen", p:"lah kwee-zeen", lvl:"A1"},
+  {cat:"Cuisine", fr:"la casserole", en:"pot", p:"lah kahs-rol", lvl:"A1"},
+  {cat:"Cuisine", fr:"la poêle", en:"frying pan", p:"lah pwahl", lvl:"A1"},
+  {cat:"Cuisine", fr:"le couteau", en:"knife", p:"luh koo-toh", lvl:"A1"},
+  {cat:"Cuisine", fr:"la fourchette", en:"fork", p:"lah four-shet", lvl:"A1"},
+  {cat:"Cuisine", fr:"la cuillère", en:"spoon", p:"lah kwee-yair", lvl:"A1"},
+  {cat:"Cuisine", fr:"l'assiette", en:"plate", p:"lah-syet", lvl:"A1"},
+  {cat:"Cuisine", fr:"le verre", en:"glass", p:"luh vair", lvl:"A1"},
+  {cat:"Cuisine", fr:"la bouteille", en:"bottle", p:"lah boo-tay", lvl:"A1"},
+  {cat:"Cuisine", fr:"le sac", en:"bag", p:"luh sahk", lvl:"A1"},
+  {cat:"Cuisine", fr:"la boîte", en:"box", p:"lah bwaht", lvl:"A1"},
+  {cat:"Cuisine", fr:"le panier", en:"basket", p:"luh pah-nyay", lvl:"A1"},
+  {cat:"Ville", fr:"l'église", en:"church", p:"lay-gleez", lvl:"A1"},
+  {cat:"Ville", fr:"le musée", en:"museum", p:"luh mew-zay", lvl:"A1"},
+  {cat:"Ville", fr:"le parc", en:"park", p:"luh park", lvl:"A1"},
+  {cat:"Ville", fr:"le pont", en:"bridge", p:"luh pohn", lvl:"A1"},
+  {cat:"Ville", fr:"l'immeuble", en:"building", p:"lee-muhbl", lvl:"A1"},
+  {cat:"Ville", fr:"la maison", en:"house", p:"lah meh-zohn", lvl:"A1"},
+  {cat:"Ville", fr:"l'appartement", en:"apartment", p:"lah-par-tuh-mahn", lvl:"A1"},
+  {cat:"Ville", fr:"le jardin", en:"garden", p:"luh zhar-dan", lvl:"A1"},
+  {cat:"Ville", fr:"la piscine", en:"pool", p:"lah pee-seen", lvl:"A1"},
+  {cat:"Ville", fr:"le marché", en:"market", p:"luh mar-shay", lvl:"A1"},
+  {cat:"Ville", fr:"le supermarché", en:"supermarket", p:"luh sew-pair-mar-shay", lvl:"A1"},
+  {cat:"Transport", fr:"le vélo", en:"bicycle", p:"luh vay-loh", lvl:"A1"},
+  {cat:"Transport", fr:"la moto", en:"motorcycle", p:"lah moh-toh", lvl:"A1"},
+  {cat:"Transport", fr:"le bateau", en:"boat", p:"luh bah-toh", lvl:"A1"},
+  {cat:"Transport", fr:"le métro", en:"subway", p:"luh may-troh", lvl:"A1"},
+  {cat:"Transport", fr:"le billet", en:"ticket", p:"luh bee-yeh", lvl:"A1"},
+  {cat:"Transport", fr:"le passeport", en:"passport", p:"luh pahs-por", lvl:"A1"},
+  {cat:"Transport", fr:"le chauffeur", en:"driver", p:"luh shoh-fuhr", lvl:"A1"},
+  {cat:"Nombres", fr:"cent", en:"hundred", p:"sahn", lvl:"A1"},
+  {cat:"Nombres", fr:"mille", en:"thousand", p:"meel", lvl:"A1"},
+  {cat:"Nombres", fr:"premier", en:"first", p:"pruh-myay", lvl:"A1"},
+  {cat:"Nombres", fr:"deuxième", en:"second", p:"duh-zyem", lvl:"A1"},
+  {cat:"Nombres", fr:"troisième", en:"third", p:"trwah-zyem", lvl:"A1"},
+  {cat:"Nombres", fr:"dernier", en:"last", p:"dair-nyay", lvl:"A1"},
+  {cat:"Temps", fr:"le printemps", en:"spring", p:"luh pran-tahn", lvl:"A1"},
+  {cat:"Temps", fr:"l'été", en:"summer", p:"lay-tay", lvl:"A1"},
+  {cat:"Temps", fr:"l'automne", en:"autumn", p:"loh-ton", lvl:"A1"},
+  {cat:"Temps", fr:"l'hiver", en:"winter", p:"lee-vair", lvl:"A1"},
+  {cat:"Temps", fr:"la saison", en:"season", p:"lah say-zohn", lvl:"A1"},
+  {cat:"Temps", fr:"la date", en:"date", p:"lah daht", lvl:"A1"},
+  {cat:"Temps", fr:"l'horaire", en:"schedule", p:"lor-air", lvl:"A1"},
+  {cat:"Corps", fr:"le nez", en:"nose", p:"luh nay", lvl:"A1"},
+  {cat:"Corps", fr:"la bouche", en:"mouth", p:"lah boosh", lvl:"A1"},
+  {cat:"Corps", fr:"l'oreille", en:"ear", p:"loh-ray", lvl:"A1"},
+  {cat:"Corps", fr:"les dents", en:"teeth", p:"lay dahn", lvl:"A1"},
+  {cat:"Corps", fr:"les cheveux", en:"hair", p:"lay shuh-vuh", lvl:"A1"},
+  {cat:"Corps", fr:"le dos", en:"back", p:"luh doh", lvl:"A1"},
+  {cat:"Corps", fr:"l'estomac", en:"stomach", p:"les-toh-mah", lvl:"A1"},
+  {cat:"Corps", fr:"le doigt", en:"finger", p:"luh dwah", lvl:"A1"},
+  {cat:"Nourriture", fr:"le gâteau", en:"cake", p:"luh gah-toh", lvl:"A1"},
+  {cat:"Nourriture", fr:"les pâtes", en:"pasta", p:"lay paht", lvl:"A1"},
+  {cat:"Nourriture", fr:"la soupe", en:"soup", p:"lah soop", lvl:"A1"},
+  {cat:"Nourriture", fr:"le jus", en:"juice", p:"luh zhew", lvl:"A1"},
+  {cat:"Nourriture", fr:"la bière", en:"beer", p:"lah byair", lvl:"A1"},
+  {cat:"Nourriture", fr:"le vin", en:"wine", p:"luh van", lvl:"A1"},
+  {cat:"Nourriture", fr:"les œufs", en:"eggs", p:"lay zuh", lvl:"A1"},
+  {cat:"Nourriture", fr:"le beurre", en:"butter", p:"luh buhr", lvl:"A1"},
+  {cat:"Nourriture", fr:"la confiture", en:"jam", p:"lah kohn-fee-tewr", lvl:"A1"},
+  {cat:"Nourriture", fr:"les épices", en:"spices", p:"lay zay-pees", lvl:"A1"},
+  {cat:"Nourriture", fr:"la crème glacée", en:"ice cream", p:"lah krem glah-say", lvl:"A1"},
+  {cat:"Verbes courants", fr:"laisser", en:"to leave/let", p:"leh-say", lvl:"A1"},
+  {cat:"Verbes courants", fr:"oublier", en:"to forget", p:"oo-blee-yay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"préparer", en:"to prepare", p:"pray-pah-ray", lvl:"A1"},
+  {cat:"Verbes courants", fr:"apporter", en:"to bring", p:"ah-por-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"emporter", en:"to take away", p:"ahm-por-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"réparer", en:"to repair", p:"ray-pah-ray", lvl:"A1"},
+  {cat:"Verbes courants", fr:"nettoyer", en:"to clean", p:"neh-twah-yay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"ranger", en:"to tidy up", p:"rahn-zhay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"construire", en:"to build", p:"kohn-strweer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"casser", en:"to break", p:"kah-say", lvl:"A1"},
+  {cat:"Comparatifs", fr:"plus", en:"more", p:"plew", lvl:"A2"},
+  {cat:"Comparatifs", fr:"moins", en:"less", p:"mwan", lvl:"A2"},
+  {cat:"Comparatifs", fr:"autant", en:"as much", p:"oh-tahn", lvl:"A2"},
+  {cat:"Comparatifs", fr:"meilleur", en:"better", p:"meh-yuhr", lvl:"A2"},
+  {cat:"Comparatifs", fr:"pire", en:"worse", p:"peer", lvl:"A2"},
+  {cat:"Comparatifs", fr:"mieux", en:"better (adv.)", p:"myuh", lvl:"A2"},
+  {cat:"Voyage", fr:"le voyage", en:"trip", p:"luh vwah-yahzh", lvl:"A2"},
+  {cat:"Voyage", fr:"la réservation", en:"reservation", p:"lah ray-zair-vah-syohn", lvl:"A2"},
+  {cat:"Voyage", fr:"le vol", en:"flight", p:"luh vol", lvl:"A2"},
+  {cat:"Voyage", fr:"l'hôtel", en:"hotel", p:"loh-tel", lvl:"A2"},
+  {cat:"Voyage", fr:"la chambre", en:"room", p:"lah shahmbr", lvl:"A2"},
+  {cat:"Voyage", fr:"le bagage", en:"luggage", p:"luh bah-gahzh", lvl:"A2"},
+  {cat:"Voyage", fr:"la douane", en:"customs", p:"lah dwahn", lvl:"A2"},
+  {cat:"Voyage", fr:"la frontière", en:"border", p:"lah frohn-tyair", lvl:"A2"},
+  {cat:"Voyage", fr:"le guide", en:"guide", p:"luh geed", lvl:"A2"},
+  {cat:"Voyage", fr:"la carte", en:"map", p:"lah kart", lvl:"A2"},
+  {cat:"Verbes courants", fr:"se dépêcher", en:"to hurry", p:"suh day-peh-shay", lvl:"A2"},
+  {cat:"Verbes courants", fr:"s'amuser", en:"to have fun", p:"sah-mew-zay", lvl:"A2"},
+  {cat:"Verbes courants", fr:"se rappeler", en:"to remember", p:"suh rah-play", lvl:"A2"},
+  {cat:"Verbes courants", fr:"s'inquiéter", en:"to worry", p:"san-kyay-tay", lvl:"A2"},
+  {cat:"Verbes courants", fr:"se marier", en:"to get married", p:"suh mah-ryay", lvl:"A2"},
+  {cat:"Verbes courants", fr:"se disputer", en:"to argue", p:"suh dees-pew-tay", lvl:"A2"},
+  {cat:"Connecteurs", fr:"selon moi", en:"in my opinion", p:"suh-lohn mwah", lvl:"A2"},
+  {cat:"Connecteurs", fr:"à mon avis", en:"in my opinion", p:"ah mohn nah-vee", lvl:"A2"},
+  {cat:"Connecteurs", fr:"d'ailleurs", en:"moreover", p:"dah-yuhr", lvl:"A2"},
+  {cat:"Connecteurs", fr:"en fait", en:"in fact", p:"ahn feht", lvl:"A2"},
+  {cat:"Connecteurs", fr:"par contre", en:"on the other hand", p:"par kohntr", lvl:"A2"},
+  {cat:"Connecteurs", fr:"malgré", en:"despite", p:"mal-gray", lvl:"A2"},
+  {cat:"Connecteurs", fr:"grâce à", en:"thanks to", p:"grahs ah", lvl:"A2"},
+  {cat:"Émotions", fr:"stressé", en:"stressed", p:"streh-say", lvl:"A2"},
+  {cat:"Émotions", fr:"détendu", en:"relaxed", p:"day-tahn-dew", lvl:"A2"},
+  {cat:"Émotions", fr:"nerveux", en:"nervous", p:"nair-vuh", lvl:"A2"},
+  {cat:"Émotions", fr:"jaloux", en:"jealous", p:"zhah-loo", lvl:"A2"},
+  {cat:"Émotions", fr:"fier", en:"proud", p:"fyair", lvl:"A2"},
+  {cat:"Émotions", fr:"honteux", en:"ashamed", p:"ohn-tuh", lvl:"A2"},
+  {cat:"Travail", fr:"le contrat", en:"contract", p:"luh kohn-trah", lvl:"A2"},
+  {cat:"Travail", fr:"le rendez-vous", en:"appointment", p:"luh rahn-day-voo", lvl:"A2"},
+  {cat:"Travail", fr:"la carrière", en:"career", p:"lah kah-ryair", lvl:"A2"},
+  {cat:"Travail", fr:"le stage", en:"internship", p:"luh stahzh", lvl:"A2"},
+  {cat:"Travail", fr:"démissionner", en:"to resign", p:"day-mee-syoh-nay", lvl:"A2"},
+  {cat:"Travail", fr:"embaucher", en:"to hire", p:"ahm-boh-shay", lvl:"A2"},
+  {cat:"Travail", fr:"licencier", en:"to lay off", p:"lee-sahn-syay", lvl:"A2"},
+  {cat:"Achats", fr:"échanger", en:"to exchange", p:"ay-shahn-zhay", lvl:"A2"},
+  {cat:"Achats", fr:"rembourser", en:"to refund", p:"rahm-boor-say", lvl:"A2"},
+  {cat:"Achats", fr:"la garantie", en:"warranty", p:"lah gah-rahn-tee", lvl:"A2"},
+  {cat:"Achats", fr:"la taille", en:"size", p:"lah tie", lvl:"A2"},
+  {cat:"Idées", fr:"la difficulté", en:"difficulty", p:"lah dee-fee-kewl-tay", lvl:"A2"},
+  {cat:"Idées", fr:"l'expérience", en:"experience", p:"lex-pay-ryahns", lvl:"A2"},
+  {cat:"Idées", fr:"le conseil", en:"advice", p:"luh kohn-say", lvl:"A2"},
+  {cat:"Idées", fr:"la solution", en:"solution", p:"lah soh-lew-syohn", lvl:"A2"},
+  {cat:"Idées", fr:"le problème", en:"problem", p:"luh proh-blem", lvl:"A2"},
+  {cat:"Idées", fr:"la décision", en:"decision", p:"lah day-see-zyohn", lvl:"A2"},
+  {cat:"Idées", fr:"l'objectif", en:"objective", p:"lohb-zhek-teef", lvl:"A2"},
+  {cat:"Idées", fr:"le résultat", en:"result", p:"luh ray-zewl-tah", lvl:"A2"},
+  {cat:"Idées", fr:"améliorer", en:"to improve", p:"ah-may-lyoh-ray", lvl:"A2"},
+  {cat:"Idées", fr:"réussir", en:"to succeed", p:"ray-ew-seer", lvl:"A2"},
+  {cat:"Idées", fr:"échouer", en:"to fail", p:"ay-shoo-way", lvl:"A2"},
 ];
 
 const VERBS = [
@@ -505,23 +813,23 @@ const VERBS = [
 const SUBJECTS = {je:"Je",tu:"Tu",il:"Il",nous:"Nous",vous:"Vous",ils:"Ils"};
 
 const SENTENCES = [
-  {fr:"Il y a une chaise.", en:"There is a chair."},
-  {fr:"La chaise est à côté de la table.", en:"The chair is next to the table."},
-  {fr:"Il y a un sac dans ma chambre.", en:"There is a bag in my room."},
-  {fr:"Il y a un ventilateur dans ma chambre.", en:"There is a fan in my room."},
-  {fr:"Le garçon est gentil.", en:"The boy is kind."},
-  {fr:"La femme est formidable.", en:"The woman is great."},
-  {fr:"Ils sont mes parents.", en:"They are my parents."},
-  {fr:"Elles sont nos mères.", en:"They are our mothers."},
-  {fr:"J'ai faim.", en:"I am hungry."},
-  {fr:"J'ai soif.", en:"I am thirsty."},
-  {fr:"Mes parents sont formidables.", en:"My parents are wonderful."},
-  {fr:"Le chat est sur la table.", en:"The cat is on the table."},
-  {fr:"Le chien est à côté de la fenêtre.", en:"The dog is beside the window."},
-  {fr:"J'ai mangé.", en:"I ate."},
-  {fr:"Nous avons dansé.", en:"We danced."},
-  {fr:"Elle a chanté.", en:"She sang."},
-  {fr:"Mon cours de français est le mardi, mercredi et jeudi.", en:"My French class is on Tuesday, Wednesday, and Thursday."},
+  {fr:"Il y a une chaise.", en:"There is a chair.", p:"eel ee ah ewn shez", lvl:"A1"},
+  {fr:"La chaise est à côté de la table.", en:"The chair is next to the table.", p:"lah shez eh tah koh-tay duh lah tahbl", lvl:"A1"},
+  {fr:"Il y a un sac dans ma chambre.", en:"There is a bag in my room.", p:"eel ee ah uhn sahk dahn mah shahmbr", lvl:"A1"},
+  {fr:"Il y a un ventilateur dans ma chambre.", en:"There is a fan in my room.", p:"eel ee ah uhn vahn-tee-lah-tuhr dahn mah shahmbr", lvl:"A1"},
+  {fr:"Le garçon est gentil.", en:"The boy is kind.", p:"luh gar-sohn eh zhahn-tee", lvl:"A1"},
+  {fr:"La femme est formidable.", en:"The woman is great.", p:"lah fahm eh for-mee-dahbl", lvl:"A1"},
+  {fr:"Ils sont mes parents.", en:"They are my parents.", p:"eel sohn may pah-rahn", lvl:"A1"},
+  {fr:"Elles sont nos mères.", en:"They are our mothers.", p:"el sohn noh mair", lvl:"A1"},
+  {fr:"J'ai faim.", en:"I am hungry.", p:"zhay fan", lvl:"A1"},
+  {fr:"J'ai soif.", en:"I am thirsty.", p:"zhay swahf", lvl:"A1"},
+  {fr:"Mes parents sont formidables.", en:"My parents are wonderful.", p:"may pah-rahn sohn for-mee-dahbl", lvl:"A1"},
+  {fr:"Le chat est sur la table.", en:"The cat is on the table.", p:"luh shah eh sewr lah tahbl", lvl:"A1"},
+  {fr:"Le chien est à côté de la fenêtre.", en:"The dog is beside the window.", p:"luh shyan eh tah koh-tay duh lah fuh-netr", lvl:"A1"},
+  {fr:"J'ai mangé.", en:"I ate.", p:"zhay mahn-zhay", lvl:"A2"},
+  {fr:"Nous avons dansé.", en:"We danced.", p:"noo zah-vohn dahn-say", lvl:"A2"},
+  {fr:"Elle a chanté.", en:"She sang.", p:"el ah shahn-tay", lvl:"A2"},
+  {fr:"Mon cours de français est le mardi, mercredi et jeudi.", en:"My French class is on Tuesday, Wednesday, and Thursday.", p:"mohn koor duh frahn-say eh luh mar-dee, mair-kruh-dee ay zhuh-dee", lvl:"A1"},
 ];
 
 const CONVERSATION = {
@@ -632,17 +940,48 @@ function saveProgress(p){ try{ localStorage.setItem('frt_progress', JSON.stringi
 let progress = loadProgress();
 
 function getItemProgress(key){
-  return progress[key] || { box: 0, nextDue: 0 };
+  const p = progress[key];
+  return p ? Object.assign({box:0,nextDue:0,missStreak:0,pending:false}, p) : { box: 0, nextDue: 0, missStreak: 0, pending: false };
 }
 function updateProgress(key, ok){
   const cur = getItemProgress(key);
-  const newBox = ok ? Math.min(cur.box + 1, SRS_INTERVALS_DAYS.length - 1) : 0;
+  let newBox, missStreak, pending;
+  if(ok){
+    newBox = Math.min(cur.box + 1, SRS_INTERVALS_DAYS.length - 1);
+    missStreak = 0;
+    pending = false;
+  } else {
+    newBox = 0;
+    missStreak = (cur.missStreak||0) + 1;
+    pending = missStreak >= 3 ? true : cur.pending;
+  }
   const nextDue = Date.now() + SRS_INTERVALS_DAYS[newBox] * MS_DAY;
-  progress[key] = { box: newBox, nextDue };
+  progress[key] = { box: newBox, nextDue, missStreak, pending };
   saveProgress(progress);
+  return progress[key];
 }
 function isDue(key){
   return getItemProgress(key).nextDue <= Date.now();
+}
+
+/* ---------- Rough French -> English-spelling phonetic approximation ----------
+   Not real IPA — a best-effort "sounds like" fallback shown only after 3 misses
+   on the same item, so the person has something to anchor pronunciation to. */
+function approxPhonetic(text){
+  let s = ' ' + text.toLowerCase() + ' ';
+  const rules = [
+    [/eaux?/g, 'oh'], [/au/g, 'oh'], [/ille/g, 'eey'],
+    [/ph/g, 'f'], [/th/g, 't'], [/qu/g, 'k'], [/gn/g, 'ny'], [/ch/g, 'sh'],
+    [/ain|ein/g, 'an'], [/oin/g, 'wan'], [/ou/g, 'oo'], [/oi/g, 'wah'],
+    [/eu|œu/g, 'uh'], [/an|am|en|em/g, 'ahn'], [/in|im|yn|ym/g, 'an'],
+    [/on|om/g, 'ohn'], [/un|um/g, 'uhn'],
+    [/é/g, 'ay'], [/è|ê|ai|ei/g, 'eh'], [/ç/g, 's'], [/œ/g, 'uh'],
+    [/ce|ci/g, 'se'], [/ge|gi/g, 'zhe'],
+    [/y/g, 'ee'], [/j/g, 'zh'], [/h/g, ''], [/u/g, 'ew'],
+  ];
+  rules.forEach(([re, rep]) => { s = s.replace(re, rep); });
+  s = s.trim().replace(/[tdsxpz]\b/g, '').replace(/e\b/g, '');
+  return s.trim() || text;
 }
 function stageInfo(box){
   if(box===0) return {label:'New', cls:'stage-new'};
@@ -672,22 +1011,23 @@ function touchStreak(){
 /* ---------- Unified item list (vocab + verbs + sentences + conversation) ---------- */
 function getAllItems(){
   const items = [];
-  allVocab().forEach(v=> items.push({key:'vocab:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire'}));
-  allSentences().forEach(s=> items.push({key:'sent:'+s.fr, fr:s.fr, en:s.en, source:'Phrases'}));
+  allVocab().forEach(v=> items.push({key:'vocab:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl}));
+  allSentences().forEach(s=> items.push({key:'sent:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl}));
   VERBS.forEach(verb=>{
     ['present','pc'].forEach(mode=>{
       const forms = mode==='present' ? verb.present : verb.pc;
       if(!forms) return;
       Object.keys(forms).forEach(subj=>{
         const full = (subj==='je' && forms[subj][0].match(/[aeiouyéèêh]/i)) ? "J'"+forms[subj] : SUBJECTS[subj]+' '+forms[subj];
-        items.push({key:'verb:'+verb.inf+':'+mode+':'+subj, fr:full, en:verb.en+' ('+SUBJECTS[subj]+')', source:'Verbes'});
+        items.push({key:'verb:'+verb.inf+':'+mode+':'+subj, fr:full, en:verb.en+' ('+SUBJECTS[subj]+')', source:'Verbes', lvl: mode==='present' ? 'A1' : 'A2'});
       });
     });
   });
+  const CONV_TASK_LEVELS = { 'tcf:0':'A2', 'tcf:1':'B1', 'tcf:2':'B1', 'tef:0':'A2', 'tef:1':'B1' };
   Object.keys(CONVERSATION).forEach(examKey=>{
     CONVERSATION[examKey].tasks.forEach((task,ti)=>{
       task.prompts.forEach((p,pi)=>{
-        items.push({key:'conv:'+examKey+':'+ti+':'+pi, fr:p.fr, en:p.en, source:'Conversation', keywordSets:p.keywords, model:p.model});
+        items.push({key:'conv:'+examKey+':'+ti+':'+pi, fr:p.fr, en:p.en, source:'Conversation', keywordSets:p.keywords, model:p.model, lvl: CONV_TASK_LEVELS[examKey+':'+ti] || 'B1'});
       });
     });
   });
@@ -705,20 +1045,77 @@ function buildSession(maxSize){
 }
 
 /* ---------- Progression gate: Vocab -> Sentences -> Conversation (TCF/TEF) ----------
-   A word counts as "solid" once its box reaches 2 (gotten right twice running).
-   Sentences unlock once enough vocab is solid; Conversation unlocks once enough
-   sentences AND verb forms are solid — mirrors how real acquisition builds up. */
+   A word/sentence only counts as "solid" once it's been gotten right (box>=2) in
+   BOTH directions — read-aloud (French shown) AND recall (English shown, you produce
+   the French). Passing just one direction isn't enough: recall is the real test that
+   the word has actually stuck, not just that you can read it off the screen. */
+/* ---------- CEFR level chart ----------
+   Real-world word targets are ballpark figures from CEFR/FSI research, not exact
+   thresholds — "critical mass" for basic A1 fluency is commonly cited around
+   500-600 words, with each level roughly doubling from there. What's "loaded"
+   below is only what THIS app currently has for that level — mastering 100% of
+   loaded content is a real milestone but isn't the same as a certified CEFR level
+   until the loaded content itself is comprehensive enough. */
+const LEVELS = [
+  { code:'A1', name:'Breakthrough', wordTarget: 600,
+    grammar: ["Articles (le/la/l'/les, un/une/des)", "Présent tense — être, avoir, -ER verbs",
+              "Numbers, days, months, time", "Question words (où, comment, quand...)",
+              "Possessives (mon/ma/mes...) — taught by tutor, not yet drillable here",
+              "Negation (ne...pas) — taught by tutor, not yet drillable here"] },
+  { code:'A2', name:'Elementary', wordTarget: 1200,
+    grammar: ["Passé composé (past tense)", "Futur proche (aller + infinitif) — not yet added",
+              "Reflexive verbs — not yet added", "Comparatives — not yet added"] },
+  { code:'B1', name:'Intermediate', wordTarget: 2500,
+    grammar: ["Imparfait — not yet added", "Conditionnel — not yet added",
+              "Subjonctif (intro) — not yet added", "Opinions & defending a position (Conversation module)"] },
+  { code:'B2', name:'Upper Intermediate', wordTarget: 4000,
+    grammar: ["Subjonctif fluency — not yet added", "Nuanced argumentation — not yet added",
+              "Native-speed listening — not yet added"] },
+];
+function levelStats(code){
+  const vocabItems = allVocab().filter(v=>v.lvl===code);
+  const sentItems = allSentences().filter(s=>s.lvl===code);
+  const verbItems = getAllItems().filter(i=>i.key.startsWith('verb:') && i.lvl===code);
+  const convItems = getAllItems().filter(i=>i.key.startsWith('conv:') && i.lvl===code);
+
+  const vocabSolid = countSolidBothWays(vocabItems, 'vocab:', 'vocab:rev:');
+  const sentSolid = countSolidBothWays(sentItems, 'sent:', 'sent:rev:');
+  const verbSolid = verbItems.filter(i=>getItemProgress(i.key).box>=2).length;
+  const convSolid = convItems.filter(i=>getItemProgress(i.key).box>=2).length;
+
+  const loaded = vocabItems.length + sentItems.length + verbItems.length + convItems.length;
+  const solid = vocabSolid + sentSolid + verbSolid + convSolid;
+
+  // Cumulative word count: real proficiency stacks, so A2 coverage = A1 words + A2 words, etc.
+  const idx = LEVELS.findIndex(l=>l.code===code);
+  const cumulativeCodes = LEVELS.slice(0, idx+1).map(l=>l.code);
+  const cumulativeVocabLoaded = allVocab().filter(v=>cumulativeCodes.includes(v.lvl)).length;
+
+  return { loaded, solid, vocabLoaded: vocabItems.length, vocabSolid, cumulativeVocabLoaded,
+           complete: loaded > 0 && solid >= loaded };
+}
+
 const UNLOCK = {
   sentences: { vocabSolid: 20 },
   conversation: { sentSolid: 8, verbSolid: 10 }
 };
-function countSolid(prefix, minBox){
+function countSolidBothWays(items, fwdPrefix, revPrefix, minBox){
   minBox = minBox===undefined ? 2 : minBox;
-  return getAllItems().filter(i=>i.key.startsWith(prefix) && getItemProgress(i.key).box>=minBox).length;
+  return items.filter(it=>{
+    const f = getItemProgress(fwdPrefix+it.fr).box;
+    const r = getItemProgress(revPrefix+it.fr).box;
+    return f>=minBox && r>=minBox;
+  }).length;
 }
-function sentencesUnlocked(){ return countSolid('vocab:') >= UNLOCK.sentences.vocabSolid; }
+function countSolidVocab(minBox){ return countSolidBothWays(allVocab(), 'vocab:', 'vocab:rev:', minBox); }
+function countSolidSentences(minBox){ return countSolidBothWays(allSentences(), 'sent:', 'sent:rev:', minBox); }
+function countSolidVerbs(minBox){
+  minBox = minBox===undefined ? 1 : minBox;
+  return getAllItems().filter(i=>i.key.startsWith('verb:') && getItemProgress(i.key).box>=minBox).length;
+}
+function sentencesUnlocked(){ return countSolidVocab(2) >= UNLOCK.sentences.vocabSolid; }
 function conversationUnlocked(){
-  return countSolid('sent:') >= UNLOCK.conversation.sentSolid && countSolid('verb:') >= UNLOCK.conversation.verbSolid;
+  return countSolidSentences(2) >= UNLOCK.conversation.sentSolid && countSolidVerbs(1) >= UNLOCK.conversation.verbSolid;
 }
 function lockedCard(main, title, current, needed, explain, goTab, goLabel){
   main.innerHTML = '';
@@ -748,10 +1145,14 @@ let sessionCorrect = 0;
 let vocabCat = 'Tous';
 let vocabIndex = 0;
 let vocabDueOnly = false;
+let vocabPendingOnly = false;
+let vocabReverse = false;
 let verbIndex = 0;
 let verbMode = 'present';
 let sentIndex = 0;
 let sentDueOnly = false;
+let sentPendingOnly = false;
+let sentReverse = false;
 let convExam = 'tcf';
 let convTaskIdx = 0;
 let convPromptIdx = 0;
@@ -819,12 +1220,26 @@ function practiceWidget(targetText, onCorrect, opts){
         ok = alts.some(a=>isMatch(targetText, a));
       }
       recordAttempt(ok);
-      if(opts.progressKey){ updateProgress(opts.progressKey, ok); }
+      let updated = null;
+      if(opts.progressKey){ updated = updateProgress(opts.progressKey, ok); }
       feedback.className = 'feedback ' + (ok ? 'good' : 'bad');
-      feedback.innerHTML = (ok ? '✅ Nice — that matched!' : '❌ Not quite — listen again and retry.') +
-        '<div class="heard">You said: "' + said + '"</div>';
-      if(ok && onCorrect) onCorrect();
-      if(!ok){ setTimeout(()=>speak(targetText), 400); }
+      if(ok){
+        feedback.innerHTML = '✅ Nice — that matched!' +
+          '<div class="heard">You said: "' + said + '"</div>';
+        if(onCorrect) onCorrect(true);
+      } else if(updated && updated.missStreak >= 3){
+        const hint = opts.pron || approxPhonetic(targetText);
+        feedback.innerHTML = "❌ Still not quite — here's a pronunciation aid, then we'll move on." +
+          '<div class="heard">You said: "' + said + '"</div>' +
+          '<div class="heard">Rough English sound for "' + targetText + '": <b>' + hint + '</b></div>' +
+          '<div class="heard" style="margin-top:4px;">Marked as <b>pending</b> — it\'ll come back to you soon.</div>';
+        setTimeout(()=>speak(targetText), 300);
+        if(onCorrect){ setTimeout(()=>onCorrect(false), 2600); }
+      } else {
+        feedback.innerHTML = '❌ Not quite — listen again and retry.' +
+          '<div class="heard">You said: "' + said + '"</div>';
+        setTimeout(()=>speak(targetText), 400);
+      }
     }, (err)=>{
       micBtn.classList.remove('listening');
       micBtn.innerHTML = '🎤 Say it';
@@ -933,10 +1348,10 @@ function renderHome(main, nav){
   const pathCard = document.createElement('div');
   pathCard.className = 'card';
   pathCard.innerHTML = '<p class="item-en" style="margin-bottom:8px;">Your path</p>';
-  const vocabSolid = countSolid('vocab:');
+  const vocabSolid = countSolidVocab();
   const sentUnlocked = sentencesUnlocked();
-  const sentSolid = countSolid('sent:');
-  const verbSolid = countSolid('verb:');
+  const sentSolid = countSolidSentences();
+  const verbSolid = countSolidVerbs();
   const convUnlocked = conversationUnlocked();
 
   function pathStep(label, done, current, needed, note){
@@ -953,13 +1368,56 @@ function renderHome(main, nav){
     `;
     return row;
   }
-  pathCard.appendChild(pathStep('1. Vocabulary', true, vocabSolid, UNLOCK.sentences.vocabSolid, 'Words practiced solidly (Learning stage or beyond).'));
+  pathCard.appendChild(pathStep('1. Vocabulary', true, vocabSolid, UNLOCK.sentences.vocabSolid,
+    'Words solid in BOTH directions — read aloud AND recalled from English. Use 🔀 Test me on the Vocab tab.'));
   pathCard.appendChild(pathStep('2. Sentences', sentUnlocked, vocabSolid, UNLOCK.sentences.vocabSolid,
-    sentUnlocked ? 'Unlocked — full sentences from your lessons.' : 'Unlocks once enough vocabulary is solid.'));
+    sentUnlocked ? 'Unlocked — full sentences from your lessons.' : 'Unlocks once enough vocabulary is solid both ways.'));
   pathCard.appendChild(pathStep('3. Conversation (TCF/TEF)', convUnlocked, sentSolid + verbSolid,
     UNLOCK.conversation.sentSolid + UNLOCK.conversation.verbSolid,
-    convUnlocked ? 'Unlocked — real TCF/TEF-style conversation practice.' : 'Unlocks once sentences and verb forms are solid.'));
+    convUnlocked ? 'Unlocked — real TCF/TEF-style conversation practice.' : 'Unlocks once sentences (both ways) and verb forms are solid.'));
   main.appendChild(pathCard);
+
+  const levelCard = document.createElement('div');
+  levelCard.className = 'card';
+  levelCard.innerHTML = `
+    <p class="item-en" style="margin-bottom:2px;">Level chart</p>
+    <p class="small" style="margin-bottom:12px;">
+      Progress against what's currently loaded per CEFR level — not an official certification.
+      Real A1 typically needs ~600 words total; word targets below show how far the app's
+      content goes toward the real requirement.
+    </p>
+  `;
+  LEVELS.forEach(lv=>{
+    const st = levelStats(lv.code);
+    const pct = st.loaded > 0 ? Math.round((st.solid/st.loaded)*100) : 0;
+    const coveragePct = Math.min(100, Math.round((st.cumulativeVocabLoaded / lv.wordTarget) * 100));
+    const row = document.createElement('div');
+    row.style.marginBottom = '16px';
+    row.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <span style="font-weight:700;">${st.complete ? '✅' : '📘'} ${lv.code} — ${lv.name}</span>
+        <span class="small">${st.solid}/${st.loaded} mastered</span>
+      </div>
+      <div class="session-bar-track"><div class="session-bar-fill" style="width:${pct}%"></div></div>
+      <p class="small" style="margin-top:4px;">
+        ${st.cumulativeVocabLoaded} of ~${lv.wordTarget} real-world words loaded so far (${coveragePct}% cumulative coverage)
+        ${st.complete ? ' — everything currently loaded for this level is solid both ways.' : ''}
+      </p>
+    `;
+    const gramBtn = document.createElement('button');
+    gramBtn.className = 'action btn-ghost';
+    gramBtn.style.fontSize = '0.75rem';
+    gramBtn.style.padding = '6px 10px';
+    gramBtn.textContent = 'Grammar checklist';
+    const gramBox = document.createElement('div');
+    gramBox.className = 'model-answer';
+    gramBox.innerHTML = lv.grammar.map(g=>'• '+g).join('<br>');
+    gramBtn.onclick = ()=>{ gramBox.classList.toggle('show'); };
+    row.appendChild(gramBtn);
+    row.appendChild(gramBox);
+    levelCard.appendChild(row);
+  });
+  main.appendChild(levelCard);
 }
 
 /* ---------- Daily session (unified review across all tabs) ---------- */
@@ -1004,9 +1462,10 @@ function renderSession(main, nav){
   `;
 
   const opts = item.keywordSets ? {keywordSets: item.keywordSets, progressKey: item.key} : {progressKey: item.key};
-  const widget = practiceWidget(item.fr, ()=>{
-    sessionCorrect++;
-    setTimeout(()=>{ sessionIdx++; render(); }, 900);
+  if(item.p) opts.pron = item.p;
+  const widget = practiceWidget(item.fr, (ok)=>{
+    if(ok) sessionCorrect++;
+    setTimeout(()=>{ sessionIdx++; render(); }, ok ? 900 : 400);
   }, opts);
   card.appendChild(widget);
 
@@ -1040,50 +1499,94 @@ function renderSession(main, nav){
 
 /* ---------- Vocab tab ---------- */
 function renderVocab(main, nav){
+  function progKey(item){ return vocabReverse ? 'vocab:rev:'+item.fr : 'vocab:'+item.fr; }
+
   const cats = ['Tous', ...new Set(allVocab().map(v=>v.cat))];
   cats.forEach(c=>{
     const b = document.createElement('button');
     b.textContent = c;
-    if(c===vocabCat && !vocabDueOnly) b.classList.add('active');
-    b.onclick = ()=>{ vocabCat=c; vocabDueOnly=false; vocabIndex=0; render(); };
+    if(c===vocabCat && !vocabDueOnly && !vocabPendingOnly) b.classList.add('active');
+    b.onclick = ()=>{ vocabCat=c; vocabDueOnly=false; vocabPendingOnly=false; vocabIndex=0; render(); };
     nav.appendChild(b);
   });
   const dueBtn = document.createElement('button');
-  const dueCount = allVocab().filter(v=>isDue('vocab:'+v.fr)).length;
+  const dueCount = allVocab().filter(v=>isDue(progKey(v))).length;
   dueBtn.textContent = '📅 Due (' + dueCount + ')';
   if(vocabDueOnly) dueBtn.classList.add('active');
-  dueBtn.onclick = ()=>{ vocabDueOnly=true; vocabIndex=0; render(); };
+  dueBtn.onclick = ()=>{ vocabDueOnly=true; vocabPendingOnly=false; vocabIndex=0; render(); };
   nav.appendChild(dueBtn);
 
+  const pendingBtn = document.createElement('button');
+  const pendingCount = allVocab().filter(v=>getItemProgress(progKey(v)).pending).length;
+  pendingBtn.textContent = '⏳ Pending (' + pendingCount + ')';
+  if(vocabPendingOnly) pendingBtn.classList.add('active');
+  pendingBtn.onclick = ()=>{ vocabPendingOnly=true; vocabDueOnly=false; vocabIndex=0; render(); };
+  nav.appendChild(pendingBtn);
+
+  const revBtn = document.createElement('button');
+  revBtn.textContent = vocabReverse ? '🔀 Testing EN→FR' : '🔀 Test me (EN→FR)';
+  if(vocabReverse) revBtn.classList.add('active');
+  revBtn.onclick = ()=>{ vocabReverse = !vocabReverse; vocabIndex=0; render(); };
+  nav.appendChild(revBtn);
+
   let list = vocabCat==='Tous' ? allVocab() : allVocab().filter(v=>v.cat===vocabCat);
-  if(vocabDueOnly) list = allVocab().filter(v=>isDue('vocab:'+v.fr));
+  if(vocabDueOnly) list = allVocab().filter(v=>isDue(progKey(v)));
+  if(vocabPendingOnly) list = allVocab().filter(v=>getItemProgress(progKey(v)).pending);
   if(vocabIndex>=list.length) vocabIndex=0;
   const item = list[vocabIndex];
 
   main.innerHTML = '';
   if(!item){
-    main.innerHTML = vocabDueOnly
-      ? '<div class="card"><p class="item-en">Nothing due right now — nice work staying on top of reviews. Check back later, or browse a category to learn new words.</p></div>'
-      : '<div class="card">No words yet in this category.</div>';
+    let msg = 'No words yet in this category.';
+    if(vocabDueOnly) msg = "Nothing due right now — nice work staying on top of reviews.";
+    if(vocabPendingOnly) msg = "No pending words — anything you've struggled with 3+ times shows up here.";
+    main.innerHTML = `<div class="card"><p class="item-en">${msg}</p></div>`;
     return;
   }
 
-  const key = 'vocab:'+item.fr;
-  const stage = stageInfo(getItemProgress(key).box);
+  const key = progKey(item);
+  const ip = getItemProgress(key);
+  const stage = stageInfo(ip.box);
+  const label = vocabDueOnly ? 'Due review' : (vocabPendingOnly ? 'Pending' : 'Word');
 
   const card = document.createElement('div');
   card.className = 'card';
-  card.innerHTML = `
-    <div class="pill">${item.cat}</div>
-    <span class="stage-pill ${stage.cls}">${stage.label}</span>
-    <div class="progress-line" style="margin-top:8px;">${vocabDueOnly ? 'Due review' : 'Word'} ${vocabIndex+1} of ${list.length}</div>
-    <p class="item-fr">${item.fr}</p>
-    <p class="item-en">${item.en}</p>
-  `;
+  if(vocabReverse){
+    card.innerHTML = `
+      <div class="pill">${item.cat}</div>
+      <span class="stage-pill ${stage.cls}">${stage.label}</span>${ip.pending ? ' <span class="stage-pill stage-learning">⏳ Pending</span>' : ''}
+      <div class="progress-line" style="margin-top:8px;">${label} ${vocabIndex+1} of ${list.length}</div>
+      <p class="item-en" style="margin-bottom:2px;">🔀 Say this in French:</p>
+      <p class="item-fr">${item.en}</p>
+    `;
+  } else {
+    card.innerHTML = `
+      <div class="pill">${item.cat}</div>
+      <span class="stage-pill ${stage.cls}">${stage.label}</span>${ip.pending ? ' <span class="stage-pill stage-learning">⏳ Pending</span>' : ''}
+      <div class="progress-line" style="margin-top:8px;">${label} ${vocabIndex+1} of ${list.length}</div>
+      <p class="item-fr">${item.fr}</p>
+      <p class="item-en">${item.en}</p>
+    `;
+  }
+  const widgetOpts = {progressKey: key};
+  if(item.p) widgetOpts.pron = item.p;
   const widget = practiceWidget(item.fr, ()=>{
     setTimeout(()=>{ vocabIndex = (vocabIndex+1)%list.length; render(); }, 900);
-  }, {progressKey: key});
+  }, widgetOpts);
   card.appendChild(widget);
+
+  if(vocabReverse){
+    const revealBtn = document.createElement('button');
+    revealBtn.className = 'action btn-ghost';
+    revealBtn.style.marginTop = '10px';
+    revealBtn.textContent = '👁 Reveal French spelling';
+    const revealBox = document.createElement('div');
+    revealBox.className = 'model-answer';
+    revealBox.innerHTML = `<b>${item.fr}</b>`;
+    revealBtn.onclick = ()=>{ revealBox.classList.toggle('show'); };
+    card.appendChild(revealBtn);
+    card.appendChild(revealBox);
+  }
 
   const nextRow = document.createElement('div');
   nextRow.className = 'btn-row';
@@ -1185,42 +1688,85 @@ function renderVerbs(main, nav){
 function renderSentences(main, nav){
   nav.innerHTML = '';
   if(!sentencesUnlocked()){
-    lockedCard(main, 'Sentences', countSolid('vocab:'), UNLOCK.sentences.vocabSolid,
-      "Get a bit more vocabulary solid first — sentences are built from words you already know, so this unlocks once you've got enough vocab under your belt.",
+    lockedCard(main, 'Sentences', countSolidVocab(), UNLOCK.sentences.vocabSolid,
+      "Get more vocabulary solid first — and \"solid\" means both directions: read it aloud correctly, AND recall it from English using 🔀 Test me on the Vocab tab. Sentences are built from words you actually know, not just words you can read.",
       'vocab', 'Go practice Vocab');
     return;
   }
-  const dueCount = allSentences().filter(s=>isDue('sent:'+s.fr)).length;
+  function progKey(s){ return sentReverse ? 'sent:rev:'+s.fr : 'sent:'+s.fr; }
+  const dueCount = allSentences().filter(s=>isDue(progKey(s))).length;
+  const pendingCount = allSentences().filter(s=>getItemProgress(progKey(s)).pending).length;
   nav.innerHTML = '<span class="small" style="padding:8px 4px;">Full sentences from your lessons</span>';
   const dueBtn = document.createElement('button');
   dueBtn.textContent = '📅 Due (' + dueCount + ')';
   if(sentDueOnly) dueBtn.classList.add('active');
-  dueBtn.onclick = ()=>{ sentDueOnly = !sentDueOnly; sentIndex=0; render(); };
+  dueBtn.onclick = ()=>{ sentDueOnly = !sentDueOnly; sentPendingOnly=false; sentIndex=0; render(); };
   nav.appendChild(dueBtn);
 
-  let list = sentDueOnly ? allSentences().filter(s=>isDue('sent:'+s.fr)) : allSentences();
+  const pendingBtn = document.createElement('button');
+  pendingBtn.textContent = '⏳ Pending (' + pendingCount + ')';
+  if(sentPendingOnly) pendingBtn.classList.add('active');
+  pendingBtn.onclick = ()=>{ sentPendingOnly = !sentPendingOnly; sentDueOnly=false; sentIndex=0; render(); };
+  nav.appendChild(pendingBtn);
+
+  const revBtn = document.createElement('button');
+  revBtn.textContent = sentReverse ? '🔀 Testing EN→FR' : '🔀 Test me (EN→FR)';
+  if(sentReverse) revBtn.classList.add('active');
+  revBtn.onclick = ()=>{ sentReverse = !sentReverse; sentIndex=0; render(); };
+  nav.appendChild(revBtn);
+
+  let list = allSentences();
+  if(sentDueOnly) list = list.filter(s=>isDue(progKey(s)));
+  if(sentPendingOnly) list = list.filter(s=>getItemProgress(progKey(s)).pending);
   if(sentIndex>=list.length) sentIndex=0;
   const s = list[sentIndex];
 
   main.innerHTML = '';
   if(!s){
-    main.innerHTML = '<div class="card"><p class="item-en">Nothing due right now — check back later.</p></div>';
+    let msg = 'Nothing due right now — check back later.';
+    if(sentPendingOnly) msg = "No pending sentences — anything you've struggled with 3+ times shows up here.";
+    main.innerHTML = `<div class="card"><p class="item-en">${msg}</p></div>`;
     return;
   }
-  const key = 'sent:'+s.fr;
-  const stage = stageInfo(getItemProgress(key).box);
+  const key = progKey(s);
+  const ip = getItemProgress(key);
+  const stage = stageInfo(ip.box);
   const card = document.createElement('div');
   card.className = 'card';
-  card.innerHTML = `
-    <span class="stage-pill ${stage.cls}">${stage.label}</span>
-    <div class="progress-line" style="margin-top:8px;">Sentence ${sentIndex+1} of ${list.length}</div>
-    <p class="item-fr" style="font-size:1.15rem;">${s.fr}</p>
-    <p class="item-en">${s.en}</p>
-  `;
+  if(sentReverse){
+    card.innerHTML = `
+      <span class="stage-pill ${stage.cls}">${stage.label}</span>${ip.pending ? ' <span class="stage-pill stage-learning">⏳ Pending</span>' : ''}
+      <div class="progress-line" style="margin-top:8px;">Sentence ${sentIndex+1} of ${list.length}</div>
+      <p class="item-en" style="margin-bottom:2px;">🔀 Say this in French:</p>
+      <p class="item-fr" style="font-size:1.15rem;">${s.en}</p>
+    `;
+  } else {
+    card.innerHTML = `
+      <span class="stage-pill ${stage.cls}">${stage.label}</span>${ip.pending ? ' <span class="stage-pill stage-learning">⏳ Pending</span>' : ''}
+      <div class="progress-line" style="margin-top:8px;">Sentence ${sentIndex+1} of ${list.length}</div>
+      <p class="item-fr" style="font-size:1.15rem;">${s.fr}</p>
+      <p class="item-en">${s.en}</p>
+    `;
+  }
+  const sWidgetOpts = {progressKey: key};
+  if(s.p) sWidgetOpts.pron = s.p;
   const widget = practiceWidget(s.fr, ()=>{
     setTimeout(()=>{ sentIndex=(sentIndex+1)%list.length; render(); }, 900);
-  }, {progressKey: key});
+  }, sWidgetOpts);
   card.appendChild(widget);
+
+  if(sentReverse){
+    const revealBtn = document.createElement('button');
+    revealBtn.className = 'action btn-ghost';
+    revealBtn.style.marginTop = '10px';
+    revealBtn.textContent = '👁 Reveal French';
+    const revealBox = document.createElement('div');
+    revealBox.className = 'model-answer';
+    revealBox.innerHTML = `<b>${s.fr}</b>`;
+    revealBtn.onclick = ()=>{ revealBox.classList.toggle('show'); };
+    card.appendChild(revealBtn);
+    card.appendChild(revealBox);
+  }
 
   const nextRow = document.createElement('div');
   nextRow.className = 'btn-row';
@@ -1238,12 +1784,10 @@ function renderSentences(main, nav){
 function renderConversation(main, nav){
   nav.innerHTML = '';
   if(!conversationUnlocked()){
-    const need = Math.max(UNLOCK.conversation.sentSolid - countSolid('sent:'), 0) +
-                 Math.max(UNLOCK.conversation.verbSolid - countSolid('verb:'), 0);
     lockedCard(main, 'Conversation (TCF/TEF)',
-      countSolid('sent:') + countSolid('verb:'),
+      countSolidSentences() + countSolidVerbs(),
       UNLOCK.conversation.sentSolid + UNLOCK.conversation.verbSolid,
-      "Real conversation needs solid sentences and verb conjugation behind it — get more of those locked in and this unlocks automatically.",
+      "Real conversation needs sentences that are solid both ways — read aloud AND recalled from English (🔀 Test me on Sentences) — plus solid verb conjugation. Get those locked in and this unlocks automatically.",
       'sentences', 'Go practice Sentences');
     return;
   }
