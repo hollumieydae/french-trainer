@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Français — Trainer</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#2b4fa3">
+<style>
+:root{
+  --bg:#faf9f7; --card:#ffffff; --ink:#1a1a2e; --sub:#5c5c70;
+  --accent:#2b4fa3; --accent2:#c8102e; --good:#1e8a4c; --bad:#c8102e;
+  --line:#e4e2dd; --chip:#eef1f8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14141c; --card:#1e1e2a; --ink:#f0f0f5; --sub:#a3a3b8;
+    --accent:#7fa0ff; --accent2:#ff6b7d; --good:#4ade80; --bad:#ff6b7d;
+    --line:#33333f; --chip:#242433;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14141c; --card:#1e1e2a; --ink:#f0f0f5; --sub:#a3a3b8;
+  --accent:#7fa0ff; --accent2:#ff6b7d; --good:#4ade80; --bad:#ff6b7d;
+  --line:#33333f; --chip:#242433;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding-bottom:90px;
+}
+header{
+  padding:18px 16px 10px; position:sticky; top:0; background:var(--bg); z-index:10;
+  border-bottom:1px solid var(--line);
+}
+header h1{ margin:0 0 2px; font-size:1.3rem; display:flex; align-items:center; gap:8px;}
+header p{ margin:0; color:var(--sub); font-size:0.85rem;}
+nav{
+  display:flex; gap:6px; overflow-x:auto; padding:10px 16px; background:var(--bg);
+  position:sticky; top:60px; z-index:9; border-bottom:1px solid var(--line);
+}
+nav button{
+  flex:0 0 auto; padding:8px 14px; border-radius:20px; border:1px solid var(--line);
+  background:var(--card); color:var(--ink); font-size:0.85rem; cursor:pointer;
+}
+nav button.active{ background:var(--accent); color:#fff; border-color:var(--accent);}
+main{ padding:16px; max-width:640px; margin:0 auto;}
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:14px;
+  padding:16px; margin-bottom:12px;
+}
+.sub-tabs{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;}
+.sub-tabs button{
+  padding:6px 12px; border-radius:14px; border:1px solid var(--line);
+  background:var(--chip); color:var(--sub); font-size:0.78rem; cursor:pointer;
+}
+.sub-tabs button.active{ background:var(--accent); color:#fff; border-color:var(--accent);}
+.item-fr{ font-size:1.4rem; font-weight:700; margin:0 0 2px;}
+.item-en{ color:var(--sub); font-size:0.95rem; margin:0 0 14px;}
+.progress-line{ font-size:0.75rem; color:var(--sub); margin-bottom:10px;}
+.btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
+button.action{
+  border:none; border-radius:10px; padding:12px 16px; font-size:0.95rem;
+  cursor:pointer; font-weight:600; display:flex; align-items:center; gap:6px;
+}
+.btn-play{ background:var(--chip); color:var(--accent);}
+.btn-mic{ background:var(--accent); color:#fff;}
+.btn-mic.listening{ background:var(--accent2); animation:pulse 1s infinite;}
+.btn-ghost{ background:transparent; color:var(--sub); border:1px solid var(--line) !important;}
+.btn-next{ background:var(--good); color:#fff;}
+@keyframes pulse{ 0%{opacity:1;} 50%{opacity:0.6;} 100%{opacity:1;} }
+.feedback{ margin-top:14px; padding:12px; border-radius:10px; font-size:0.9rem; display:none;}
+.feedback.good{ background:rgba(30,138,76,0.12); color:var(--good); display:block;}
+.feedback.bad{ background:rgba(200,16,46,0.1); color:var(--bad); display:block;}
+.feedback .heard{ color:var(--ink); opacity:0.75; font-size:0.82rem; margin-top:4px;}
+.conj-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0;}
+.conj-cell{ background:var(--chip); border-radius:8px; padding:8px 10px; font-size:0.85rem;}
+.conj-cell b{ display:block; font-size:0.7rem; color:var(--sub); font-weight:500;}
+.small{ font-size:0.78rem; color:var(--sub);}
+.model-answer{ background:var(--chip); border-radius:10px; padding:12px; margin-top:10px; font-size:0.88rem; display:none;}
+.model-answer.show{ display:block;}
+textarea, input[type=text]{
+  width:100%; padding:10px; border-radius:8px; border:1px solid var(--line);
+  background:var(--bg); color:var(--ink); font-size:0.9rem; margin-bottom:8px; font-family:inherit;
+}
+select{
+  width:100%; padding:10px; border-radius:8px; border:1px solid var(--line);
+  background:var(--bg); color:var(--ink); font-size:0.9rem; margin-bottom:8px;
+}
+.pill{ display:inline-block; background:var(--chip); color:var(--accent); font-size:0.72rem; padding:3px 9px; border-radius:10px; margin-bottom:8px;}
+.warn{ background:rgba(200,16,46,0.08); border:1px solid var(--accent2); border-radius:10px; padding:12px; font-size:0.85rem; margin-bottom:14px;}
+.footer-nav{
+  position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--line);
+  display:flex; justify-content:space-around; padding:8px 0 max(8px,env(safe-area-inset-bottom));
+}
+.footer-nav button{
+  background:none; border:none; color:var(--sub); font-size:0.7rem; display:flex;
+  flex-direction:column; align-items:center; gap:2px; cursor:pointer; padding:4px 8px;
+}
+.footer-nav button.active{ color:var(--accent); font-weight:600;}
+.footer-nav .ic{ font-size:1.2rem;}
+.streak{ font-size:0.75rem; color:var(--sub); text-align:right;}
+.list-row{ display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line);}
+.list-row:last-child{ border-bottom:none;}
+.del-btn{ background:none; border:none; color:var(--bad); font-size:1rem; cursor:pointer;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🇫🇷 Français Trainer</h1>
+  <p id="headerSub">Pronunciation + Conversation practice</p>
+</header>
+
+<nav id="mainNav"></nav>
+
+<main id="mainContent"></main>
+
+<div class="footer-nav">
+  <button data-tab="vocab" class="active"><span class="ic">🔤</span>Vocab</button>
+  <button data-tab="verbs"><span class="ic">🔁</span>Verbs</button>
+  <button data-tab="sentences"><span class="ic">✍️</span>Sentences</button>
+  <button data-tab="conversation"><span class="ic">💬</span>Talk</button>
+  <button data-tab="add"><span class="ic">➕</span>Add</button>
+</div>
+
+<script>
+/* ---------- Speech setup ---------- */
+const synth = (typeof window !== 'undefined' && window.speechSynthesis) ? window.speechSynthesis : null;
+let frVoice = null;
+function loadVoice(){
+  if(!synth) return;
+  try{
+    const voices = synth.getVoices();
+    frVoice = voices.find(v=>v.lang && v.lang.toLowerCase().startsWith('fr')) || null;
+  }catch(e){ /* ignore — playback will just use default voice/lang */ }
+}
+try{ loadVoice(); }catch(e){}
+if (synth){ try{ synth.onvoiceschanged = loadVoice; }catch(e){} }
+
+function speak(text){
+  if(!synth){
+    alert("This browser doesn't support text-to-speech playback.");
+    return;
+  }
+  try{ synth.cancel(); }catch(e){}
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'fr-FR';
+  if(frVoice) u.voice = frVoice;
+  u.rate = 0.92;
+  u.onerror = (e)=>{
+    console.log('TTS error', e);
+  };
+  try{ synth.speak(u); }catch(e){ alert('Playback failed: '+ (e.message||e)); }
+}
+function hasFrenchVoice(){
+  if(!synth) return false;
+  try{
+    const voices = synth.getVoices();
+    return voices.some(v=>v.lang && v.lang.toLowerCase().startsWith('fr'));
+  }catch(e){ return false; }
+}
+
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognizer = null;
+let recognizing = false;
+function getRecognizer(onResult, onEnd){
+  if(!SpeechRecognitionAPI) return null;
+  const r = new SpeechRecognitionAPI();
+  r.lang = 'fr-FR';
+  r.interimResults = false;
+  r.maxAlternatives = 3;
+  r.onresult = (e)=>{
+    const alts = [];
+    for(let i=0;i<e.results[0].length;i++){ alts.push(e.results[0][i].transcript); }
+    onResult(alts);
+  };
+  r.onend = ()=>{ recognizing=false; if(onEnd) onEnd(); };
+  r.onerror = (e)=>{ recognizing=false; if(onEnd) onEnd(e.error || 'error'); };
+  return r;
+}
+
+function normalize(s){
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[.,!?;:'"’]/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function isMatch(target, said){
+  return normalize(target) === normalize(said);
+}
+function keywordMatch(said, keywordSets){
+  const n = normalize(said);
+  return keywordSets.some(set => set.every(kw => n.includes(normalize(kw))));
+}
+
+/* ---------- Data ---------- */
+const VOCAB = [
+  {cat:"Maison", fr:"la porte", en:"the door"},
+  {cat:"Maison", fr:"la fenêtre", en:"the window"},
+  {cat:"Maison", fr:"la table", en:"the table"},
+  {cat:"Maison", fr:"la chaise", en:"the chair"},
+  {cat:"Maison", fr:"le canapé", en:"the sofa"},
+  {cat:"Maison", fr:"le fauteuil", en:"the armchair"},
+  {cat:"Maison", fr:"le rideau", en:"the curtain"},
+  {cat:"Maison", fr:"l'étagère", en:"the shelf"},
+  {cat:"Maison", fr:"le téléviseur", en:"the TV"},
+  {cat:"Maison", fr:"la lampe", en:"the lamp"},
+  {cat:"Maison", fr:"le tableau", en:"the painting"},
+  {cat:"Maison", fr:"la plante", en:"the plant"},
+  {cat:"Maison", fr:"le lit", en:"the bed"},
+  {cat:"Maison", fr:"l'armoire", en:"the wardrobe"},
+  {cat:"Maison", fr:"la commode", en:"the dresser"},
+  {cat:"Maison", fr:"l'oreiller", en:"the pillow"},
+  {cat:"Maison", fr:"le miroir", en:"the mirror"},
+  {cat:"Maison", fr:"le coussin", en:"the cushion"},
+  {cat:"Maison", fr:"le lavabo", en:"the sink"},
+  {cat:"Maison", fr:"la douche", en:"the shower"},
+  {cat:"Maison", fr:"le four", en:"the oven"},
+  {cat:"Maison", fr:"le réfrigérateur", en:"the fridge"},
+  {cat:"Maison", fr:"l'évier", en:"the kitchen sink"},
+  {cat:"Maison", fr:"le robinet", en:"the faucet"},
+  {cat:"Famille", fr:"le père", en:"the father"},
+  {cat:"Famille", fr:"la mère", en:"the mother"},
+  {cat:"Famille", fr:"le frère", en:"the brother"},
+  {cat:"Famille", fr:"la sœur", en:"the sister"},
+  {cat:"Famille", fr:"l'oncle", en:"the uncle"},
+  {cat:"Famille", fr:"la tante", en:"the aunt"},
+  {cat:"Famille", fr:"le grand-père", en:"the grandfather"},
+  {cat:"Famille", fr:"la grand-mère", en:"the grandmother"},
+  {cat:"Famille", fr:"le neveu", en:"the nephew"},
+  {cat:"Famille", fr:"la nièce", en:"the niece"},
+  {cat:"Famille", fr:"mes parents", en:"my parents"},
+  {cat:"Vêtements", fr:"les chaussures", en:"shoes"},
+  {cat:"Vêtements", fr:"le pantalon", en:"trousers"},
+  {cat:"Vêtements", fr:"la jupe", en:"skirt"},
+  {cat:"Vêtements", fr:"la chemise", en:"shirt"},
+  {cat:"Vêtements", fr:"le chemisier", en:"blouse"},
+  {cat:"Adjectifs", fr:"gentil", en:"kind (masc.)"},
+  {cat:"Adjectifs", fr:"gentille", en:"kind (fem.)"},
+  {cat:"Adjectifs", fr:"grand", en:"tall/big (masc.)"},
+  {cat:"Adjectifs", fr:"grande", en:"tall/big (fem.)"},
+  {cat:"Adjectifs", fr:"petit", en:"small (masc.)"},
+  {cat:"Adjectifs", fr:"petite", en:"small (fem.)"},
+  {cat:"Adjectifs", fr:"beau", en:"handsome"},
+  {cat:"Adjectifs", fr:"belle", en:"beautiful"},
+  {cat:"Adjectifs", fr:"fatigué", en:"tired (masc.)"},
+  {cat:"Adjectifs", fr:"fatiguée", en:"tired (fem.)"},
+  {cat:"Prépositions", fr:"sur", en:"on"},
+  {cat:"Prépositions", fr:"sous", en:"under"},
+  {cat:"Prépositions", fr:"à côté de", en:"beside"},
+  {cat:"Prépositions", fr:"devant", en:"in front of"},
+  {cat:"Prépositions", fr:"derrière", en:"behind"},
+  {cat:"Prépositions", fr:"dans", en:"in"},
+  {cat:"Prépositions", fr:"dehors", en:"outside"},
+  {cat:"Nombres", fr:"vingt", en:"20"},
+  {cat:"Nombres", fr:"soixante-dix", en:"70"},
+  {cat:"Nombres", fr:"quatre-vingts", en:"80"},
+  {cat:"Nombres", fr:"quatre-vingt-dix", en:"90"},
+  {cat:"Jours", fr:"lundi", en:"Monday"},
+  {cat:"Jours", fr:"mardi", en:"Tuesday"},
+  {cat:"Jours", fr:"mercredi", en:"Wednesday"},
+  {cat:"Jours", fr:"jeudi", en:"Thursday"},
+  {cat:"Jours", fr:"vendredi", en:"Friday"},
+  {cat:"Jours", fr:"samedi", en:"Saturday"},
+  {cat:"Jours", fr:"dimanche", en:"Sunday"},
+  {cat:"Mois", fr:"janvier", en:"January"},
+  {cat:"Mois", fr:"février", en:"February"},
+  {cat:"Mois", fr:"septembre", en:"September"},
+  {cat:"Mois", fr:"décembre", en:"December"},
+];
+
+const VERBS = [
+  {inf:"être", en:"to be", irregular:true,
+    present:{je:"suis",tu:"es",il:"est",nous:"sommes",vous:"êtes",ils:"sont"}},
+  {inf:"avoir", en:"to have", irregular:true,
+    present:{je:"ai",tu:"as",il:"a",nous:"avons",vous:"avez",ils:"ont"}},
+  {inf:"chanter", en:"to sing",
+    present:{je:"chante",tu:"chantes",il:"chante",nous:"chantons",vous:"chantez",ils:"chantent"},
+    pc:{je:"ai chanté",tu:"as chanté",il:"a chanté",nous:"avons chanté",vous:"avez chanté",ils:"ont chanté"}},
+  {inf:"danser", en:"to dance",
+    present:{je:"danse",tu:"danses",il:"danse",nous:"dansons",vous:"dansez",ils:"dansent"},
+    pc:{je:"ai dansé",tu:"as dansé",il:"a dansé",nous:"avons dansé",vous:"avez dansé",ils:"ont dansé"}},
+  {inf:"écouter", en:"to listen",
+    present:{je:"écoute",tu:"écoutes",il:"écoute",nous:"écoutons",vous:"écoutez",ils:"écoutent"},
+    pc:{je:"ai écouté",tu:"as écouté",il:"a écouté",nous:"avons écouté",vous:"avez écouté",ils:"ont écouté"}},
+  {inf:"manger", en:"to eat",
+    present:{je:"mange",tu:"manges",il:"mange",nous:"mangeons",vous:"mangez",ils:"mangent"},
+    pc:{je:"ai mangé",tu:"as mangé",il:"a mangé",nous:"avons mangé",vous:"avez mangé",ils:"ont mangé"}},
+  {inf:"écraser", en:"to crush",
+    present:{je:"écrase",tu:"écrases",il:"écrase",nous:"écrasons",vous:"écrasez",ils:"écrasent"},
+    pc:{je:"ai écrasé",tu:"as écrasé",il:"a écrasé",nous:"avons écrasé",vous:"avez écrasé",ils:"ont écrasé"}},
+  {inf:"accrocher", en:"to hang",
+    present:{je:"accroche",tu:"accroches",il:"accroche",nous:"accrochons",vous:"accrochez",ils:"accrochent"}},
+];
+const SUBJECTS = {je:"Je",tu:"Tu",il:"Il",nous:"Nous",vous:"Vous",ils:"Ils"};
+
+const SENTENCES = [
+  {fr:"Il y a une chaise.", en:"There is a chair."},
+  {fr:"La chaise est à côté de la table.", en:"The chair is next to the table."},
+  {fr:"Il y a un sac dans ma chambre.", en:"There is a bag in my room."},
+  {fr:"Il y a un ventilateur dans ma chambre.", en:"There is a fan in my room."},
+  {fr:"Le garçon est gentil.", en:"The boy is kind."},
+  {fr:"La femme est formidable.", en:"The woman is great."},
+  {fr:"Ils sont mes parents.", en:"They are my parents."},
+  {fr:"Elles sont nos mères.", en:"They are our mothers."},
+  {fr:"J'ai faim.", en:"I am hungry."},
+  {fr:"J'ai soif.", en:"I am thirsty."},
+  {fr:"Mes parents sont formidables.", en:"My parents are wonderful."},
+  {fr:"Le chat est sur la table.", en:"The cat is on the table."},
+  {fr:"Le chien est à côté de la fenêtre.", en:"The dog is beside the window."},
+  {fr:"J'ai mangé.", en:"I ate."},
+  {fr:"Nous avons dansé.", en:"We danced."},
+  {fr:"Elle a chanté.", en:"She sang."},
+  {fr:"Mon cours de français est le mardi, mercredi et jeudi.", en:"My French class is on Tuesday, Wednesday, and Thursday."},
+];
+
+const CONVERSATION = {
+  tcf: {
+    label: "TCF Canada",
+    tasks: [
+      { title:"Task 1 — Guided Interview", desc:"Examiner asks simple personal questions. Answer in full sentences, don't just say one word.",
+        prompts:[
+          {fr:"Comment vous appelez-vous ?", en:"What is your name?",
+            keywords:[["je m appelle"],["mon nom est"]],
+            model:"Je m'appelle [votre nom]." },
+          {fr:"Où habitez-vous ?", en:"Where do you live?",
+            keywords:[["j habite"],["je vis"],["j habite a"]],
+            model:"J'habite à Lagos, au Nigeria." },
+          {fr:"Qu'est-ce que vous faites dans la vie ?", en:"What do you do for a living?",
+            keywords:[["je travaille"],["je suis"]],
+            model:"Je travaille dans les opérations de paiement." },
+          {fr:"Parlez-moi de votre famille.", en:"Tell me about your family.",
+            keywords:[["j ai"],["ma famille"]],
+            model:"J'ai une femme. Nous sommes une petite famille." },
+          {fr:"Quels sont vos loisirs ?", en:"What are your hobbies?",
+            keywords:[["j aime"],["mon loisir"]],
+            model:"J'aime écouter de la musique et regarder le football." },
+        ]},
+      { title:"Task 2 — Interaction", desc:"You must negotiate or resolve a problem. React and adapt.",
+        prompts:[
+          {fr:"Vous avez réservé une chambre d'hôtel mais elle est déjà occupée à votre arrivée. Que dites-vous à la réception ?",
+           en:"You booked a hotel room but it's already occupied when you arrive. What do you say at reception?",
+            keywords:[["j ai reserve"],["ma reservation"],["probleme"]],
+            model:"Bonjour, j'ai réservé une chambre, mais elle est occupée. Pouvez-vous vérifier ma réservation, s'il vous plaît ?" },
+          {fr:"Votre vol est annulé. Demandez une solution à l'agent.", en:"Your flight is cancelled. Ask the agent for a solution.",
+            keywords:[["mon vol"],["annule"],["que puis je faire"]],
+            model:"Bonjour, mon vol est annulé. Quelles sont mes options pour un autre vol aujourd'hui ?" },
+        ]},
+      { title:"Task 3 — Express an Opinion", desc:"Present a clear opinion with arguments, then defend it when challenged.",
+        prompts:[
+          {fr:"Pensez-vous que le télétravail est bénéfique pour les employés ?", en:"Do you think remote work is beneficial for employees?",
+            keywords:[["a mon avis"],["je pense que"]],
+            model:"À mon avis, le télétravail présente des avantages significatifs, comme plus de flexibilité et moins de stress lié aux transports." },
+          {fr:"Est-ce que les réseaux sociaux ont plus d'avantages que d'inconvénients ?", en:"Do social networks have more advantages than disadvantages?",
+            keywords:[["a mon avis"],["je pense que"]],
+            model:"Je pense que les réseaux sociaux ont des avantages, comme rester connecté, mais aussi des inconvénients, comme la perte de temps." },
+        ]},
+    ]
+  },
+  tef: {
+    label: "TEF Canada",
+    tasks: [
+      { title:"Section A — Gather Information (formal, vous)", desc:"You call about an advertisement. Ask questions using vous.",
+        prompts:[
+          {fr:"Ouvrez la conversation : vous appelez au sujet d'une annonce pour un appartement.", en:"Open the conversation: you're calling about an apartment ad.",
+            keywords:[["votre annonce"],["m interesse"]],
+            model:"Bonjour, votre annonce m'intéresse. Est-ce que je peux vous poser quelques questions ?" },
+          {fr:"Demandez le prix.", en:"Ask about the price.",
+            keywords:[["quel est le tarif"],["le prix"],["combien"]],
+            model:"Quel est le tarif, tous frais compris ?" },
+          {fr:"Terminez poliment la conversation.", en:"End the conversation politely.",
+            keywords:[["merci"],["bonne journee"]],
+            model:"Merci pour ces renseignements. Je vais consulter les disponibilités. Bonne journée !" },
+        ]},
+      { title:"Section B — Persuade a Friend", desc:"Convince the examiner (playing a friend) of your position. Expect pushback.",
+        prompts:[
+          {fr:"Convainquez votre ami de partir en voyage avec vous ce week-end.", en:"Convince your friend to travel with you this weekend.",
+            keywords:[["tu devrais"],["viens avec moi"],["ce serait"]],
+            model:"Tu devrais venir avec moi ce week-end, ce serait une excellente occasion de se détendre." },
+          {fr:"Votre ami hésite. Répondez à son objection.", en:"Your friend hesitates. Respond to their objection.",
+            keywords:[["je comprends"],["mais"]],
+            model:"Je comprends, mais je pense que ça vaut vraiment le coup. On pourra toujours revenir tôt si besoin." },
+        ]},
+    ]
+  }
+};
+
+/* ---------- Storage ---------- */
+function loadCustom(){
+  try{
+    return JSON.parse(localStorage.getItem('frt_custom')||'{"vocab":[],"sentences":[]}');
+  }catch(e){ return {vocab:[],sentences:[]}; }
+}
+function saveCustom(data){
+  try{ localStorage.setItem('frt_custom', JSON.stringify(data)); }catch(e){}
+}
+let custom = loadCustom();
+
+function loadStreak(){
+  try{ return JSON.parse(localStorage.getItem('frt_stats')||'{"correct":0,"attempts":0}'); }
+  catch(e){ return {correct:0,attempts:0}; }
+}
+function saveStreak(s){ try{ localStorage.setItem('frt_stats', JSON.stringify(s)); }catch(e){} }
+let stats = loadStreak();
+function recordAttempt(ok){
+  stats.attempts++; if(ok) stats.correct++;
+  saveStreak(stats);
+}
+
+/* ---------- Router ---------- */
+let currentTab = 'vocab';
+let vocabCat = 'Tous';
+let vocabIndex = 0;
+let verbIndex = 0;
+let verbMode = 'present';
+let sentIndex = 0;
+let convExam = 'tcf';
+let convTaskIdx = 0;
+let convPromptIdx = 0;
+
+document.querySelectorAll('.footer-nav button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.footer-nav button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    currentTab = b.dataset.tab;
+    render();
+  });
+});
+
+function allVocab(){ return VOCAB.concat(custom.vocab || []); }
+function allSentences(){ return SENTENCES.concat(custom.sentences || []); }
+
+function render(){
+  const main = document.getElementById('mainContent');
+  const nav = document.getElementById('mainNav');
+  nav.innerHTML = '';
+  if(currentTab === 'vocab') renderVocab(main, nav);
+  else if(currentTab === 'verbs') renderVerbs(main, nav);
+  else if(currentTab === 'sentences') renderSentences(main, nav);
+  else if(currentTab === 'conversation') renderConversation(main, nav);
+  else if(currentTab === 'add') renderAdd(main, nav);
+}
+
+/* ---------- Practice widget (shared) ---------- */
+function practiceWidget(targetText, onCorrect, opts){
+  opts = opts || {};
+  const wrap = document.createElement('div');
+  const micSupported = !!SpeechRecognitionAPI;
+
+  const btnRow = document.createElement('div');
+  btnRow.className = 'btn-row';
+
+  const playBtn = document.createElement('button');
+  playBtn.className = 'action btn-play';
+  playBtn.innerHTML = '🔊 Hear it';
+  playBtn.onclick = ()=> speak(targetText);
+  btnRow.appendChild(playBtn);
+
+  const micBtn = document.createElement('button');
+  micBtn.className = 'action btn-mic';
+  micBtn.innerHTML = micSupported ? '🎤 Say it' : '🎤 Not supported';
+  micBtn.disabled = !micSupported;
+  btnRow.appendChild(micBtn);
+
+  const feedback = document.createElement('div');
+  feedback.className = 'feedback';
+
+  micBtn.onclick = ()=>{
+    if(recognizing) return;
+    recognizing = true;
+    micBtn.classList.add('listening');
+    micBtn.innerHTML = '🔴 Listening...';
+    const rec = getRecognizer((alts)=>{
+      const said = alts[0] || '';
+      let ok;
+      if(opts.keywordSets){
+        ok = alts.some(a=>keywordMatch(a, opts.keywordSets));
+      } else {
+        ok = alts.some(a=>isMatch(targetText, a));
+      }
+      recordAttempt(ok);
+      feedback.className = 'feedback ' + (ok ? 'good' : 'bad');
+      feedback.innerHTML = (ok ? '✅ Nice — that matched!' : '❌ Not quite — listen again and retry.') +
+        '<div class="heard">You said: "' + said + '"</div>';
+      if(ok && onCorrect) onCorrect();
+      if(!ok){ setTimeout(()=>speak(targetText), 400); }
+    }, (err)=>{
+      micBtn.classList.remove('listening');
+      micBtn.innerHTML = '🎤 Say it';
+      if(err){
+        feedback.className = 'feedback bad';
+        let msg = "⚠️ Couldn't hear you — try again.";
+        if(err === 'not-allowed' || err === 'service-not-allowed'){
+          msg = "⚠️ Microphone permission is blocked. Tap the 🔒/ⓘ icon next to the address bar → Permissions → Microphone → Allow, then reload the page.";
+        } else if(err === 'no-speech'){
+          msg = "⚠️ Didn't catch any speech — tap 🎤 and speak right after it turns red.";
+        } else if(err === 'audio-capture'){
+          msg = "⚠️ No microphone was found. Check that no other app is using it.";
+        } else if(err === 'network'){
+          msg = "⚠️ Speech recognition needs an internet connection — check your connection and retry.";
+        }
+        feedback.innerHTML = msg;
+      }
+    });
+    if(!rec){ recognizing=false; return; }
+    recognizer = rec;
+    try{ rec.start(); }catch(e){ recognizing=false; }
+    rec.onend = ()=>{
+      recognizing = false;
+      micBtn.classList.remove('listening');
+      micBtn.innerHTML = '🎤 Say it';
+    };
+  };
+
+  wrap.appendChild(btnRow);
+  wrap.appendChild(feedback);
+
+  // Fallback: type or dictate via the device keyboard's own mic — bypasses
+  // page-level microphone restrictions entirely since it runs at OS/keyboard level.
+  const altWrap = document.createElement('div');
+  altWrap.style.marginTop = '12px';
+  const altLabel = document.createElement('div');
+  altLabel.className = 'small';
+  altLabel.style.marginBottom = '6px';
+  altLabel.textContent = "Mic not working here? Tap the box, then use your keyboard's 🎤 dictation button:";
+  const altInput = document.createElement('input');
+  altInput.type = 'text';
+  altInput.placeholder = 'Type or dictate here...';
+  const altBtn = document.createElement('button');
+  altBtn.className = 'action btn-mic';
+  altBtn.style.marginTop = '6px';
+  altBtn.textContent = 'Check';
+  altBtn.onclick = ()=>{
+    const said = altInput.value;
+    if(!said.trim()) return;
+    let ok;
+    if(opts.keywordSets){
+      ok = keywordMatch(said, opts.keywordSets);
+    } else {
+      ok = isMatch(targetText, said);
+    }
+    recordAttempt(ok);
+    feedback.className = 'feedback ' + (ok ? 'good' : 'bad');
+    feedback.innerHTML = (ok ? '✅ Nice — that matched!' : '❌ Not quite — listen again and retry.') +
+      '<div class="heard">You typed: "' + said + '"</div>';
+    if(ok && onCorrect) onCorrect();
+    if(!ok){ setTimeout(()=>speak(targetText), 400); }
+  };
+  altWrap.appendChild(altLabel);
+  altWrap.appendChild(altInput);
+  altWrap.appendChild(altBtn);
+  wrap.appendChild(altWrap);
+
+  return wrap;
+}
+
+/* ---------- Vocab tab ---------- */
+function renderVocab(main, nav){
+  const cats = ['Tous', ...new Set(allVocab().map(v=>v.cat))];
+  cats.forEach(c=>{
+    const b = document.createElement('button');
+    b.textContent = c;
+    if(c===vocabCat) b.classList.add('active');
+    b.onclick = ()=>{ vocabCat=c; vocabIndex=0; render(); };
+    nav.appendChild(b);
+  });
+
+  const list = vocabCat==='Tous' ? allVocab() : allVocab().filter(v=>v.cat===vocabCat);
+  if(vocabIndex>=list.length) vocabIndex=0;
+  const item = list[vocabIndex];
+
+  main.innerHTML = '';
+  if(!item){ main.innerHTML = '<div class="card">No words yet in this category.</div>'; return; }
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="pill">${item.cat}</div>
+    <div class="progress-line">Word ${vocabIndex+1} of ${list.length}</div>
+    <p class="item-fr">${item.fr}</p>
+    <p class="item-en">${item.en}</p>
+  `;
+  const widget = practiceWidget(item.fr, ()=>{
+    setTimeout(()=>{ vocabIndex = (vocabIndex+1)%list.length; render(); }, 900);
+  });
+  card.appendChild(widget);
+
+  const nextRow = document.createElement('div');
+  nextRow.className = 'btn-row';
+  const skipBtn = document.createElement('button');
+  skipBtn.className = 'action btn-ghost';
+  skipBtn.textContent = 'Skip →';
+  skipBtn.onclick = ()=>{ vocabIndex=(vocabIndex+1)%list.length; render(); };
+  nextRow.appendChild(skipBtn);
+  card.appendChild(nextRow);
+
+  main.appendChild(card);
+}
+
+/* ---------- Verbs tab ---------- */
+function renderVerbs(main, nav){
+  ['present','pc'].forEach(mode=>{
+    const b = document.createElement('button');
+    b.textContent = mode==='present' ? 'Présent' : 'Passé composé';
+    if(mode===verbMode) b.classList.add('active');
+    b.onclick = ()=>{ verbMode=mode; render(); };
+    nav.appendChild(b);
+  });
+
+  const verbsAvailable = VERBS.filter(v=> verbMode==='present' || v.pc);
+  if(verbIndex>=verbsAvailable.length) verbIndex=0;
+  const verb = verbsAvailable[verbIndex];
+  const forms = verbMode==='present' ? verb.present : verb.pc;
+
+  main.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="progress-line">Verb ${verbIndex+1} of ${verbsAvailable.length}</div>
+    <p class="item-fr">${verb.inf}</p>
+    <p class="item-en">${verb.en}</p>
+  `;
+
+  const grid = document.createElement('div');
+  grid.className = 'conj-grid';
+  Object.keys(forms).forEach(subj=>{
+    const cell = document.createElement('div');
+    cell.className = 'conj-cell';
+    const full = (subj==='je' && forms[subj][0].match(/[aeiouyéèêh]/i)) ? "J'"+forms[subj] : SUBJECTS[subj]+' '+forms[subj];
+    cell.innerHTML = `<b>${SUBJECTS[subj]}</b>${full}`;
+    grid.appendChild(cell);
+  });
+  card.appendChild(grid);
+
+  const sel = document.createElement('div');
+  sel.className = 'small';
+  sel.textContent = 'Tap a pronoun below to practice that form:';
+  card.appendChild(sel);
+
+  const pronRow = document.createElement('div');
+  pronRow.className = 'sub-tabs';
+  let activeSubj = Object.keys(forms)[0];
+  Object.keys(forms).forEach(subj=>{
+    const b = document.createElement('button');
+    b.textContent = SUBJECTS[subj];
+    if(subj===activeSubj) b.classList.add('active');
+    b.onclick = ()=>{ activeSubj=subj; buildPractice(); };
+    pronRow.appendChild(b);
+  });
+  card.appendChild(pronRow);
+
+  const practiceHolder = document.createElement('div');
+  card.appendChild(practiceHolder);
+
+  function buildPractice(){
+    pronRow.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.textContent===SUBJECTS[activeSubj]));
+    practiceHolder.innerHTML = '';
+    const full = (activeSubj==='je' && forms[activeSubj][0].match(/[aeiouyéèêh]/i)) ? "J'"+forms[activeSubj] : SUBJECTS[activeSubj]+' '+forms[activeSubj];
+    practiceHolder.appendChild(practiceWidget(full));
+  }
+  buildPractice();
+
+  const nextRow = document.createElement('div');
+  nextRow.className = 'btn-row';
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'action btn-next';
+  nextBtn.textContent = 'Next verb →';
+  nextBtn.onclick = ()=>{ verbIndex=(verbIndex+1)%verbsAvailable.length; render(); };
+  nextRow.appendChild(nextBtn);
+  card.appendChild(nextRow);
+
+  main.appendChild(card);
+}
+
+/* ---------- Sentences tab ---------- */
+function renderSentences(main, nav){
+  nav.innerHTML = '<span class="small" style="padding:8px 4px;">Full sentences from your lessons</span>';
+  const list = allSentences();
+  if(sentIndex>=list.length) sentIndex=0;
+  const s = list[sentIndex];
+
+  main.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="progress-line">Sentence ${sentIndex+1} of ${list.length}</div>
+    <p class="item-fr" style="font-size:1.15rem;">${s.fr}</p>
+    <p class="item-en">${s.en}</p>
+  `;
+  const widget = practiceWidget(s.fr, ()=>{
+    setTimeout(()=>{ sentIndex=(sentIndex+1)%list.length; render(); }, 900);
+  });
+  card.appendChild(widget);
+
+  const nextRow = document.createElement('div');
+  nextRow.className = 'btn-row';
+  const skipBtn = document.createElement('button');
+  skipBtn.className = 'action btn-ghost';
+  skipBtn.textContent = 'Skip →';
+  skipBtn.onclick = ()=>{ sentIndex=(sentIndex+1)%list.length; render(); };
+  nextRow.appendChild(skipBtn);
+  card.appendChild(nextRow);
+
+  main.appendChild(card);
+}
+
+/* ---------- Conversation tab ---------- */
+function renderConversation(main, nav){
+  Object.keys(CONVERSATION).forEach(key=>{
+    const b = document.createElement('button');
+    b.textContent = CONVERSATION[key].label;
+    if(key===convExam) b.classList.add('active');
+    b.onclick = ()=>{ convExam=key; convTaskIdx=0; convPromptIdx=0; render(); };
+    nav.appendChild(b);
+  });
+
+  const exam = CONVERSATION[convExam];
+  const task = exam.tasks[convTaskIdx];
+  const prompt = task.prompts[convPromptIdx];
+
+  main.innerHTML = '';
+
+  const taskNav = document.createElement('div');
+  taskNav.className = 'sub-tabs';
+  exam.tasks.forEach((t,i)=>{
+    const b = document.createElement('button');
+    b.textContent = t.title.split('—')[0].trim();
+    if(i===convTaskIdx) b.classList.add('active');
+    b.onclick = ()=>{ convTaskIdx=i; convPromptIdx=0; render(); };
+    taskNav.appendChild(b);
+  });
+  main.appendChild(taskNav);
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="pill">${task.title}</div>
+    <p class="small">${task.desc}</p>
+    <div class="progress-line">Question ${convPromptIdx+1} of ${task.prompts.length}</div>
+    <p class="item-fr" style="font-size:1.15rem;">${prompt.fr}</p>
+    <p class="item-en">${prompt.en}</p>
+  `;
+
+  const widget = practiceWidget(prompt.fr, null, {keywordSets: prompt.keywords});
+  card.appendChild(widget);
+
+  const modelBtn = document.createElement('button');
+  modelBtn.className = 'action btn-ghost';
+  modelBtn.style.marginTop = '10px';
+  modelBtn.textContent = 'Show model answer';
+  const modelBox = document.createElement('div');
+  modelBox.className = 'model-answer';
+  modelBox.innerHTML = `<b>Model answer:</b><br>${prompt.model}`;
+  modelBtn.onclick = ()=>{
+    modelBox.classList.toggle('show');
+    if(modelBox.classList.contains('show')) speak(prompt.model);
+  };
+  card.appendChild(modelBtn);
+  card.appendChild(modelBox);
+
+  const nextRow = document.createElement('div');
+  nextRow.className = 'btn-row';
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'action btn-next';
+  nextBtn.textContent = 'Next question →';
+  nextBtn.onclick = ()=>{
+    convPromptIdx++;
+    if(convPromptIdx>=task.prompts.length){ convPromptIdx=0; }
+    render();
+  };
+  nextRow.appendChild(nextBtn);
+  card.appendChild(nextRow);
+
+  main.appendChild(card);
+}
+
+/* ---------- Add tab ---------- */
+function renderAdd(main, nav){
+  nav.innerHTML = '<span class="small" style="padding:8px 4px;">Add words or sentences from each lesson</span>';
+  main.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <p class="item-en" style="margin-bottom:10px;">Add a new item</p>
+    <select id="addType">
+      <option value="vocab">Vocabulary word</option>
+      <option value="sentences">Full sentence</option>
+    </select>
+    <input type="text" id="addFr" placeholder="French (e.g. le stylo)">
+    <input type="text" id="addEn" placeholder="English meaning">
+    <input type="text" id="addCat" placeholder="Category (vocab only, e.g. Verbes)">
+    <div class="btn-row">
+      <button class="action btn-next" id="addBtn">Add</button>
+    </div>
+  `;
+  main.appendChild(card);
+
+  document.getElementById('addBtn').onclick = ()=>{
+    const type = document.getElementById('addType').value;
+    const fr = document.getElementById('addFr').value.trim();
+    const en = document.getElementById('addEn').value.trim();
+    const cat = document.getElementById('addCat').value.trim() || 'Ajouté';
+    if(!fr || !en) return;
+    if(type==='vocab'){ custom.vocab.push({cat, fr, en}); }
+    else{ custom.sentences.push({fr, en}); }
+    saveCustom(custom);
+    document.getElementById('addFr').value='';
+    document.getElementById('addEn').value='';
+    document.getElementById('addCat').value='';
+    renderAddList();
+  };
+
+  const listCard = document.createElement('div');
+  listCard.className = 'card';
+  listCard.id = 'addListCard';
+  main.appendChild(listCard);
+  renderAddList();
+
+  function renderAddList(){
+    const lc = document.getElementById('addListCard');
+    lc.innerHTML = '<p class="item-en">Your added items</p>';
+    const combined = [
+      ...custom.vocab.map((v,i)=>({...v, kind:'vocab', idx:i})),
+      ...custom.sentences.map((s,i)=>({...s, kind:'sentences', idx:i}))
+    ];
+    if(combined.length===0){ lc.innerHTML += '<p class="small">Nothing added yet.</p>'; return; }
+    combined.forEach(item=>{
+      const row = document.createElement('div');
+      row.className = 'list-row';
+      row.innerHTML = `<span>${item.fr} <span class="small">— ${item.en}</span></span>`;
+      const del = document.createElement('button');
+      del.className = 'del-btn';
+      del.textContent = '✕';
+      del.onclick = ()=>{
+        custom[item.kind].splice(item.idx,1);
+        saveCustom(custom);
+        renderAddList();
+      };
+      row.appendChild(del);
+      lc.appendChild(row);
+    });
+  }
+}
+
+/* ---------- Init ---------- */
+try{
+  if(!SpeechRecognitionAPI){
+    const w = document.createElement('div');
+    w.className = 'warn';
+    w.innerHTML = '⚠️ Speech recognition isn\'t supported in this browser. Use <b>Chrome on Android</b> for the "Say it" mic feature — pronunciation playback will still work everywhere.';
+    document.body.insertBefore(w, document.getElementById('mainNav').nextSibling);
+  }
+}catch(e){}
+
+function checkVoiceAvailability(){
+  if(!synth) return;
+  if(!hasFrenchVoice()){
+    if(document.getElementById('noVoiceWarn')) return;
+    const w = document.createElement('div');
+    w.className = 'warn';
+    w.id = 'noVoiceWarn';
+    w.innerHTML = '⚠️ No French voice found on this device, so "Hear it" will stay silent. Install one: Android Settings → System → Languages & input → Text-to-speech output → Google Text-to-Speech → Install voice data → French.';
+    document.body.insertBefore(w, document.getElementById('mainNav').nextSibling);
+  } else {
+    const existing = document.getElementById('noVoiceWarn');
+    if(existing) existing.remove();
+  }
+}
+setTimeout(checkVoiceAvailability, 600);
+if(synth){ try{ synth.addEventListener('voiceschanged', checkVoiceAvailability); }catch(e){} }
+
+try{
+  render();
+}catch(e){
+  document.getElementById('mainContent').innerHTML =
+    '<div class="card"><p class="item-en">Something didn\'t load right: ' +
+    (e && e.message ? e.message : 'unknown error') +
+    '</p><p class="small">Try reloading the page.</p></div>';
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* fine if unavailable, e.g. on claude.ai preview */ });
+  });
+}
+</script>
+</body>
+</html>
