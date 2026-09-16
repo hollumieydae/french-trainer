@@ -519,43 +519,6 @@ function practiceWidget(targetText, onCorrect, opts){
 
   wrap.appendChild(btnRow);
   wrap.appendChild(feedback);
-
-  // Fallback: type or dictate via the device keyboard's own mic — bypasses
-  // page-level microphone restrictions entirely since it runs at OS/keyboard level.
-  const altWrap = document.createElement('div');
-  altWrap.style.marginTop = '12px';
-  const altLabel = document.createElement('div');
-  altLabel.className = 'small';
-  altLabel.style.marginBottom = '6px';
-  altLabel.textContent = "Mic not working here? Tap the box, then use your keyboard's 🎤 dictation button:";
-  const altInput = document.createElement('input');
-  altInput.type = 'text';
-  altInput.placeholder = 'Type or dictate here...';
-  const altBtn = document.createElement('button');
-  altBtn.className = 'action btn-mic';
-  altBtn.style.marginTop = '6px';
-  altBtn.textContent = 'Check';
-  altBtn.onclick = ()=>{
-    const said = altInput.value;
-    if(!said.trim()) return;
-    let ok;
-    if(opts.keywordSets){
-      ok = keywordMatch(said, opts.keywordSets);
-    } else {
-      ok = isMatch(targetText, said);
-    }
-    recordAttempt(ok);
-    feedback.className = 'feedback ' + (ok ? 'good' : 'bad');
-    feedback.innerHTML = (ok ? '✅ Nice — that matched!' : '❌ Not quite — listen again and retry.') +
-      '<div class="heard">You typed: "' + said + '"</div>';
-    if(ok && onCorrect) onCorrect();
-    if(!ok){ setTimeout(()=>speak(targetText), 400); }
-  };
-  altWrap.appendChild(altLabel);
-  altWrap.appendChild(altInput);
-  altWrap.appendChild(altBtn);
-  wrap.appendChild(altWrap);
-
   return wrap;
 }
 
