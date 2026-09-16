@@ -1151,6 +1151,15 @@ function skipAsUnknown(key, targetText){
   if(targetText) speak(targetText);
 }
 
+const STOPWORDS = new Set(['the','a','an','to','of','in','on','is','are','be','it','for','with','and','or','your','you','i']);
+function meaningMatch(userText, correctMeaning){
+  const strip = s => normalize(s).replace(/[()]/g,'').split(' ').filter(w=>w && !STOPWORDS.has(w));
+  const userWords = new Set(strip(userText));
+  const correctWords = strip(correctMeaning);
+  if(userWords.size === 0 || correctWords.length === 0) return false;
+  return correctWords.some(w => userWords.has(w) || Array.from(userWords).some(uw => levenshtein(uw,w) <= 1));
+}
+
 function approxPhonetic(text){
   let s = ' ' + text.toLowerCase() + ' ';
   const rules = [
@@ -1196,15 +1205,18 @@ function touchStreak(){
 function getAllItems(){
   const items = [];
   allVocab().forEach(v=>{
-    items.push({key:'vocab:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:false});
-    if(getItemProgress('vocab:'+v.fr).box >= 2){
-      items.push({key:'vocab:rev:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:true});
+    items.push({key:'vocab:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:false, stage:1});
+    if(getItemProgress('vocab:'+v.fr).box >= 1){
+      items.push({key:'vocab:rev:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:true, stage:2});
+      if(getItemProgress('vocab:rev:'+v.fr).box >= 1){
+        items.push({key:'vocab:test:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:false, stage:3, fullTest:true});
+      }
     }
   });
   allSentences().forEach(s=>{
-    items.push({key:'sent:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:false});
+    items.push({key:'sent:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:false, stage:1});
     if(getItemProgress('sent:'+s.fr).box >= 2){
-      items.push({key:'sent:rev:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:true});
+      items.push({key:'sent:rev:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:true, stage:2});
     }
   });
   VERBS.forEach(verb=>{
@@ -1227,25 +1239,51 @@ function getAllItems(){
   });
   return items;
 }
-function buildSession(maxSize){
-  maxSize = maxSize || 20;
+/* ---------- Daily Plan: Pending -> Stage1(Read) -> Stage2(Recall) -> Stage3(Full Test) -> Sentences -> Quiz ---------- */
+let todaysCompletedKeys = [];
+
+function buildDailyPlan(){
   let all = getAllItems();
   if(!sentencesUnlocked()) all = all.filter(i=>i.source!=='Phrases');
   if(!conversationUnlocked()) all = all.filter(i=>i.source!=='Conversation');
 
-  // Pending is a hard gate: as long as ANY item is flagged pending, every
-  // session shows ONLY pending items — nothing else — until they're all
-  // cleared (answered correctly). Only then does normal due content resume.
   const pendingItems = all.filter(i=>getItemProgress(i.key).pending);
   if(pendingItems.length > 0){
-    return { queue: pendingItems.slice(0, maxSize), totalDue: pendingItems.length, pendingMode: true };
+    return { phase:'pending', queue: pendingItems.slice(0,20), counts: null };
   }
 
-  const due = all.filter(i=>isDue(i.key));
-  const reviews = due.filter(i=>getItemProgress(i.key).box>0);
-  const fresh = due.filter(i=>getItemProgress(i.key).box===0);
-  return { queue: reviews.concat(fresh).slice(0, maxSize), totalDue: due.length, pendingMode: false };
+  const stage1Due = all.filter(i=>i.stage===1 && i.source==='Vocabulaire' && isDue(i.key));
+  const stage2Due = all.filter(i=>i.stage===2 && i.source==='Vocabulaire' && isDue(i.key));
+  const stage3Due = all.filter(i=>i.stage===3 && i.source==='Vocabulaire' && isDue(i.key));
+  const sentDue   = all.filter(i=>i.source==='Phrases' && isDue(i.key));
+  const counts = { stage1: stage1Due.length, stage2: stage2Due.length, stage3: stage3Due.length, sentences: sentDue.length };
+
+  // Advancing words already in progress always comes before introducing new
+  // ones — otherwise, with hundreds of words available, "new word intro" would
+  // never run out and a completed batch would never get to progress to Stage 2/3.
+  if(stage3Due.length > 0) return { phase:'stage3', queue: stage3Due.slice(0,20), counts };
+  if(stage2Due.length > 0) return { phase:'stage2', queue: stage2Due.slice(0,20), counts };
+  if(sentDue.length   > 0) return { phase:'sentences', queue: sentDue.slice(0,5), counts };
+  if(stage1Due.length > 0) return { phase:'stage1', queue: stage1Due.slice(0,20), counts };
+
+  // Everything due is cleared — offer the Daily Quiz capstone from what was
+  // actually practiced today (no SRS effect, just closes the day out).
+  const quizPool = todaysCompletedKeys
+    .map(k => all.find(i=>i.key===k))
+    .filter(Boolean);
+  const quizQueue = quizPool.length >= 3 ? quizPool.slice(0, 10) : [];
+  return { phase: quizQueue.length ? 'quiz' : 'done', queue: quizQueue, counts };
 }
+
+const STAGE_LABELS = {
+  pending: '⏳ Clearing Pending',
+  stage1: 'Stage 1 — Read',
+  stage2: 'Stage 2 — Recall',
+  stage3: 'Stage 3 — Full Test',
+  sentences: 'Sentences',
+  quiz: '📝 Daily Quiz',
+  done: "🎉 Today's Plan Complete"
+};
 
 /* ---------- Progression gate: Vocab -> Sentences -> Conversation (TCF/TEF) ----------
    A word/sentence only counts as "solid" once it's been gotten right (box>=2) in
@@ -1310,7 +1348,16 @@ function countSolidBothWays(items, fwdPrefix, revPrefix, minBox){
     return f>=minBox && r>=minBox;
   }).length;
 }
-function countSolidVocab(minBox){ return countSolidBothWays(allVocab(), 'vocab:', 'vocab:rev:', minBox); }
+// A word only counts as truly mastered once it has cleared all three stages —
+// Read, Recall, and the unscaffolded Full Test — each at least twice, spaced.
+function countSolidVocab(minBox){
+  minBox = minBox===undefined ? 2 : minBox;
+  return allVocab().filter(v=>{
+    return getItemProgress('vocab:'+v.fr).box>=minBox
+      && getItemProgress('vocab:rev:'+v.fr).box>=minBox
+      && getItemProgress('vocab:test:'+v.fr).box>=minBox;
+  }).length;
+}
 function countSolidSentences(minBox){ return countSolidBothWays(allSentences(), 'sent:', 'sent:rev:', minBox); }
 function countSolidVerbs(minBox){
   minBox = minBox===undefined ? 1 : minBox;
@@ -1350,6 +1397,7 @@ function lockedCard(main, title, current, needed, explain, goTab, goLabel){
 let currentTab = 'home';
 let sessionQueue = [];
 let sessionPendingMode = false;
+let sessionPhase = 'stage1';
 let sessionIdx = 0;
 let sessionCorrect = 0;
 let vocabCat = 'Tous';
@@ -1419,6 +1467,39 @@ function practiceWidget(targetText, onCorrect, opts){
     checkOverrideVisibility();
   }
 
+  function showMeaningCheck(){
+    feedback.className = 'feedback good';
+    feedback.innerHTML = '✅ Pronunciation correct! Now type what it means in English:';
+    const meaningWrap = document.createElement('div');
+    meaningWrap.style.marginTop = '10px';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Type the English meaning...';
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'action btn-mic';
+    submitBtn.style.marginTop = '6px';
+    submitBtn.textContent = 'Check meaning';
+    submitBtn.onclick = ()=>{
+      const userMeaning = input.value.trim();
+      if(!userMeaning) return;
+      const matched = meaningMatch(userMeaning, opts.correctMeaning || '');
+      if(matched){
+        recordAttempt(true);
+        if(opts.progressKey){ updateProgress(opts.progressKey, true); }
+        feedback.className = 'feedback good';
+        feedback.innerHTML = '✅ Pronunciation and meaning both confirmed!';
+        meaningWrap.remove();
+        if(onCorrect) onCorrect(true);
+      } else {
+        meaningWrap.remove();
+        handleMiss('You said the meaning was "' + userMeaning + '" — correct: "' + (opts.correctMeaning||'') + '"');
+      }
+    };
+    meaningWrap.appendChild(input);
+    meaningWrap.appendChild(submitBtn);
+    wrap.appendChild(meaningWrap);
+  }
+
   const btnRow = document.createElement('div');
   btnRow.className = 'btn-row';
 
@@ -1454,12 +1535,16 @@ function practiceWidget(targetText, onCorrect, opts){
         ok = alts.some(a=>isMatch(targetText, a));
       }
       if(ok){
-        recordAttempt(true);
-        if(opts.progressKey){ updateProgress(opts.progressKey, true); }
-        feedback.className = 'feedback good';
-        feedback.innerHTML = '✅ Nice — that matched!' +
-          '<div class="heard">You said: "' + said + '"</div>';
-        if(onCorrect) onCorrect(true);
+        if(opts.fullTest){
+          showMeaningCheck();
+        } else {
+          recordAttempt(true);
+          if(opts.progressKey){ updateProgress(opts.progressKey, true); }
+          feedback.className = 'feedback good';
+          feedback.innerHTML = '✅ Nice — that matched!' +
+            '<div class="heard">You said: "' + said + '"</div>';
+          if(onCorrect) onCorrect(true);
+        }
       } else {
         handleMiss('You said: "' + said + '"');
       }
@@ -1535,38 +1620,49 @@ function renderHome(main, nav){
   nav.innerHTML = '';
   const meta = touchStreak();
   const all = getAllItems();
-  const { totalDue, pendingMode } = buildSession(20);
+  const plan = buildDailyPlan();
   const mastered = all.filter(i=>getItemProgress(i.key).box===5).length;
-
-  const bySource = {};
-  all.filter(i=>isDue(i.key)).forEach(i=>{ bySource[i.source] = (bySource[i.source]||0)+1; });
 
   main.innerHTML = '';
   const card = document.createElement('div');
   card.className = 'card';
-  card.innerHTML = pendingMode ? `
-    <p class="item-en" style="margin-bottom:0;">⏳ Pending words need mastering first.</p>
-    <div class="hero-num">${totalDue}</div>
-    <div class="hero-label">pending — nothing else shows until these are cleared</div>
-  ` : `
-    <p class="item-en" style="margin-bottom:0;">Bonjour ! Here's where you stand today.</p>
-    <div class="hero-num">${totalDue}</div>
-    <div class="hero-label">due for review right now</div>
-  `;
 
-  const btn = document.createElement('button');
-  btn.className = 'big-btn';
-  btn.textContent = pendingMode ? '▶ Master pending words' : (totalDue > 0 ? "▶ Start Today's Session" : "✅ All caught up — practice anyway");
-  btn.onclick = ()=>{
-    const { queue, pendingMode: pm } = buildSession(20);
-    sessionQueue = queue.length ? queue : all.slice(0, 15);
-    sessionIdx = 0;
-    sessionCorrect = 0;
-    sessionPendingMode = pm;
-    currentTab = 'session';
-    render();
-  };
-  card.appendChild(btn);
+  if(plan.phase === 'done'){
+    card.innerHTML = `
+      <p class="item-en" style="margin-bottom:0;">🎉 Today's plan is complete.</p>
+      <div class="hero-label">Nice work — come back tomorrow for the next round.</div>
+    `;
+  } else if(plan.phase === 'pending'){
+    card.innerHTML = `
+      <p class="item-en" style="margin-bottom:0;">⏳ Pending words need mastering first.</p>
+      <div class="hero-num">${plan.queue.length}</div>
+      <div class="hero-label">pending — nothing else shows until these are cleared</div>
+    `;
+  } else {
+    card.innerHTML = `
+      <p class="item-en" style="margin-bottom:0;">Bonjour ! Today's plan:</p>
+      <p class="item-fr" style="font-size:1.3rem; margin-top:4px;">${STAGE_LABELS[plan.phase]}</p>
+      <div class="hero-label">${plan.queue.length} item(s) up next</div>
+    `;
+  }
+
+  if(plan.phase !== 'done'){
+    const btn = document.createElement('button');
+    btn.className = 'big-btn';
+    btn.textContent = plan.phase === 'pending' ? '▶ Master pending words'
+      : plan.phase === 'quiz' ? '▶ Start Daily Quiz'
+      : '▶ Continue — ' + STAGE_LABELS[plan.phase];
+    btn.onclick = ()=>{
+      sessionQueue = plan.queue;
+      sessionIdx = 0;
+      sessionCorrect = 0;
+      sessionPendingMode = plan.phase === 'pending';
+      sessionPhase = plan.phase;
+      currentTab = 'session';
+      render();
+    };
+    card.appendChild(btn);
+  }
 
   const statGrid = document.createElement('div');
   statGrid.className = 'stat-grid';
@@ -1578,18 +1674,23 @@ function renderHome(main, nav){
   card.appendChild(statGrid);
   main.appendChild(card);
 
-  if(Object.keys(bySource).length){
-    const breakdown = document.createElement('div');
-    breakdown.className = 'card';
-    breakdown.innerHTML = '<p class="item-en" style="margin-bottom:6px;">What\'s due, by type</p>';
-    ['Vocabulaire','Verbes','Phrases','Conversation'].forEach(src=>{
-      if(!bySource[src]) return;
+  if(plan.counts){
+    const stagesCard = document.createElement('div');
+    stagesCard.className = 'card';
+    stagesCard.innerHTML = '<p class="item-en" style="margin-bottom:6px;">Today\'s ladder</p>';
+    [
+      ['Stage 1 — Read', plan.counts.stage1],
+      ['Stage 2 — Recall', plan.counts.stage2],
+      ['Stage 3 — Full Test', plan.counts.stage3],
+      ['Sentences', plan.counts.sentences],
+    ].forEach(([label, n])=>{
       const row = document.createElement('div');
       row.className = 'source-row';
-      row.innerHTML = `<span>${src}</span><span>${bySource[src]}</span>`;
-      breakdown.appendChild(row);
+      const isCurrent = STAGE_LABELS[plan.phase] === label;
+      row.innerHTML = `<span>${isCurrent ? '▶ ' : ''}${label}</span><span>${n}</span>`;
+      stagesCard.appendChild(row);
     });
-    main.appendChild(breakdown);
+    main.appendChild(stagesCard);
   }
 
   const howCard = document.createElement('div');
@@ -1597,12 +1698,13 @@ function renderHome(main, nav){
   howCard.innerHTML = `
     <p class="item-en" style="margin-bottom:4px;">How this works</p>
     <p class="how-it-works">
-      Every word, verb form, sentence, and conversation line you practice gets scheduled automatically.
-      Get it right → it comes back further away (tomorrow, then in 3 days, then a week, then two weeks).
-      Get it wrong → it comes back today, so you fix it before it turns into a bad habit.<br><br>
-      You don't need to think about any of this — just tap <b>Start Today's Session</b> each day and do
-      whatever it gives you. Browse Vocab / Verbs / Sentences / Talk any time you want extra practice
-      beyond the daily session.
+      Each word climbs a 3-stage ladder: <b>Read</b> (French shown, English underneath) →
+      <b>Recall</b> (English shown, you produce the French) → <b>Full Test</b> (French alone,
+      no hints — say it AND state what it means). Each stage needs two correct spaced answers
+      before the next unlocks. Once a word clears all three, it's genuinely stuck — not just seen.<br><br>
+      Sentences unlock once enough vocabulary is fully mastered. A Daily Quiz closes out
+      whatever you practiced today — no scoring pressure, just a clean finish line.<br><br>
+      Just tap <b>Continue</b> each day and follow the ladder — you never have to pick what's next.
     </p>
   `;
   main.appendChild(howCard);
@@ -1630,10 +1732,10 @@ function renderHome(main, nav){
     `;
     return row;
   }
-  pathCard.appendChild(pathStep('1. Vocabulary', true, vocabSolid, UNLOCK.sentences.vocabSolid,
-    'Words solid in BOTH directions — read aloud AND recalled from English. Use 🔀 Test me on the Vocab tab.'));
+  pathCard.appendChild(pathStep('1. Vocabulary (all 3 stages)', true, vocabSolid, UNLOCK.sentences.vocabSolid,
+    'Words that have cleared Read, Recall, AND the unscaffolded Full Test.'));
   pathCard.appendChild(pathStep('2. Sentences', sentUnlocked, vocabSolid, UNLOCK.sentences.vocabSolid,
-    sentUnlocked ? 'Unlocked — full sentences from your lessons.' : 'Unlocks once enough vocabulary is solid both ways.'));
+    sentUnlocked ? 'Unlocked — full sentences from your lessons.' : 'Unlocks once enough vocabulary is fully mastered.'));
   pathCard.appendChild(pathStep('3. Conversation (TCF/TEF)', convUnlocked, sentSolid + verbSolid,
     UNLOCK.conversation.sentSolid + UNLOCK.conversation.verbSolid,
     convUnlocked ? 'Unlocked — real TCF/TEF-style conversation practice.' : 'Unlocks once sentences (both ways) and verb forms are solid.'));
@@ -1688,28 +1790,28 @@ function renderSession(main, nav){
   main.innerHTML = '';
 
   if(sessionIdx >= sessionQueue.length){
-    const { queue: nextQueue, totalDue, pendingMode: nextPending } = buildSession(20);
+    const nextPlan = buildDailyPlan();
     const card = document.createElement('div');
     card.className = 'card';
+    const justFinishedLabel = STAGE_LABELS[sessionPhase] || 'Batch';
     card.innerHTML = `
-      <p class="item-en" style="margin-bottom:0;">${sessionPendingMode ? '⏳ Pending batch complete' : '🎉 Batch complete'}</p>
+      <p class="item-en" style="margin-bottom:0;">✅ ${justFinishedLabel} complete</p>
       <div class="hero-num">${sessionCorrect}/${sessionQueue.length}</div>
-      <div class="hero-label">correct this batch</div>
+      <div class="hero-label">correct this round</div>
     `;
-    if(totalDue > 0){
+    if(nextPlan.phase !== 'done'){
       const p = document.createElement('p');
       p.className = 'small';
       p.style.marginBottom = '10px';
-      p.textContent = nextPending
-        ? totalDue + ' pending item(s) still need clearing before anything else unlocks.'
-        : totalDue + ' more still due today.';
+      p.textContent = 'Next up: ' + STAGE_LABELS[nextPlan.phase] + ' (' + nextPlan.queue.length + ' item(s))';
       card.appendChild(p);
       const contBtn = document.createElement('button');
       contBtn.className = 'big-btn';
-      contBtn.textContent = nextPending ? '▶ Continue clearing pending' : '▶ Continue — next batch';
+      contBtn.textContent = '▶ Continue — ' + STAGE_LABELS[nextPlan.phase];
       contBtn.onclick = ()=>{
-        sessionQueue = nextQueue;
-        sessionPendingMode = nextPending;
+        sessionQueue = nextPlan.queue;
+        sessionPendingMode = nextPlan.phase === 'pending';
+        sessionPhase = nextPlan.phase;
         sessionIdx = 0;
         sessionCorrect = 0;
         render();
@@ -1719,7 +1821,7 @@ function renderSession(main, nav){
       const p = document.createElement('p');
       p.className = 'small';
       p.style.marginBottom = '10px';
-      p.textContent = "Nothing else due today — that's everything.";
+      p.textContent = "🎉 That's everything for today — nice work.";
       card.appendChild(p);
     }
     const backBtn = document.createElement('button');
@@ -1745,14 +1847,34 @@ function renderSession(main, nav){
     warn.className = 'warn';
     warn.innerHTML = '⏳ Clearing pending backlog — everything else is paused until these are mastered.';
     main.appendChild(warn);
+  } else if(sessionPhase === 'stage3'){
+    const warn = document.createElement('div');
+    warn.className = 'warn';
+    warn.innerHTML = '🎯 Full Test — no hints. Say it, then state what it means.';
+    main.appendChild(warn);
+  } else if(sessionPhase === 'quiz'){
+    const warn = document.createElement('div');
+    warn.className = 'warn';
+    warn.innerHTML = "📝 Daily Quiz — reviewing what you practiced today. This doesn't affect your schedule, just closes today out.";
+    main.appendChild(warn);
   }
 
   const card = document.createElement('div');
   card.className = 'card';
   const stage = stageInfo(getItemProgress(item.key).box);
-  if(item.reverse){
+  const stageLabel = STAGE_LABELS[sessionPhase] || item.source;
+
+  if(item.stage === 3){
+    // Full Test: French alone — no English caption, no phonetic hint.
     card.innerHTML = `
-      <div class="pill">${item.source}</div>
+      <div class="pill">${stageLabel}</div>
+      <span class="stage-pill ${stage.cls}">${stage.label}</span>
+      <div class="progress-line" style="margin-top:8px;">Item ${sessionIdx+1} of ${sessionQueue.length}</div>
+      <p class="item-fr" style="font-size:1.2rem;">${item.fr}</p>
+    `;
+  } else if(item.reverse){
+    card.innerHTML = `
+      <div class="pill">${stageLabel}</div>
       <span class="stage-pill ${stage.cls}">${stage.label}</span>
       <div class="progress-line" style="margin-top:8px;">Item ${sessionIdx+1} of ${sessionQueue.length}</div>
       <p class="item-en" style="margin-bottom:2px;">🔀 Say this in French:</p>
@@ -1760,7 +1882,7 @@ function renderSession(main, nav){
     `;
   } else {
     card.innerHTML = `
-      <div class="pill">${item.source}</div>
+      <div class="pill">${stageLabel}</div>
       <span class="stage-pill ${stage.cls}">${stage.label}</span>
       <div class="progress-line" style="margin-top:8px;">Item ${sessionIdx+1} of ${sessionQueue.length}</div>
       <p class="item-fr" style="font-size:1.2rem;">${item.fr}</p>
@@ -1769,15 +1891,20 @@ function renderSession(main, nav){
     `;
   }
 
-  const opts = item.keywordSets ? {keywordSets: item.keywordSets, progressKey: item.key} : {progressKey: item.key};
-  if(item.p) opts.pron = item.p;
+  const opts = item.keywordSets ? {keywordSets: item.keywordSets} : {};
+  if(sessionPhase !== 'quiz'){ opts.progressKey = item.key; }
+  if(item.p && item.stage !== 3) opts.pron = item.p;
+  if(item.fullTest){ opts.fullTest = true; opts.correctMeaning = item.en; }
   const widget = practiceWidget(item.fr, (ok)=>{
-    if(ok) sessionCorrect++;
+    if(ok){
+      sessionCorrect++;
+      if(sessionPhase !== 'quiz' && !todaysCompletedKeys.includes(item.key)){ todaysCompletedKeys.push(item.key); }
+    }
     setTimeout(()=>{ sessionIdx++; render(); }, ok ? 900 : 400);
   }, opts);
   card.appendChild(widget);
 
-  if(item.reverse){
+  if(item.reverse && item.stage !== 3){
     const revealBtn = document.createElement('button');
     revealBtn.className = 'action btn-ghost';
     revealBtn.style.marginTop = '10px';
@@ -1806,14 +1933,16 @@ function renderSession(main, nav){
     card.appendChild(modelBox);
   }
 
-  const skipRow = document.createElement('div');
-  skipRow.className = 'btn-row';
-  const skipBtn = document.createElement('button');
-  skipBtn.className = 'action btn-ghost';
-  skipBtn.textContent = 'Skip →';
-  skipBtn.onclick = ()=>{ skipAsUnknown(item.key, item.reverse ? item.fr : item.fr); setTimeout(()=>{ sessionIdx++; render(); }, 700); };
-  skipRow.appendChild(skipBtn);
-  card.appendChild(skipRow);
+  if(sessionPhase !== 'quiz'){
+    const skipRow = document.createElement('div');
+    skipRow.className = 'btn-row';
+    const skipBtn = document.createElement('button');
+    skipBtn.className = 'action btn-ghost';
+    skipBtn.textContent = 'Skip →';
+    skipBtn.onclick = ()=>{ skipAsUnknown(item.key, item.fr); setTimeout(()=>{ sessionIdx++; render(); }, 700); };
+    skipRow.appendChild(skipBtn);
+    card.appendChild(skipRow);
+  }
 
   main.appendChild(card);
 }
