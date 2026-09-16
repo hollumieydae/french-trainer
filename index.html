@@ -232,7 +232,6 @@ function getRecognizer(onResult, onEnd){
     for(let i=0;i<e.results[0].length;i++){ alts.push(e.results[0][i].transcript); }
     onResult(alts);
   };
-  r.onend = ()=>{ recognizing=false; if(onEnd) onEnd(); };
   r.onerror = (e)=>{ recognizing=false; if(onEnd) onEnd(e.error || 'error'); };
   return r;
 }
@@ -1444,7 +1443,9 @@ function practiceWidget(targetText, onCorrect, opts){
     playBtn.disabled = true;
     micBtn.classList.add('listening');
     micBtn.innerHTML = '🔴 Listening...';
+    let handledThisAttempt = false;
     const rec = getRecognizer((alts)=>{
+      handledThisAttempt = true;
       const said = alts[0] || '';
       let ok;
       if(opts.keywordSets){
@@ -1463,6 +1464,7 @@ function practiceWidget(targetText, onCorrect, opts){
         handleMiss('You said: "' + said + '"');
       }
     }, (err)=>{
+      handledThisAttempt = true;
       micBtn.classList.remove('listening');
       micBtn.innerHTML = '🎤 Say it';
       if(err === 'not-allowed' || err === 'service-not-allowed'){
@@ -1474,14 +1476,10 @@ function practiceWidget(targetText, onCorrect, opts){
       } else if(err === 'network'){
         feedback.className = 'feedback bad';
         feedback.innerHTML = "⚠️ Speech recognition needs an internet connection — check your connection and retry.";
-      } else if(err === 'no-speech'){
-        // Short words (like "vingt") often trigger this repeatedly if the mic cuts off
-        // too fast — it genuinely counts as a failed attempt so it isn't invisible to
-        // the pending/override system, instead of silently going nowhere forever.
-        handleMiss("Didn't catch any speech that attempt — tap 🎤 and speak immediately, a little louder/closer to the mic.");
-      } else if(err){
-        feedback.className = 'feedback bad';
-        feedback.innerHTML = "⚠️ Couldn't hear you — try again.";
+      } else {
+        handleMiss(err === 'no-speech'
+          ? "Didn't catch any speech that attempt — tap 🎤 and speak immediately, a little louder/closer to the mic."
+          : "Couldn't hear you clearly that attempt — try again.");
       }
     });
     if(!rec){ recognizing=false; return; }
@@ -1492,6 +1490,12 @@ function practiceWidget(targetText, onCorrect, opts){
       playBtn.disabled = false;
       micBtn.classList.remove('listening');
       micBtn.innerHTML = '🎤 Say it';
+      if(!handledThisAttempt){
+        // Recognition ended with no result AND no error at all — very short words
+        // like "mai" or "vingt" can end this way. Treat it as a genuine failed
+        // attempt so it's never silently invisible to the pending/override system.
+        handleMiss("Didn't catch any speech that attempt — tap 🎤 and speak immediately, a little louder/closer to the mic.");
+      }
     };
   };
 
