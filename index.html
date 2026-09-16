@@ -1277,6 +1277,26 @@ function practiceWidget(targetText, onCorrect, opts){
   const micSupported = !!SpeechRecognitionAPI;
   let checkOverrideVisibility = ()=>{};
 
+  function handleMiss(reasonHtml){
+    recordAttempt(false);
+    let updated = null;
+    if(opts.progressKey){ updated = updateProgress(opts.progressKey, false); }
+    feedback.className = 'feedback bad';
+    if(updated && updated.missStreak >= 3){
+      const hint = opts.pron || approxPhonetic(targetText);
+      feedback.innerHTML = "❌ Still not quite — here's a pronunciation aid, then we'll move on." +
+        '<div class="heard">' + reasonHtml + '</div>' +
+        '<div class="heard">Rough English sound for "' + targetText + '": <b>' + hint + '</b></div>' +
+        '<div class="heard" style="margin-top:4px;">Marked as <b>pending</b> — it\'ll come back to you soon.</div>';
+      setTimeout(()=>speak(targetText), 300);
+      if(onCorrect){ setTimeout(()=>onCorrect(false), 2600); }
+    } else {
+      feedback.innerHTML = '❌ Not quite — listen again and retry.' + '<div class="heard">' + reasonHtml + '</div>';
+      setTimeout(()=>speak(targetText), 400);
+    }
+    checkOverrideVisibility();
+  }
+
   const btnRow = document.createElement('div');
   btnRow.className = 'btn-row';
 
@@ -1309,45 +1329,36 @@ function practiceWidget(targetText, onCorrect, opts){
       } else {
         ok = alts.some(a=>isMatch(targetText, a));
       }
-      recordAttempt(ok);
-      let updated = null;
-      if(opts.progressKey){ updated = updateProgress(opts.progressKey, ok); }
-      feedback.className = 'feedback ' + (ok ? 'good' : 'bad');
       if(ok){
+        recordAttempt(true);
+        if(opts.progressKey){ updateProgress(opts.progressKey, true); }
+        feedback.className = 'feedback good';
         feedback.innerHTML = '✅ Nice — that matched!' +
           '<div class="heard">You said: "' + said + '"</div>';
         if(onCorrect) onCorrect(true);
-      } else if(updated && updated.missStreak >= 3){
-        const hint = opts.pron || approxPhonetic(targetText);
-        feedback.innerHTML = "❌ Still not quite — here's a pronunciation aid, then we'll move on." +
-          '<div class="heard">You said: "' + said + '"</div>' +
-          '<div class="heard">Rough English sound for "' + targetText + '": <b>' + hint + '</b></div>' +
-          '<div class="heard" style="margin-top:4px;">Marked as <b>pending</b> — it\'ll come back to you soon.</div>';
-        setTimeout(()=>speak(targetText), 300);
-        if(onCorrect){ setTimeout(()=>onCorrect(false), 2600); }
-        checkOverrideVisibility();
       } else {
-        feedback.innerHTML = '❌ Not quite — listen again and retry.' +
-          '<div class="heard">You said: "' + said + '"</div>';
-        setTimeout(()=>speak(targetText), 400);
-        checkOverrideVisibility();
+        handleMiss('You said: "' + said + '"');
       }
     }, (err)=>{
       micBtn.classList.remove('listening');
       micBtn.innerHTML = '🎤 Say it';
-      if(err){
+      if(err === 'not-allowed' || err === 'service-not-allowed'){
         feedback.className = 'feedback bad';
-        let msg = "⚠️ Couldn't hear you — try again.";
-        if(err === 'not-allowed' || err === 'service-not-allowed'){
-          msg = "⚠️ Microphone permission is blocked. Tap the 🔒/ⓘ icon next to the address bar → Permissions → Microphone → Allow, then reload the page.";
-        } else if(err === 'no-speech'){
-          msg = "⚠️ Didn't catch any speech — tap 🎤 and speak right after it turns red.";
-        } else if(err === 'audio-capture'){
-          msg = "⚠️ No microphone was found. Check that no other app is using it.";
-        } else if(err === 'network'){
-          msg = "⚠️ Speech recognition needs an internet connection — check your connection and retry.";
-        }
-        feedback.innerHTML = msg;
+        feedback.innerHTML = "⚠️ Microphone permission is blocked. Tap the 🔒/ⓘ icon next to the address bar → Permissions → Microphone → Allow, then reload the page.";
+      } else if(err === 'audio-capture'){
+        feedback.className = 'feedback bad';
+        feedback.innerHTML = "⚠️ No microphone was found. Check that no other app is using it.";
+      } else if(err === 'network'){
+        feedback.className = 'feedback bad';
+        feedback.innerHTML = "⚠️ Speech recognition needs an internet connection — check your connection and retry.";
+      } else if(err === 'no-speech'){
+        // Short words (like "vingt") often trigger this repeatedly if the mic cuts off
+        // too fast — it genuinely counts as a failed attempt so it isn't invisible to
+        // the pending/override system, instead of silently going nowhere forever.
+        handleMiss("Didn't catch any speech that attempt — tap 🎤 and speak immediately, a little louder/closer to the mic.");
+      } else if(err){
+        feedback.className = 'feedback bad';
+        feedback.innerHTML = "⚠️ Couldn't hear you — try again.";
       }
     });
     if(!rec){ recognizing=false; return; }
