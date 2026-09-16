@@ -1044,15 +1044,21 @@ function touchStreak(){
 /* ---------- Unified item list (vocab + verbs + sentences + conversation) ---------- */
 function getAllItems(){
   const items = [];
-  allVocab().forEach(v=> items.push({key:'vocab:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl}));
-  allSentences().forEach(s=> items.push({key:'sent:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl}));
+  allVocab().forEach(v=>{
+    items.push({key:'vocab:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:false});
+    items.push({key:'vocab:rev:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:true});
+  });
+  allSentences().forEach(s=>{
+    items.push({key:'sent:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:false});
+    items.push({key:'sent:rev:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:true});
+  });
   VERBS.forEach(verb=>{
     ['present','pc'].forEach(mode=>{
       const forms = mode==='present' ? verb.present : verb.pc;
       if(!forms) return;
       Object.keys(forms).forEach(subj=>{
         const full = (subj==='je' && forms[subj][0].match(/[aeiouyéèêh]/i)) ? "J'"+forms[subj] : SUBJECTS[subj]+' '+forms[subj];
-        items.push({key:'verb:'+verb.inf+':'+mode+':'+subj, fr:full, en:verb.en+' ('+SUBJECTS[subj]+')', source:'Verbes', lvl: mode==='present' ? 'A1' : 'A2'});
+        items.push({key:'verb:'+verb.inf+':'+mode+':'+subj, fr:full, en:verb.en+' ('+SUBJECTS[subj]+')', source:'Verbes', lvl: mode==='present' ? 'A1' : 'A2', reverse:false});
       });
     });
   });
@@ -1060,7 +1066,7 @@ function getAllItems(){
   Object.keys(CONVERSATION).forEach(examKey=>{
     CONVERSATION[examKey].tasks.forEach((task,ti)=>{
       task.prompts.forEach((p,pi)=>{
-        items.push({key:'conv:'+examKey+':'+ti+':'+pi, fr:p.fr, en:p.en, source:'Conversation', keywordSets:p.keywords, model:p.model, lvl: CONV_TASK_LEVELS[examKey+':'+ti] || 'B1'});
+        items.push({key:'conv:'+examKey+':'+ti+':'+pi, fr:p.fr, en:p.en, source:'Conversation', keywordSets:p.keywords, model:p.model, lvl: CONV_TASK_LEVELS[examKey+':'+ti] || 'B1', reverse:false});
       });
     });
   });
@@ -1459,15 +1465,40 @@ function renderSession(main, nav){
   main.innerHTML = '';
 
   if(sessionIdx >= sessionQueue.length){
+    const { queue: nextQueue, totalDue } = buildSession(20);
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
-      <p class="item-en" style="margin-bottom:0;">🎉 Session complete</p>
+      <p class="item-en" style="margin-bottom:0;">🎉 Batch complete</p>
       <div class="hero-num">${sessionCorrect}/${sessionQueue.length}</div>
-      <div class="hero-label">correct this session</div>
+      <div class="hero-label">correct this batch</div>
     `;
+    if(totalDue > 0){
+      const p = document.createElement('p');
+      p.className = 'small';
+      p.style.marginBottom = '10px';
+      p.textContent = totalDue + ' more still due today.';
+      card.appendChild(p);
+      const contBtn = document.createElement('button');
+      contBtn.className = 'big-btn';
+      contBtn.textContent = '▶ Continue — next batch';
+      contBtn.onclick = ()=>{
+        sessionQueue = nextQueue;
+        sessionIdx = 0;
+        sessionCorrect = 0;
+        render();
+      };
+      card.appendChild(contBtn);
+    } else {
+      const p = document.createElement('p');
+      p.className = 'small';
+      p.style.marginBottom = '10px';
+      p.textContent = "Nothing else due today — that's everything.";
+      card.appendChild(p);
+    }
     const backBtn = document.createElement('button');
-    backBtn.className = 'big-btn';
+    backBtn.className = 'action btn-ghost';
+    backBtn.style.marginTop = '6px';
     backBtn.textContent = 'Back to Home';
     backBtn.onclick = ()=>{ currentTab='home'; render(); };
     card.appendChild(backBtn);
@@ -1486,14 +1517,24 @@ function renderSession(main, nav){
   const card = document.createElement('div');
   card.className = 'card';
   const stage = stageInfo(getItemProgress(item.key).box);
-  card.innerHTML = `
-    <div class="pill">${item.source}</div>
-    <span class="stage-pill ${stage.cls}">${stage.label}</span>
-    <div class="progress-line" style="margin-top:8px;">Item ${sessionIdx+1} of ${sessionQueue.length}</div>
-    <p class="item-fr" style="font-size:1.2rem;">${item.fr}</p>
-    ${item.p ? `<p class="item-pron">[ ${item.p} ]</p>` : ''}
-    <p class="item-en">${item.en}</p>
-  `;
+  if(item.reverse){
+    card.innerHTML = `
+      <div class="pill">${item.source}</div>
+      <span class="stage-pill ${stage.cls}">${stage.label}</span>
+      <div class="progress-line" style="margin-top:8px;">Item ${sessionIdx+1} of ${sessionQueue.length}</div>
+      <p class="item-en" style="margin-bottom:2px;">🔀 Say this in French:</p>
+      <p class="item-fr" style="font-size:1.2rem;">${item.en}</p>
+    `;
+  } else {
+    card.innerHTML = `
+      <div class="pill">${item.source}</div>
+      <span class="stage-pill ${stage.cls}">${stage.label}</span>
+      <div class="progress-line" style="margin-top:8px;">Item ${sessionIdx+1} of ${sessionQueue.length}</div>
+      <p class="item-fr" style="font-size:1.2rem;">${item.fr}</p>
+      ${item.p ? `<p class="item-pron">[ ${item.p} ]</p>` : ''}
+      <p class="item-en">${item.en}</p>
+    `;
+  }
 
   const opts = item.keywordSets ? {keywordSets: item.keywordSets, progressKey: item.key} : {progressKey: item.key};
   if(item.p) opts.pron = item.p;
@@ -1502,6 +1543,19 @@ function renderSession(main, nav){
     setTimeout(()=>{ sessionIdx++; render(); }, ok ? 900 : 400);
   }, opts);
   card.appendChild(widget);
+
+  if(item.reverse){
+    const revealBtn = document.createElement('button');
+    revealBtn.className = 'action btn-ghost';
+    revealBtn.style.marginTop = '10px';
+    revealBtn.textContent = '👁 Reveal French';
+    const revealBox = document.createElement('div');
+    revealBox.className = 'model-answer';
+    revealBox.innerHTML = `<b>${item.fr}</b>`;
+    revealBtn.onclick = ()=>{ revealBox.classList.toggle('show'); };
+    card.appendChild(revealBtn);
+    card.appendChild(revealBox);
+  }
 
   if(item.model){
     const modelBtn = document.createElement('button');
