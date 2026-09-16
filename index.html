@@ -244,8 +244,23 @@ function normalize(s){
     .replace(/\s+/g,' ')
     .trim();
 }
+function levenshtein(a, b){
+  const dp = Array.from({length:a.length+1}, (_,i)=>[i].concat(new Array(b.length).fill(0)));
+  for(let j=0;j<=b.length;j++) dp[0][j]=j;
+  for(let i=1;i<=a.length;i++){
+    for(let j=1;j<=b.length;j++){
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    }
+  }
+  return dp[a.length][b.length];
+}
 function isMatch(target, said){
-  return normalize(target) === normalize(said);
+  const nt = normalize(target), ns = normalize(said);
+  if(nt === ns) return true;
+  // Small tolerance, scaled to length — catches homophones (mère/mer) and minor
+  // speech-recognition transcription quirks without accepting genuinely different words.
+  const tolerance = nt.length <= 4 ? 0 : (nt.length <= 10 ? 1 : 2);
+  return tolerance > 0 && levenshtein(nt, ns) <= tolerance;
 }
 function keywordMatch(said, keywordSets){
   const n = normalize(said);
@@ -1260,6 +1275,7 @@ function practiceWidget(targetText, onCorrect, opts){
   opts = opts || {};
   const wrap = document.createElement('div');
   const micSupported = !!SpeechRecognitionAPI;
+  let checkOverrideVisibility = ()=>{};
 
   const btnRow = document.createElement('div');
   btnRow.className = 'btn-row';
@@ -1309,10 +1325,12 @@ function practiceWidget(targetText, onCorrect, opts){
           '<div class="heard" style="margin-top:4px;">Marked as <b>pending</b> — it\'ll come back to you soon.</div>';
         setTimeout(()=>speak(targetText), 300);
         if(onCorrect){ setTimeout(()=>onCorrect(false), 2600); }
+        checkOverrideVisibility();
       } else {
         feedback.innerHTML = '❌ Not quite — listen again and retry.' +
           '<div class="heard">You said: "' + said + '"</div>';
         setTimeout(()=>speak(targetText), 400);
+        checkOverrideVisibility();
       }
     }, (err)=>{
       micBtn.classList.remove('listening');
@@ -1345,6 +1363,32 @@ function practiceWidget(targetText, onCorrect, opts){
 
   wrap.appendChild(btnRow);
   wrap.appendChild(feedback);
+
+  if(opts.progressKey){
+    const overrideWrap = document.createElement('div');
+    overrideWrap.style.marginTop = '8px';
+    overrideWrap.style.display = 'none';
+    const overrideBtn = document.createElement('button');
+    overrideBtn.className = 'action btn-ghost';
+    overrideBtn.style.fontSize = '0.78rem';
+    overrideBtn.textContent = "Confident you said it right? Mark correct manually";
+    overrideBtn.onclick = ()=>{
+      recordAttempt(true);
+      updateProgress(opts.progressKey, true);
+      feedback.className = 'feedback good';
+      feedback.innerHTML = '✅ Marked correct manually.';
+      overrideWrap.style.display = 'none';
+      if(onCorrect) onCorrect(true);
+    };
+    overrideWrap.appendChild(overrideBtn);
+    wrap.appendChild(overrideWrap);
+
+    checkOverrideVisibility = ()=>{
+      if(getItemProgress(opts.progressKey).missStreak >= 2){ overrideWrap.style.display = 'block'; }
+    };
+    checkOverrideVisibility();
+  }
+
   return wrap;
 }
 
