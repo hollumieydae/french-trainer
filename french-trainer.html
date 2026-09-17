@@ -468,7 +468,7 @@ const VOCAB = [
   {cat:"Nourriture", fr:"le déjeuner", en:"lunch", p:"luh day-zhuh-nay", lvl:"A1"},
   {cat:"Nourriture", fr:"le dîner", en:"dinner", p:"luh dee-nay", lvl:"A1"},
   {cat:"Nourriture", fr:"le restaurant", en:"restaurant", p:"luh res-toh-rahn", lvl:"A1"},
-  {cat:"Nourriture", fr:"l'addition", en:"the bill", p:"lah-dee-syohn", lvl:"A1"},
+  {cat:"Nourriture", fr:"l'addition", en:"the bill / addition (math)", p:"lah-dee-syohn", lvl:"A1"},
   {cat:"Corps", fr:"la tête", en:"head", p:"lah tet", lvl:"A1"},
   {cat:"Corps", fr:"les yeux", en:"eyes", p:"lay zyuh", lvl:"A1"},
   {cat:"Corps", fr:"la main", en:"hand", p:"lah man", lvl:"A1"},
@@ -833,6 +833,47 @@ const VOCAB = [
   {cat:"Idées", fr:"améliorer", en:"to improve", p:"ah-may-lyoh-ray", lvl:"A2"},
   {cat:"Idées", fr:"réussir", en:"to succeed", p:"ray-ew-seer", lvl:"A2"},
   {cat:"Idées", fr:"échouer", en:"to fail", p:"ay-shoo-way", lvl:"A2"},
+  {cat:"Nombres", fr:"zéro", en:"zero", p:"zay-ro", lvl:"A1"},
+  {cat:"Nombres", fr:"un", en:"one", p:"uhn", lvl:"A1"},
+  {cat:"Nombres", fr:"deux", en:"two", p:"duh", lvl:"A1"},
+  {cat:"Nombres", fr:"trois", en:"three", p:"twah", lvl:"A1"},
+  {cat:"Nombres", fr:"quatre", en:"four", p:"katr", lvl:"A1"},
+  {cat:"Nombres", fr:"cinq", en:"five", p:"sank", lvl:"A1"},
+  {cat:"Nombres", fr:"six", en:"six", p:"sees", lvl:"A1"},
+  {cat:"Nombres", fr:"sept", en:"seven", p:"set", lvl:"A1"},
+  {cat:"Nombres", fr:"huit", en:"eight", p:"weet", lvl:"A1"},
+  {cat:"Nombres", fr:"neuf", en:"nine", p:"nuhf", lvl:"A1"},
+  {cat:"Nombres", fr:"dix", en:"ten", p:"dees", lvl:"A1"},
+  {cat:"Nombres", fr:"onze", en:"eleven", p:"ohnz", lvl:"A1"},
+  {cat:"Nombres", fr:"douze", en:"twelve", p:"dooz", lvl:"A1"},
+  {cat:"Nombres", fr:"treize", en:"thirteen", p:"trez", lvl:"A1"},
+  {cat:"Nombres", fr:"quatorze", en:"fourteen", p:"kah-torz", lvl:"A1"},
+  {cat:"Nombres", fr:"quinze", en:"fifteen", p:"kanz", lvl:"A1"},
+  {cat:"Nombres", fr:"seize", en:"sixteen", p:"sez", lvl:"A1"},
+  {cat:"Nombres", fr:"dix-sept", en:"seventeen", p:"dee-set", lvl:"A1"},
+  {cat:"Nombres", fr:"dix-huit", en:"eighteen", p:"dee-zweet", lvl:"A1"},
+  {cat:"Nombres", fr:"dix-neuf", en:"nineteen", p:"deez-nuhf", lvl:"A1"},
+  {cat:"Nombres", fr:"trente", en:"thirty", p:"trahnt", lvl:"A1"},
+  {cat:"Nombres", fr:"quarante", en:"forty", p:"kah-rahnt", lvl:"A1"},
+  {cat:"Nombres", fr:"cinquante", en:"fifty", p:"san-kahnt", lvl:"A1"},
+  {cat:"Nombres", fr:"soixante", en:"sixty", p:"swah-sahnt", lvl:"A1"},
+  {cat:"Calculs", fr:"divisé par", en:"divided by", p:"dee-vee-zay par", lvl:"A1"},
+  {cat:"Calculs", fr:"multiplié par", en:"multiplied by", p:"mool-tee-plee-ay par", lvl:"A1"},
+  {cat:"Calculs", fr:"égal", en:"equals", p:"ay-gahl", lvl:"A1"},
+  {cat:"Calculs", fr:"la soustraction", en:"subtraction", p:"lah soo-strahk-syohn", lvl:"A1"},
+  {cat:"Calculs", fr:"la division", en:"division", p:"lah dee-vee-zyohn", lvl:"A1"},
+  {cat:"Calculs", fr:"la multiplication", en:"multiplication", p:"lah mool-tee-plee-kah-syohn", lvl:"A1"},
+  {cat:"Calculs", fr:"font", en:"make/equal (in sums)", p:"fohn", lvl:"A1"},
+  {cat:"Nombres", fr:"deux-cents", en:"two hundred", p:"duh sahn", lvl:"A1"},
+  {cat:"Nombres", fr:"dix-mille", en:"ten thousand", p:"dee meel", lvl:"A1"},
+  {cat:"Nombres", fr:"cent-mille", en:"a hundred thousand", p:"sahn meel", lvl:"A1"},
+  {cat:"Nombres", fr:"un million", en:"one million", p:"uhn mee-lyohn", lvl:"A1"},
+  {cat:"Nombres", fr:"un milliard", en:"one billion", p:"uhn mee-lyar", lvl:"A1"},
+
+  {cat:"Objets du quotidien", fr:"le pupitre", en:"school desk", p:"luh pew-peetr", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"le dossier", en:"file/folder", p:"luh doh-syay", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"le bois", en:"wood", p:"luh bwah", lvl:"A1"},
+  {cat:"Maison", fr:"la garde-robe", en:"wardrobe", p:"lah gard-rohb", lvl:"A1"},
 ];
 
 const VERBS = [
@@ -857,6 +898,9 @@ const VERBS = [
     pc:{je:"ai écrasé",tu:"as écrasé",il:"a écrasé",nous:"avons écrasé",vous:"avez écrasé",ils:"ont écrasé"}},
   {inf:"accrocher", en:"to hang",
     present:{je:"accroche",tu:"accroches",il:"accroche",nous:"accrochons",vous:"accrochez",ils:"accrochent"}},
+  {inf:"empiler", en:"to stack/pile",
+    present:{je:"empile",tu:"empiles",il:"empile",nous:"empilons",vous:"empilez",ils:"empilent"},
+    pc:{je:"ai empilé",tu:"as empilé",il:"a empilé",nous:"avons empilé",vous:"avez empilé",ils:"ont empilé"}},
 ];
 const SUBJECTS = {je:"Je",tu:"Tu",il:"Il",nous:"Nous",vous:"Vous",ils:"Ils"};
 
@@ -878,6 +922,17 @@ const SENTENCES = [
   {fr:"Nous avons dansé.", en:"We danced.", p:"noo zah-vohn dahn-say", lvl:"A2"},
   {fr:"Elle a chanté.", en:"She sang.", p:"el ah shahn-tay", lvl:"A2"},
   {fr:"Mon cours de français est le mardi, mercredi et jeudi.", en:"My French class is on Tuesday, Wednesday, and Thursday.", p:"mohn koor duh frahn-say eh luh mar-dee, mair-kruh-dee ay zhuh-dee", lvl:"A1"},
+  {fr:"Les livres sont sur le pupitre.", en:"The books are on the desk.", p:"lay leevr sohn sewr luh pew-peetr", lvl:"A1"},
+  {fr:"Les dossiers sont à gauche.", en:"The files are on the left.", p:"lay doh-syay sohn tah gohsh", lvl:"A1"},
+  {fr:"Le bois est pour l'hiver.", en:"The wood is for winter.", p:"luh bwah eh poor lee-vair", lvl:"A1"},
+  {fr:"Les assiettes sont sur l'évier.", en:"The plates are on the sink.", p:"lay zah-syet sohn sewr lay-vyay", lvl:"A1"},
+  {fr:"Les chemises sont dans la garde-robe.", en:"The shirts are in the wardrobe.", p:"lay shuh-meez sohn dahn lah gard-rob", lvl:"A1"},
+  {fr:"Les photos sont sur le mur.", en:"The photos are on the wall.", p:"lay foh-toh sohn sewr luh mewr", lvl:"A1"},
+  {fr:"Les dossiers sont sur l'ordinateur.", en:"The files are on the computer.", p:"lay doh-syay sohn sewr lor-dee-nah-tuhr", lvl:"A1"},
+  {fr:"Les vêtements sont sur le lit.", en:"The clothes are on the bed.", p:"lay vet-mahn sohn sewr luh lee", lvl:"A1"},
+  {fr:"Les chaises sont sur les tables.", en:"The chairs are on the tables.", p:"lay shez sohn sewr lay tahbl", lvl:"A1"},
+  {fr:"Les draps sont sur le lit.", en:"The sheets are on the bed.", p:"lay drah sohn sewr luh lee", lvl:"A1"},
+
 ];
 
 const CONVERSATION = {
@@ -1500,13 +1555,26 @@ function practiceWidget(targetText, onCorrect, opts){
     wrap.appendChild(meaningWrap);
   }
 
+  let answeredCorrectly = false;
   const btnRow = document.createElement('div');
   btnRow.className = 'btn-row';
 
   const playBtn = document.createElement('button');
   playBtn.className = 'action btn-play';
   playBtn.innerHTML = '🔊 Hear it';
-  playBtn.onclick = ()=> speak(targetText);
+  playBtn.onclick = ()=>{
+    if(opts.giveawayPenalty && !answeredCorrectly){
+      playBtn.disabled = true;
+      micBtn.disabled = true;
+      skipAsUnknown(opts.progressKey, targetText);
+      feedback.className = 'feedback bad';
+      feedback.innerHTML = "Heard it before answering — that's the same as not knowing it yet. Marked pending.";
+      checkOverrideVisibility();
+      if(onCorrect){ setTimeout(()=>onCorrect(false), 1400); }
+    } else {
+      speak(targetText);
+    }
+  };
   btnRow.appendChild(playBtn);
 
   const micBtn = document.createElement('button');
@@ -1536,8 +1604,10 @@ function practiceWidget(targetText, onCorrect, opts){
       }
       if(ok){
         if(opts.fullTest){
+          answeredCorrectly = true;
           showMeaningCheck();
         } else {
+          answeredCorrectly = true;
           recordAttempt(true);
           if(opts.progressKey){ updateProgress(opts.progressKey, true); }
           feedback.className = 'feedback good';
@@ -1596,6 +1666,7 @@ function practiceWidget(targetText, onCorrect, opts){
     overrideBtn.style.fontSize = '0.78rem';
     overrideBtn.textContent = "Confident you said it right? Mark correct manually";
     overrideBtn.onclick = ()=>{
+      answeredCorrectly = true;
       recordAttempt(true);
       updateProgress(opts.progressKey, true);
       feedback.className = 'feedback good';
@@ -1895,6 +1966,7 @@ function renderSession(main, nav){
   if(sessionPhase !== 'quiz'){ opts.progressKey = item.key; }
   if(item.p && item.stage !== 3) opts.pron = item.p;
   if(item.fullTest){ opts.fullTest = true; opts.correctMeaning = item.en; }
+  if((item.reverse || item.stage === 3) && sessionPhase !== 'quiz'){ opts.giveawayPenalty = true; }
   const widget = practiceWidget(item.fr, (ok)=>{
     if(ok){
       sessionCorrect++;
@@ -2029,6 +2101,7 @@ function renderVocab(main, nav){
   }
   const widgetOpts = {progressKey: key};
   if(item.p) widgetOpts.pron = item.p;
+  if(vocabReverse) widgetOpts.giveawayPenalty = true;
   const widget = practiceWidget(item.fr, ()=>{
     setTimeout(()=>{ vocabIndex = (vocabIndex+1)%list.length; render(); }, 900);
   }, widgetOpts);
@@ -2221,6 +2294,7 @@ function renderSentences(main, nav){
   }
   const sWidgetOpts = {progressKey: key};
   if(s.p) sWidgetOpts.pron = s.p;
+  if(sentReverse) sWidgetOpts.giveawayPenalty = true;
   const widget = practiceWidget(s.fr, ()=>{
     setTimeout(()=>{ sentIndex=(sentIndex+1)%list.length; render(); }, 900);
   }, sWidgetOpts);
