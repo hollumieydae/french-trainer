@@ -1208,9 +1208,16 @@ function skipAsUnknown(key, targetText){
 
 const STOPWORDS = new Set(['the','a','an','to','of','in','on','is','are','be','it','for','with','and','or','your','you','i']);
 function meaningMatch(userText, correctMeaning){
-  const strip = s => normalize(s).replace(/[()]/g,'').replace(/[\/,]/g,' ').split(' ').filter(w=>w && !STOPWORDS.has(w));
-  const userWords = new Set(strip(userText));
-  const correctWords = strip(correctMeaning);
+  const stripWords = s => {
+    const words = normalize(s).replace(/[()]/g,'').replace(/[\/,]/g,' ').split(' ').filter(Boolean);
+    const withoutStop = words.filter(w=>!STOPWORDS.has(w));
+    // If a phrase's ONLY content word happens to be a stopword (sur = "on",
+    // dans = "in", et = "and"...), stripping it would leave nothing to
+    // compare — fall back to the unfiltered words in that case.
+    return withoutStop.length > 0 ? withoutStop : words;
+  };
+  const userWords = new Set(stripWords(userText));
+  const correctWords = stripWords(correctMeaning);
   if(userWords.size === 0 || correctWords.length === 0) return false;
   return correctWords.some(w => userWords.has(w) || Array.from(userWords).some(uw => levenshtein(uw,w) <= 1));
 }
