@@ -1420,6 +1420,18 @@ function countSolidVocab(minBox){
       && getItemProgress('vocab:test:'+v.fr).box>=minBox;
   }).length;
 }
+// Per-stage breakdown — shows real progress even before any word has cleared
+// ALL three stages at once, so work doesn't look like it's going nowhere.
+function vocabStageBreakdown(minBox){
+  minBox = minBox===undefined ? 2 : minBox;
+  const touched = allVocab().filter(v=>getItemProgress('vocab:'+v.fr).box>0 || getItemProgress('vocab:rev:'+v.fr).box>0 || getItemProgress('vocab:test:'+v.fr).box>0);
+  return {
+    touched: touched.length,
+    stage1: allVocab().filter(v=>getItemProgress('vocab:'+v.fr).box>=minBox).length,
+    stage2: allVocab().filter(v=>getItemProgress('vocab:rev:'+v.fr).box>=minBox).length,
+    stage3: allVocab().filter(v=>getItemProgress('vocab:test:'+v.fr).box>=minBox).length,
+  };
+}
 function countSolidSentences(minBox){ return countSolidBothWays(allSentences(), 'sent:', 'sent:rev:', minBox); }
 function countSolidVerbs(minBox){
   minBox = minBox===undefined ? 1 : minBox;
@@ -1755,7 +1767,8 @@ function renderHome(main, nav){
   if(plan.counts){
     const stagesCard = document.createElement('div');
     stagesCard.className = 'card';
-    stagesCard.innerHTML = '<p class="item-en" style="margin-bottom:6px;">Today\'s ladder</p>';
+    stagesCard.innerHTML = '<p class="item-en" style="margin-bottom:2px;">Today\'s ladder</p>' +
+      '<p class="small" style="margin-bottom:10px;">What\'s actually queued for today — not your whole vocabulary bank.</p>';
     [
       ['Stage 1 — Read', plan.counts.stage1],
       ['Stage 2 — Recall', plan.counts.stage2],
@@ -1765,7 +1778,9 @@ function renderHome(main, nav){
       const row = document.createElement('div');
       row.className = 'source-row';
       const isCurrent = STAGE_LABELS[plan.phase] === label;
-      row.innerHTML = `<span>${isCurrent ? '▶ ' : ''}${label}</span><span>${n}</span>`;
+      const capped = Math.min(n, label === 'Sentences' ? 5 : 20);
+      const extra = n - capped;
+      row.innerHTML = `<span>${isCurrent ? '▶ ' : ''}${label}</span><span>${capped}${extra > 0 ? ` <span class="small">(+${extra} waiting)</span>` : ''}</span>`;
       stagesCard.appendChild(row);
     });
     main.appendChild(stagesCard);
@@ -1812,6 +1827,13 @@ function renderHome(main, nav){
   }
   pathCard.appendChild(pathStep('1. Vocabulary (all 3 stages)', true, vocabSolid, UNLOCK.sentences.vocabSolid,
     'Words that have cleared Read, Recall, AND the unscaffolded Full Test.'));
+  const bd = vocabStageBreakdown();
+  const bdRow = document.createElement('p');
+  bdRow.className = 'small';
+  bdRow.style.marginTop = '-8px';
+  bdRow.style.marginBottom = '14px';
+  bdRow.innerHTML = `${bd.touched} words in progress — Stage 1 solid: ${bd.stage1} · Stage 2 solid: ${bd.stage2} · Stage 3 solid: ${bd.stage3}`;
+  pathCard.appendChild(bdRow);
   pathCard.appendChild(pathStep('2. Sentences', sentUnlocked, vocabSolid, UNLOCK.sentences.vocabSolid,
     sentUnlocked ? 'Unlocked — full sentences from your lessons.' : 'Unlocks once enough vocabulary is fully mastered.'));
   pathCard.appendChild(pathStep('3. Conversation (TCF/TEF)', convUnlocked, sentSolid + verbSolid,
