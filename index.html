@@ -1841,14 +1841,15 @@ function renderHome(main, nav){
   const verbSolid = countSolidVerbs();
   const convUnlocked = conversationUnlocked();
 
-  function pathStep(label, done, current, needed, note){
+  function pathStep(label, done, current, needed, note, isGate){
     const pct = Math.min(100, Math.round((current/needed)*100));
     const row = document.createElement('div');
     row.style.marginBottom = '14px';
+    const numberLabel = isGate ? `${current}/${needed} needed to unlock` : `${current}/${needed}`;
     row.innerHTML = `
       <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:4px;">
         <span>${done ? '✅' : '🔒'} ${label}</span>
-        <span class="small">${current}/${needed}</span>
+        <span class="small">${numberLabel}</span>
       </div>
       <div class="session-bar-track"><div class="session-bar-fill" style="width:${pct}%"></div></div>
       <p class="small" style="margin-top:4px;">${note}</p>
@@ -1865,10 +1866,12 @@ function renderHome(main, nav){
   bdRow.innerHTML = `${bd.touched} words in progress — Stage 1 solid: ${bd.stage1} · Stage 2 solid: ${bd.stage2} · Stage 3 solid: ${bd.stage3}`;
   pathCard.appendChild(bdRow);
   pathCard.appendChild(pathStep('2. Sentences', sentUnlocked, vocabSolid, UNLOCK.sentences.vocabSolid,
-    sentUnlocked ? 'Unlocked — full sentences from your lessons.' : 'Unlocks once enough vocabulary is fully mastered.'));
+    sentUnlocked ? 'Unlocked — full sentences from your lessons.' : "This isn't sentence progress — it's your vocabulary count, the requirement to unlock Sentences. You haven't practiced any sentences yet.",
+    true));
   pathCard.appendChild(pathStep('3. Conversation (TCF/TEF)', convUnlocked, sentSolid + verbSolid,
     UNLOCK.conversation.sentSolid + UNLOCK.conversation.verbSolid,
-    convUnlocked ? 'Unlocked — real TCF/TEF-style conversation practice.' : 'Unlocks once sentences (both ways) and verb forms are solid.'));
+    convUnlocked ? 'Unlocked — real TCF/TEF-style conversation practice.' : "This isn't conversation progress either — same idea: sentences + verb forms solid enough to unlock it.",
+    true));
   main.appendChild(pathCard);
 
   const levelCard = document.createElement('div');
