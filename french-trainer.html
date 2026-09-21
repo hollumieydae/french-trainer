@@ -888,35 +888,92 @@ const VOCAB = [
   {cat:"Objets du quotidien", fr:"le dossier", en:"file/folder", p:"luh doh-syay", lvl:"A1"},
   {cat:"Nature & Animaux", fr:"le bois", en:"wood", p:"luh bwah", lvl:"A1"},
   {cat:"Maison", fr:"la garde-robe", en:"wardrobe", p:"lah gard-rohb", lvl:"A1"},
+  {cat:"Nationalités", fr:"français", en:"French (masc.)", p:"frahn-say", lvl:"A1"},
+  {cat:"Nationalités", fr:"française", en:"French (fem.)", p:"frahn-sez", lvl:"A1"},
+  {cat:"Nationalités", fr:"canadien", en:"Canadian (masc.)", p:"kah-nah-dyan", lvl:"A1"},
+  {cat:"Nationalités", fr:"canadienne", en:"Canadian (fem.)", p:"kah-nah-dyen", lvl:"A1"},
+  {cat:"Nationalités", fr:"nigérian", en:"Nigerian (masc.)", p:"nee-zhay-ryan", lvl:"A1"},
+  {cat:"Nationalités", fr:"nigériane", en:"Nigerian (fem.)", p:"nee-zhay-ryahn", lvl:"A1"},
+  {cat:"Nationalités", fr:"américain", en:"American (masc.)", p:"ah-may-ree-kan", lvl:"A1"},
+  {cat:"Nationalités", fr:"américaine", en:"American (fem.)", p:"ah-may-ree-ken", lvl:"A1"},
+  {cat:"Nationalités", fr:"anglais", en:"English (masc.)", p:"ahn-gleh", lvl:"A1"},
+  {cat:"Nationalités", fr:"anglaise", en:"English (fem.)", p:"ahn-glez", lvl:"A1"},
+  {cat:"Pays", fr:"le Canada", en:"Canada", p:"luh kah-nah-dah", lvl:"A1"},
+  {cat:"Pays", fr:"la France", en:"France", p:"lah frahns", lvl:"A1"},
+  {cat:"Pays", fr:"le Nigeria", en:"Nigeria", p:"luh nee-zhay-rya", lvl:"A1"},
+  {cat:"Pays", fr:"les États-Unis", en:"the United States", p:"lay zay-tah-zew-nee", lvl:"A1"},
+  {cat:"Pays", fr:"l'Angleterre", en:"England", p:"lahn-gluh-tair", lvl:"A1"},
+  {cat:"Pays", fr:"le monde", en:"the world", p:"luh mohnd", lvl:"A1"},
+  {cat:"État civil", fr:"marié", en:"married (masc.)", p:"mah-ryay", lvl:"A1"},
+  {cat:"État civil", fr:"mariée", en:"married (fem.)", p:"mah-ryay", lvl:"A1"},
+  {cat:"État civil", fr:"célibataire", en:"single", p:"say-lee-bah-tair", lvl:"A1"},
+  {cat:"État civil", fr:"divorcé", en:"divorced (masc.)", p:"dee-vor-say", lvl:"A1"},
+  {cat:"École & Travail", fr:"ingénieur", en:"engineer", p:"an-zhay-nyuhr", lvl:"A1"},
+  {cat:"École & Travail", fr:"avocat", en:"lawyer", p:"ah-voh-kah", lvl:"A1"},
+  {cat:"École & Travail", fr:"boulanger", en:"baker", p:"boo-lahn-zhay", lvl:"A1"},
+  {cat:"École & Travail", fr:"mécanicien", en:"mechanic", p:"may-kah-nee-syan", lvl:"A1"},
+  {cat:"École & Travail", fr:"policier", en:"police officer", p:"poh-lee-syay", lvl:"A1"},
+  {cat:"École & Travail", fr:"comptable", en:"accountant", p:"kohm-tahbl", lvl:"A1"},
+  {cat:"École & Travail", fr:"secrétaire", en:"secretary", p:"suh-kray-tair", lvl:"A1"},
+  {cat:"École & Travail", fr:"journaliste", en:"journalist", p:"zhoor-nah-leest", lvl:"A1"},
 ];
 
 const VERBS = [
   {inf:"être", en:"to be", irregular:true,
-    present:{je:"suis",tu:"es",il:"est",nous:"sommes",vous:"êtes",ils:"sont"}},
+    present:{je:"suis",tu:"es",il:"est",nous:"sommes",vous:"êtes",ils:"sont"},
+    imperative:{tu:"Sois",nous:"Soyons",vous:"Soyez"}},
   {inf:"avoir", en:"to have", irregular:true,
-    present:{je:"ai",tu:"as",il:"a",nous:"avons",vous:"avez",ils:"ont"}},
+    present:{je:"ai",tu:"as",il:"a",nous:"avons",vous:"avez",ils:"ont"},
+    imperative:{tu:"Aie",nous:"Ayons",vous:"Ayez"}},
+  {inf:"aller", en:"to go", irregular:true,
+    present:{je:"vais",tu:"vas",il:"va",nous:"allons",vous:"allez",ils:"vont"},
+    imperative:{tu:"Va",nous:"Allons",vous:"Allez"}},
   {inf:"chanter", en:"to sing",
     present:{je:"chante",tu:"chantes",il:"chante",nous:"chantons",vous:"chantez",ils:"chantent"},
-    pc:{je:"ai chanté",tu:"as chanté",il:"a chanté",nous:"avons chanté",vous:"avez chanté",ils:"ont chanté"}},
+    pc:{je:"ai chanté",tu:"as chanté",il:"a chanté",nous:"avons chanté",vous:"avez chanté",ils:"ont chanté"},
+    imperative:{tu:"Chante",nous:"Chantons",vous:"Chantez"}},
   {inf:"danser", en:"to dance",
     present:{je:"danse",tu:"danses",il:"danse",nous:"dansons",vous:"dansez",ils:"dansent"},
-    pc:{je:"ai dansé",tu:"as dansé",il:"a dansé",nous:"avons dansé",vous:"avez dansé",ils:"ont dansé"}},
+    pc:{je:"ai dansé",tu:"as dansé",il:"a dansé",nous:"avons dansé",vous:"avez dansé",ils:"ont dansé"},
+    imperative:{tu:"Danse",nous:"Dansons",vous:"Dansez"}},
   {inf:"écouter", en:"to listen",
     present:{je:"écoute",tu:"écoutes",il:"écoute",nous:"écoutons",vous:"écoutez",ils:"écoutent"},
-    pc:{je:"ai écouté",tu:"as écouté",il:"a écouté",nous:"avons écouté",vous:"avez écouté",ils:"ont écouté"}},
+    pc:{je:"ai écouté",tu:"as écouté",il:"a écouté",nous:"avons écouté",vous:"avez écouté",ils:"ont écouté"},
+    imperative:{tu:"Écoute",nous:"Écoutons",vous:"Écoutez"}},
   {inf:"manger", en:"to eat",
     present:{je:"mange",tu:"manges",il:"mange",nous:"mangeons",vous:"mangez",ils:"mangent"},
-    pc:{je:"ai mangé",tu:"as mangé",il:"a mangé",nous:"avons mangé",vous:"avez mangé",ils:"ont mangé"}},
+    pc:{je:"ai mangé",tu:"as mangé",il:"a mangé",nous:"avons mangé",vous:"avez mangé",ils:"ont mangé"},
+    imperative:{tu:"Mange",nous:"Mangeons",vous:"Mangez"}},
   {inf:"écraser", en:"to crush",
     present:{je:"écrase",tu:"écrases",il:"écrase",nous:"écrasons",vous:"écrasez",ils:"écrasent"},
-    pc:{je:"ai écrasé",tu:"as écrasé",il:"a écrasé",nous:"avons écrasé",vous:"avez écrasé",ils:"ont écrasé"}},
+    pc:{je:"ai écrasé",tu:"as écrasé",il:"a écrasé",nous:"avons écrasé",vous:"avez écrasé",ils:"ont écrasé"},
+    imperative:{tu:"Écrase",nous:"Écrasons",vous:"Écrasez"}},
   {inf:"accrocher", en:"to hang",
-    present:{je:"accroche",tu:"accroches",il:"accroche",nous:"accrochons",vous:"accrochez",ils:"accrochent"}},
+    present:{je:"accroche",tu:"accroches",il:"accroche",nous:"accrochons",vous:"accrochez",ils:"accrochent"},
+    imperative:{tu:"Accroche",nous:"Accrochons",vous:"Accrochez"}},
   {inf:"empiler", en:"to stack/pile",
     present:{je:"empile",tu:"empiles",il:"empile",nous:"empilons",vous:"empilez",ils:"empilent"},
-    pc:{je:"ai empilé",tu:"as empilé",il:"a empilé",nous:"avons empilé",vous:"avez empilé",ils:"ont empilé"}},
+    pc:{je:"ai empilé",tu:"as empilé",il:"a empilé",nous:"avons empilé",vous:"avez empilé",ils:"ont empilé"},
+    imperative:{tu:"Empile",nous:"Empilons",vous:"Empilez"}},
 ];
 const SUBJECTS = {je:"Je",tu:"Tu",il:"Il",nous:"Nous",vous:"Vous",ils:"Ils"};
+// Futur proche = aller (conjugated) + infinitive — a formula, not something to
+// hand-write per verb. DELF A1 requires this tense alongside présent.
+const ALLER_PRESENT = {je:"vais",tu:"vas",il:"va",nous:"allons",vous:"allez",ils:"vont"};
+// Imperative never shows a subject pronoun — that's the whole grammatical
+// point of a command. Every other tense does. This is the one place that
+// distinction has to be handled, since everything else assumes 6 subject forms.
+function conjugatedDisplay(subj, form, mode){
+  if(mode === 'imperatif') return form + ' !';
+  if(subj==='je' && form[0] && form.match(/^[aeiouyéèêh]/i)) return "J'"+form;
+  return SUBJECTS[subj] + ' ' + form;
+}
+const IMPERATIVE_PERSON_LABEL = {tu:'to a friend', nous:"let's...", vous:'formal/plural'};
+function imperativeMeaning(verb, subj){
+  const bare = verb.en.replace(/^to /,'');
+  if(subj==='nous') return "Let's " + bare + "!";
+  return bare.charAt(0).toUpperCase() + bare.slice(1) + '! (' + IMPERATIVE_PERSON_LABEL[subj] + ')';
+}
 
 const SENTENCES = [
   {fr:"Il y a une chaise.", en:"There is a chair.", p:"eel ee ah ewn shez", lvl:"A1"},
@@ -932,9 +989,9 @@ const SENTENCES = [
   {fr:"Mes parents sont formidables.", en:"My parents are wonderful.", p:"may pah-rahn sohn for-mee-dahbl", lvl:"A1"},
   {fr:"Le chat est sur la table.", en:"The cat is on the table.", p:"luh shah eh sewr lah tahbl", lvl:"A1"},
   {fr:"Le chien est à côté de la fenêtre.", en:"The dog is beside the window.", p:"luh shyan eh tah koh-tay duh lah fuh-netr", lvl:"A1"},
-  {fr:"J'ai mangé.", en:"I ate.", p:"zhay mahn-zhay", lvl:"A2"},
-  {fr:"Nous avons dansé.", en:"We danced.", p:"noo zah-vohn dahn-say", lvl:"A2"},
-  {fr:"Elle a chanté.", en:"She sang.", p:"el ah shahn-tay", lvl:"A2"},
+  {fr:"J'ai mangé.", en:"I ate.", p:"zhay mahn-zhay", lvl:"A1"},
+  {fr:"Nous avons dansé.", en:"We danced.", p:"noo zah-vohn dahn-say", lvl:"A1"},
+  {fr:"Elle a chanté.", en:"She sang.", p:"el ah shahn-tay", lvl:"A1"},
   {fr:"Mon cours de français est le mardi, mercredi et jeudi.", en:"My French class is on Tuesday, Wednesday, and Thursday.", p:"mohn koor duh frahn-say eh luh mar-dee, mair-kruh-dee ay zhuh-dee", lvl:"A1"},
   {fr:"Les livres sont sur le pupitre.", en:"The books are on the desk.", p:"lay leevr sohn sewr luh pew-peetr", lvl:"A1"},
   {fr:"Les dossiers sont à gauche.", en:"The files are on the left.", p:"lay doh-syay sohn tah gohsh", lvl:"A1"},
@@ -947,6 +1004,48 @@ const SENTENCES = [
   {fr:"Les chaises sont sur les tables.", en:"The chairs are on the tables.", p:"lay shez sohn sewr lay tahbl", lvl:"A1"},
   {fr:"Les draps sont sur le lit.", en:"The sheets are on the bed.", p:"lay drah sohn sewr luh lee", lvl:"A1"},
 
+  {fr:"Je m'appelle Olu.", en:"My name is Olu.", p:"zhuh mah-pel oh-loo", lvl:"A1"},
+  {fr:"J'ai trente ans.", en:"I am thirty years old.", p:"zhay trahnt ahn", lvl:"A1"},
+  {fr:"Je suis nigérian.", en:"I am Nigerian.", p:"zhuh swee nee-zhay-ryan", lvl:"A1"},
+  {fr:"Je suis marié.", en:"I am married.", p:"zhuh swee mah-ryay", lvl:"A1"},
+  {fr:"J'habite au Nigeria.", en:"I live in Nigeria.", p:"zhah-beet oh nee-zhay-rya", lvl:"A1"},
+  {fr:"Je suis ingénieur.", en:"I am an engineer.", p:"zhuh swee zan-zhay-nyuhr", lvl:"A1"},
+  {fr:"Ma famille est grande.", en:"My family is big.", p:"mah fah-mee-y eh grahnd", lvl:"A1"},
+  {fr:"J'ai deux frères et une sœur.", en:"I have two brothers and one sister.", p:"zhay duh frair ay ewn suhr", lvl:"A1"},
+  {fr:"Mon père est médecin.", en:"My father is a doctor.", p:"mohn pair eh mayd-san", lvl:"A1"},
+  {fr:"Ma mère est infirmière.", en:"My mother is a nurse.", p:"mah mair eh tan-feer-myair", lvl:"A1"},
+  {fr:"J'aime le café.", en:"I like coffee.", p:"zhem luh kah-fay", lvl:"A1"},
+  {fr:"Il fait chaud aujourd'hui.", en:"It is hot today.", p:"eel feh shoh oh-zhoor-dwee", lvl:"A1"},
+  {fr:"Je me lève à sept heures.", en:"I get up at seven o'clock.", p:"zhuh muh lev ah set uhr", lvl:"A1"},
+  {fr:"Je travaille du lundi au vendredi.", en:"I work from Monday to Friday.", p:"zhuh trah-vye dew luhn-dee oh vahn-druh-dee", lvl:"A1"},
+  {fr:"Le weekend, je regarde un film.", en:"On the weekend, I watch a movie.", p:"luh week-end, zhuh ruh-gard uhn feelm", lvl:"A1"},
+  {fr:"J'aime nager et courir.", en:"I like swimming and running.", p:"zhem nah-zhay ay koo-reer", lvl:"A1"},
+  {fr:"Ma sœur est étudiante.", en:"My sister is a student.", p:"mah suhr eh tay-tew-dyahnt", lvl:"A1"},
+  {fr:"Nous sommes une petite famille.", en:"We are a small family.", p:"noo som ewn puh-teet fah-mee-y", lvl:"A1"},
+  {fr:"J'habite dans un appartement.", en:"I live in an apartment.", p:"zhah-beet dahn zuhn nah-par-tuh-mahn", lvl:"A1"},
+  {fr:"Le matin, je me lave.", en:"In the morning, I wash up.", p:"luh mah-tan, zhuh muh lahv", lvl:"A1"},
+  {fr:"Le soir, je me couche à dix heures.", en:"In the evening, I go to bed at ten o'clock.", p:"luh swahr, zhuh muh koosh ah dee zuhr", lvl:"A1"},
+  {fr:"Je suis célibataire.", en:"I am single.", p:"zhuh swee say-lee-bah-tair", lvl:"A1"},
+  {fr:"Mon frère est avocat.", en:"My brother is a lawyer.", p:"mohn frair eh tah-voh-kah", lvl:"A1"},
+  {fr:"J'habite en France.", en:"I live in France.", p:"zhah-beet ahn frahns", lvl:"A1"},
+  {fr:"Nous parlons français.", en:"We speak French.", p:"noo par-lohn frahn-say", lvl:"A1"},
+  {fr:"Je ne comprends pas.", en:"I don't understand.", p:"zhuh nuh kohm-prahn pah", lvl:"A1"},
+  {fr:"Je ne suis pas fatigué.", en:"I am not tired.", p:"zhuh nuh swee pah fah-tee-gay", lvl:"A1"},
+  {fr:"Il n'est pas grand.", en:"He is not tall.", p:"eel neh pah grahn", lvl:"A1"},
+  {fr:"Nous ne sommes pas mariés.", en:"We are not married.", p:"noo nuh som pah mah-ryay", lvl:"A1"},
+  {fr:"Je n'ai pas faim.", en:"I am not hungry.", p:"zhuh nay pah fan", lvl:"A1"},
+  {fr:"Elle n'aime pas le café.", en:"She doesn't like coffee.", p:"el nem pah luh kah-fay", lvl:"A1"},
+  {fr:"Ta chambre est grande.", en:"Your room is big.", p:"tah shahmbr eh grahnd", lvl:"A1"},
+  {fr:"Son frère est avocat.", en:"His/her brother is a lawyer.", p:"sohn frair eh tah-voh-kah", lvl:"A1"},
+  {fr:"Notre famille est petite.", en:"Our family is small.", p:"notr fah-mee-y eh puh-teet", lvl:"A1"},
+  {fr:"Votre maison est belle.", en:"Your house is beautiful.", p:"votr meh-zohn eh bel", lvl:"A1"},
+  {fr:"Leurs enfants sont gentils.", en:"Their children are kind.", p:"luhr zahn-fahn sohn zhahn-tee", lvl:"A1"},
+  {fr:"Ma sœur habite en France.", en:"My sister lives in France.", p:"mah suhr ah-beet ahn frahns", lvl:"A1"},
+  {fr:"Est-ce que tu es marié ?", en:"Are you married?", p:"es-kuh too eh mah-ryay", lvl:"A1"},
+  {fr:"Comment vous appelez-vous ?", en:"What is your name?", p:"koh-mahn voo zah-play voo", lvl:"A1"},
+  {fr:"Où habites-tu ?", en:"Where do you live?", p:"oo ah-beet tew", lvl:"A1"},
+  {fr:"Est-ce que vous aimez le café ?", en:"Do you like coffee?", p:"es-kuh voo zay-may luh kah-fay", lvl:"A1"},
+  {fr:"Quel âge as-tu ?", en:"How old are you?", p:"kel ahzh ah tew", lvl:"A1"},
 ];
 
 const CONVERSATION = {
@@ -1300,10 +1399,26 @@ function getAllItems(){
       const forms = mode==='present' ? verb.present : verb.pc;
       if(!forms) return;
       Object.keys(forms).forEach(subj=>{
-        const full = (subj==='je' && forms[subj][0].match(/[aeiouyéèêh]/i)) ? "J'"+forms[subj] : SUBJECTS[subj]+' '+forms[subj];
-        items.push({key:'verb:'+verb.inf+':'+mode+':'+subj, fr:full, en:verb.en+' ('+SUBJECTS[subj]+')', source:'Verbes', lvl: mode==='present' ? 'A1' : 'A2', reverse:false});
+        const full = conjugatedDisplay(subj, forms[subj], mode);
+        items.push({key:'verb:'+verb.inf+':'+mode+':'+subj, fr:full, en:verb.en+' ('+SUBJECTS[subj]+')', source:'Verbes', lvl:'A1', reverse:false});
       });
     });
+    // Futur proche: aller (conjugated) + infinitive — formula-generated for
+    // every verb except "aller" itself (to avoid the redundant "je vais aller").
+    if(verb.inf !== 'aller'){
+      Object.keys(ALLER_PRESENT).forEach(subj=>{
+        const allerForm = ALLER_PRESENT[subj];
+        const full = (subj==='je') ? "Je vais "+verb.inf : SUBJECTS[subj]+' '+allerForm+' '+verb.inf;
+        items.push({key:'verb:'+verb.inf+':futur:'+subj, fr:full, en:'going to '+verb.en.replace(/^to /,'')+' ('+SUBJECTS[subj]+')', source:'Verbes', lvl:'A1', reverse:false});
+      });
+    }
+    // Impératif — only 3 forms (tu/nous/vous), no subject pronoun shown.
+    if(verb.imperative){
+      Object.keys(verb.imperative).forEach(subj=>{
+        const full = conjugatedDisplay(subj, verb.imperative[subj], 'imperatif');
+        items.push({key:'verb:'+verb.inf+':imperatif:'+subj, fr:full, en:imperativeMeaning(verb, subj), source:'Verbes', lvl:'A1', reverse:false});
+      });
+    }
   });
   const CONV_TASK_LEVELS = { 'tcf:0':'A2', 'tcf:1':'B1', 'tcf:2':'B1', 'tef:0':'A2', 'tef:1':'B1' };
   Object.keys(CONVERSATION).forEach(examKey=>{
@@ -1376,18 +1491,20 @@ const STAGE_LABELS = {
 const LEVELS = [
   { code:'A1', name:'Breakthrough', wordTarget: 600,
     grammar: ["Articles (le/la/l'/les, un/une/des)", "Présent tense — être, avoir, -ER verbs",
-              "Numbers, days, months, time", "Question words (où, comment, quand...)",
-              "Possessives (mon/ma/mes...) — taught by tutor, not yet drillable here",
-              "Negation (ne...pas) — taught by tutor, not yet drillable here"] },
+              "Passé composé (past tense) — all 4 required A1 tenses now built",
+              "Futur proche (aller + infinitif)", "Impératif (commands — tu/nous/vous)",
+              "Numbers, days, months, time", "Question words + question sentences (est-ce que, inversion)",
+              "Possessives (mon/ma/mes...) — drillable via Sentences",
+              "Negation (ne...pas) — drillable via Sentences"] },
   { code:'A2', name:'Elementary', wordTarget: 1200,
-    grammar: ["Passé composé (past tense)", "Futur proche (aller + infinitif) — not yet added",
-              "Reflexive verbs — not yet added", "Comparatives — not yet added"] },
+    grammar: ["Imparfait — not yet added", "Reflexive verb conjugation practice — not yet added",
+              "Comparatives (plus/moins que) — not yet added", "Object pronouns (le/la/les, lui, leur) — not yet added"] },
   { code:'B1', name:'Intermediate', wordTarget: 2500,
-    grammar: ["Imparfait — not yet added", "Conditionnel — not yet added",
+    grammar: ["Imparfait vs. passé composé contrast — not yet added", "Conditionnel — not yet added",
               "Subjonctif (intro) — not yet added", "Opinions & defending a position (Conversation module)"] },
   { code:'B2', name:'Upper Intermediate', wordTarget: 4000,
-    grammar: ["Subjonctif fluency — not yet added", "Nuanced argumentation — not yet added",
-              "Native-speed listening — not yet added"] },
+    grammar: ["Subjonctif fluency — not yet added", "Passive voice — not yet added",
+              "Nuanced argumentation — not yet added", "Native-speed listening — not yet added"] },
 ];
 function levelStats(code){
   const vocabItems = allVocab().filter(v=>v.lvl===code);
@@ -1744,6 +1861,24 @@ function renderHome(main, nav){
   const mastered = all.filter(i=>getItemProgress(i.key).box===5).length;
 
   main.innerHTML = '';
+
+  const a1Stats = levelStats('A1');
+  if(a1Stats.complete){
+    const certCard = document.createElement('div');
+    certCard.className = 'card';
+    certCard.style.borderTop = '3px solid var(--gold)';
+    certCard.innerHTML = `
+      <p class="item-en" style="margin-bottom:4px; font-size:1.1rem;">🎓 Congratulations — A1 Certified!</p>
+      <p class="small" style="margin-bottom:6px;">
+        Every A1 word, verb form (présent, passé composé, futur proche, impératif), sentence, and
+        conversation prompt in the app has been demonstrated correctly, twice, spaced across days —
+        the real "clearly stuck" bar, not just a pass-through.
+      </p>
+      <p class="small">You're ready for A2. Keep going below — new A2 content unlocks as it's added.</p>
+    `;
+    main.appendChild(certCard);
+  }
+
   const card = document.createElement('div');
   card.className = 'card';
 
@@ -2203,18 +2338,31 @@ function renderVocab(main, nav){
 
 /* ---------- Verbs tab ---------- */
 function renderVerbs(main, nav){
-  ['present','pc'].forEach(mode=>{
+  const MODE_LABELS = {present:'Présent', pc:'Passé composé', futur:'Futur proche', imperatif:'Impératif'};
+  ['present','futur','imperatif','pc'].forEach(mode=>{
     const b = document.createElement('button');
-    b.textContent = mode==='present' ? 'Présent' : 'Passé composé';
+    b.textContent = MODE_LABELS[mode];
     if(mode===verbMode) b.classList.add('active');
     b.onclick = ()=>{ verbMode=mode; render(); };
     nav.appendChild(b);
   });
 
-  const verbsAvailable = VERBS.filter(v=> verbMode==='present' || v.pc);
+  const verbsAvailable = VERBS.filter(v=> {
+    if(verbMode==='pc') return !!v.pc;
+    if(verbMode==='futur') return v.inf !== 'aller';
+    if(verbMode==='imperatif') return !!v.imperative;
+    return true;
+  });
   if(verbIndex>=verbsAvailable.length) verbIndex=0;
   const verb = verbsAvailable[verbIndex];
-  const forms = verbMode==='present' ? verb.present : verb.pc;
+  let forms;
+  if(verbMode==='present') forms = verb.present;
+  else if(verbMode==='pc') forms = verb.pc;
+  else if(verbMode==='imperatif') forms = verb.imperative;
+  else {
+    forms = {};
+    Object.keys(ALLER_PRESENT).forEach(s=>{ forms[s] = ALLER_PRESENT[s] + ' ' + verb.inf; });
+  }
 
   main.innerHTML = '';
   const card = document.createElement('div');
@@ -2222,7 +2370,7 @@ function renderVerbs(main, nav){
   card.innerHTML = `
     <div class="progress-line">Verb ${verbIndex+1} of ${verbsAvailable.length}</div>
     <p class="item-fr">${verb.inf}</p>
-    <p class="item-en">${verb.en}</p>
+    <p class="item-en">${verb.en}${verbMode==='futur' ? ' (going to...)' : ''}</p>
   `;
 
   const grid = document.createElement('div');
@@ -2230,7 +2378,7 @@ function renderVerbs(main, nav){
   Object.keys(forms).forEach(subj=>{
     const cell = document.createElement('div');
     cell.className = 'conj-cell';
-    const full = (subj==='je' && forms[subj][0].match(/[aeiouyéèêh]/i)) ? "J'"+forms[subj] : SUBJECTS[subj]+' '+forms[subj];
+    const full = conjugatedDisplay(subj, forms[subj], verbMode);
     cell.innerHTML = `<b>${SUBJECTS[subj]}</b>${full}`;
     grid.appendChild(cell);
   });
@@ -2259,7 +2407,7 @@ function renderVerbs(main, nav){
   function buildPractice(){
     pronRow.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.textContent===SUBJECTS[activeSubj]));
     practiceHolder.innerHTML = '';
-    const full = (activeSubj==='je' && forms[activeSubj][0].match(/[aeiouyéèêh]/i)) ? "J'"+forms[activeSubj] : SUBJECTS[activeSubj]+' '+forms[activeSubj];
+    const full = conjugatedDisplay(activeSubj, forms[activeSubj], verbMode);
     const vKey = 'verb:'+verb.inf+':'+verbMode+':'+activeSubj;
     const stage = stageInfo(getItemProgress(vKey).box);
     const stageEl = document.createElement('span');
