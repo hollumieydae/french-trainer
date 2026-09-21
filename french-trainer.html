@@ -1534,8 +1534,10 @@ function practiceWidget(targetText, onCorrect, opts){
   const wrap = document.createElement('div');
   const micSupported = !!SpeechRecognitionAPI;
   let checkOverrideVisibility = ()=>{};
+  let cancelled = false;
 
   function handleMiss(reasonHtml){
+    if(cancelled) return;
     recordAttempt(false);
     let updated = null;
     if(opts.progressKey){ updated = updateProgress(opts.progressKey, false); }
@@ -1628,6 +1630,7 @@ function practiceWidget(targetText, onCorrect, opts){
     let handledThisAttempt = false;
     const rec = getRecognizer((alts)=>{
       handledThisAttempt = true;
+      if(cancelled) return;
       const said = alts[0] || '';
       let ok;
       if(opts.keywordSets){
@@ -1641,6 +1644,7 @@ function practiceWidget(targetText, onCorrect, opts){
           showMeaningCheck();
         } else {
           answeredCorrectly = true;
+          micBtn.disabled = true;
           recordAttempt(true);
           if(opts.progressKey){ updateProgress(opts.progressKey, true); }
           feedback.className = 'feedback good';
@@ -1655,6 +1659,7 @@ function practiceWidget(targetText, onCorrect, opts){
       handledThisAttempt = true;
       micBtn.classList.remove('listening');
       micBtn.innerHTML = '🎤 Say it';
+      if(cancelled) return;
       if(err === 'not-allowed' || err === 'service-not-allowed'){
         feedback.className = 'feedback bad';
         feedback.innerHTML = "⚠️ Microphone permission is blocked. Tap the 🔒/ⓘ icon next to the address bar → Permissions → Microphone → Allow, then reload the page.";
@@ -1699,7 +1704,10 @@ function practiceWidget(targetText, onCorrect, opts){
     overrideBtn.style.fontSize = '0.78rem';
     overrideBtn.textContent = "Confident you said it right? Mark correct manually";
     overrideBtn.onclick = ()=>{
+      cancelled = true;
+      if(recognizing && recognizer){ try{ recognizer.abort(); }catch(e){} recognizing = false; }
       answeredCorrectly = true;
+      micBtn.disabled = true;
       recordAttempt(true);
       updateProgress(opts.progressKey, true);
       feedback.className = 'feedback good';
@@ -1715,6 +1723,14 @@ function practiceWidget(targetText, onCorrect, opts){
     };
     checkOverrideVisibility();
   }
+
+  wrap._cancel = function(){
+    cancelled = true;
+    if(recognizing && recognizer){
+      try{ recognizer.abort(); }catch(e){}
+      recognizing = false;
+    }
+  };
 
   return wrap;
 }
@@ -2029,6 +2045,7 @@ function renderSession(main, nav){
     revealBox.innerHTML = `<b>${item.fr}</b>`;
     revealBtn.onclick = ()=>{
       revealBtn.disabled = true;
+      widget._cancel();
       widget.querySelectorAll('button').forEach(b=>b.disabled=true);
       skipAsUnknown(item.key, item.fr);
       card.appendChild(revealBox);
@@ -2059,7 +2076,7 @@ function renderSession(main, nav){
     const skipBtn = document.createElement('button');
     skipBtn.className = 'action btn-ghost';
     skipBtn.textContent = 'Skip →';
-    skipBtn.onclick = ()=>{ skipAsUnknown(item.key, item.fr); setTimeout(()=>{ sessionIdx++; render(); }, 700); };
+    skipBtn.onclick = ()=>{ widget._cancel(); skipAsUnknown(item.key, item.fr); setTimeout(()=>{ sessionIdx++; render(); }, 700); };
     skipRow.appendChild(skipBtn);
     card.appendChild(skipRow);
   }
@@ -2160,6 +2177,7 @@ function renderVocab(main, nav){
     revealBox.innerHTML = `<b>${item.fr}</b>`;
     revealBtn.onclick = ()=>{
       revealBtn.disabled = true;
+      widget._cancel();
       widget.querySelectorAll('button').forEach(b=>b.disabled=true);
       skipAsUnknown(key, item.fr);
       card.appendChild(revealBox);
@@ -2173,7 +2191,7 @@ function renderVocab(main, nav){
   const skipBtn = document.createElement('button');
   skipBtn.className = 'action btn-ghost';
   skipBtn.textContent = 'Skip →';
-  skipBtn.onclick = ()=>{ skipAsUnknown(key, item.fr); setTimeout(()=>{ vocabIndex=(vocabIndex+1)%list.length; render(); }, 700); };
+  skipBtn.onclick = ()=>{ widget._cancel(); skipAsUnknown(key, item.fr); setTimeout(()=>{ vocabIndex=(vocabIndex+1)%list.length; render(); }, 700); };
   nextRow.appendChild(skipBtn);
   card.appendChild(nextRow);
 
@@ -2353,6 +2371,7 @@ function renderSentences(main, nav){
     revealBox.innerHTML = `<b>${s.fr}</b>`;
     revealBtn.onclick = ()=>{
       revealBtn.disabled = true;
+      widget._cancel();
       widget.querySelectorAll('button').forEach(b=>b.disabled=true);
       skipAsUnknown(key, s.fr);
       card.appendChild(revealBox);
@@ -2366,7 +2385,7 @@ function renderSentences(main, nav){
   const skipBtn = document.createElement('button');
   skipBtn.className = 'action btn-ghost';
   skipBtn.textContent = 'Skip →';
-  skipBtn.onclick = ()=>{ skipAsUnknown(key, s.fr); setTimeout(()=>{ sentIndex=(sentIndex+1)%list.length; render(); }, 700); };
+  skipBtn.onclick = ()=>{ widget._cancel(); skipAsUnknown(key, s.fr); setTimeout(()=>{ sentIndex=(sentIndex+1)%list.length; render(); }, 700); };
   nextRow.appendChild(skipBtn);
   card.appendChild(nextRow);
 
