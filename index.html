@@ -253,13 +253,27 @@ function levenshtein(a, b){
   }
   return dp[a.length][b.length];
 }
+const NUMBER_WORD_TO_DIGIT = {
+  "zero":"0","un":"1","deux":"2","trois":"3","quatre":"4","cinq":"5","six":"6","sept":"7","huit":"8","neuf":"9",
+  "dix":"10","onze":"11","douze":"12","treize":"13","quatorze":"14","quinze":"15","seize":"16",
+  "dix-sept":"17","dix-huit":"18","dix-neuf":"19","vingt":"20","trente":"30","quarante":"40",
+  "cinquante":"50","soixante":"60","soixante-dix":"70","quatre-vingts":"80","quatre-vingt-dix":"90",
+  "cent":"100","deux-cents":"200","mille":"1000","dix-mille":"10000","cent-mille":"100000",
+  "un million":"1000000","un milliard":"1000000000",
+};
 function isMatch(target, said){
   const nt = normalize(target), ns = normalize(said);
   if(nt === ns) return true;
   // Small tolerance, scaled to length — catches homophones (mère/mer) and minor
   // speech-recognition transcription quirks without accepting genuinely different words.
   const tolerance = nt.length <= 4 ? 0 : (nt.length <= 10 ? 1 : 2);
-  return tolerance > 0 && levenshtein(nt, ns) <= tolerance;
+  if(tolerance > 0 && levenshtein(nt, ns) <= tolerance) return true;
+  // Number words are very commonly transcribed as digits by speech recognition
+  // regardless of the spoken language — if the target is a known number word,
+  // its digit form counts as correct too.
+  const digit = NUMBER_WORD_TO_DIGIT[nt];
+  if(digit && ns.replace(/[^\d]/g,'') === digit) return true;
+  return false;
 }
 function keywordMatch(said, keywordSets){
   const n = normalize(said);
