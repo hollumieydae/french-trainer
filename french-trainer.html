@@ -177,6 +177,7 @@ select{
   <button data-tab="vocab"><span class="ic">🔤</span>Vocab</button>
   <button data-tab="verbs"><span class="ic">🔁</span>Verbs</button>
   <button data-tab="sentences"><span class="ic">✍️</span>Sentences</button>
+  <button data-tab="reading"><span class="ic">📖</span>Read</button>
   <button data-tab="conversation"><span class="ic">💬</span>Talk</button>
   <button data-tab="writing"><span class="ic">📝</span>Write</button>
   <button data-tab="add"><span class="ic">➕</span>Add</button>
@@ -1652,6 +1653,7 @@ function render(){
   else if(currentTab === 'sentences') renderSentences(main, nav);
   else if(currentTab === 'conversation') renderConversation(main, nav);
   else if(currentTab === 'writing') renderWriting(main, nav);
+  else if(currentTab === 'reading') renderReading(main, nav);
   else if(currentTab === 'add') renderAdd(main, nav);
 }
 
@@ -2595,6 +2597,136 @@ async function checkGrammar(text){
   });
   if(!res.ok) throw new Error('LanguageTool request failed');
   return res.json();
+}
+
+/* ---------- Reading Comprehension (Compréhension Écrite) ----------
+   TCF Canada CE is 40 MCQs, 60 min, backloaded scoring (later questions worth up
+   to 11x more than early ones) — CLB 7 needs 453-498/699. Real format at A1 per
+   the CEFR descriptor: notices, simple messages, ads, timetables, menus. Unlike
+   writing, MCQ correctness is fully automatable — no LanguageTool-style limit here. */
+const READING_PASSAGES = [
+  { lvl:'A1', type:'Avis (Notice)', text:"Ouvert du lundi au vendredi, de 9h à 18h. Fermé le dimanche.",
+    questions:[
+      { q:"Quand est-ce que le magasin est fermé ?", options:["Le lundi","Le dimanche","Le vendredi"], correct:1 }
+    ]},
+  { lvl:'A1', type:'Message', text:"Bonjour, je suis en retard. J'arrive dans dix minutes. À bientôt, Marie.",
+    questions:[
+      { q:"Qui a écrit ce message ?", options:["Un professeur","Marie","Un médecin"], correct:1 },
+      { q:"Marie est en retard de combien de temps ?", options:["Dix minutes","Une heure","Trente minutes"], correct:0 }
+    ]},
+  { lvl:'A1', type:'Publicité (Ad)', text:"Grande vente ! Tous les vêtements à moins cinquante pour cent. Du premier au quinze juin.",
+    questions:[
+      { q:"Qu'est-ce qui est en solde ?", options:["Les livres","Les vêtements","Les meubles"], correct:1 }
+    ]},
+  { lvl:'A1', type:'Texte quotidien', text:"Chaque matin, je me lève à sept heures. Je bois du café et je vais au travail à huit heures. Le soir, je rentre à dix-huit heures.",
+    questions:[
+      { q:"À quelle heure est-ce que la personne va au travail ?", options:["Sept heures","Huit heures","Dix-huit heures"], correct:1 }
+    ]},
+  { lvl:'A1', type:'Lettre personnelle', text:"Chère Amina, merci pour ton invitation. Je suis désolé, mais je ne peux pas venir samedi. Je dois travailler. À bientôt, Paul.",
+    questions:[
+      { q:"Pourquoi Paul ne peut pas venir ?", options:["Il est malade","Il doit travailler","Il est en vacances"], correct:1 }
+    ]},
+  { lvl:'A1', type:'Horaire (Timetable)', text:"Le train pour Lyon part à quatorze heures vingt et arrive à seize heures quarante-cinq. Le prochain train est à dix-sept heures.",
+    questions:[
+      { q:"À quelle heure arrive le train à Lyon ?", options:["14h20","16h45","17h00"], correct:1 }
+    ]},
+  { lvl:'A1', type:'Menu', text:"Menu du jour : salade verte, poulet avec riz, et une pomme. Prix : douze euros.",
+    questions:[
+      { q:"Qu'est-ce qu'il y a dans le menu principal ?", options:["Poisson et pain","Poulet et riz","Pizza"], correct:1 }
+    ]},
+  { lvl:'A1', type:'Avis (Notice)', text:"Nous organisons une fête pour l'anniversaire de notre fille samedi prochain à quinze heures, chez nous. Apportez vos enfants !",
+    questions:[
+      { q:"Qu'est-ce qu'on célèbre ?", options:["Un mariage","Un anniversaire","Une réunion"], correct:1 }
+    ]},
+];
+function loadReadingLog(){
+  try{ return JSON.parse(localStorage.getItem('frt_reading')||'{}'); }catch(e){ return {}; }
+}
+function saveReadingLog(l){ try{ localStorage.setItem('frt_reading', JSON.stringify(l)); }catch(e){} scheduleFileBackup(); }
+let readingLog = loadReadingLog();
+let readingIdx = 0;
+
+function renderReading(main, nav){
+  nav.innerHTML = '';
+  main.innerHTML = '';
+
+  const solvedCount = READING_PASSAGES.filter((p,i)=>readingLog[i]).length;
+  const infoCard = document.createElement('div');
+  infoCard.className = 'card';
+  infoCard.innerHTML = `
+    <p class="item-en" style="margin-bottom:4px;">Compréhension Écrite — Reading</p>
+    <p class="small" style="margin-bottom:6px;">
+      The real exam: 40 MCQs, 60 minutes, CLB 7 needs 453–498/699. The scoring is
+      backloaded — later questions are worth up to 11x more than early ones, so real
+      comprehension matters more than speed on easy items. These passages match the
+      real A1 format: notices, messages, ads, timetables, menus.
+    </p>
+    <p class="small">${solvedCount} of ${READING_PASSAGES.length} passages completed.</p>
+  `;
+  main.appendChild(infoCard);
+
+  if(readingIdx >= READING_PASSAGES.length) readingIdx = 0;
+  const p = READING_PASSAGES[readingIdx];
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="pill">${p.type}</div>
+    <div class="progress-line" style="margin-top:8px;">Passage ${readingIdx+1} of ${READING_PASSAGES.length}${readingLog[readingIdx] ? ' · ✅ done' : ''}</div>
+    <p class="item-fr" style="font-size:1.05rem; line-height:1.5;">${p.text}</p>
+  `;
+
+  const answers = new Array(p.questions.length).fill(null);
+  p.questions.forEach((q, qi)=>{
+    const qDiv = document.createElement('div');
+    qDiv.style.marginTop = '14px';
+    qDiv.innerHTML = `<p class="small" style="font-weight:600; color:var(--ink);">${q.q}</p>`;
+    q.options.forEach((opt, oi)=>{
+      const optBtn = document.createElement('button');
+      optBtn.className = 'action btn-ghost';
+      optBtn.style.display = 'block';
+      optBtn.style.width = '100%';
+      optBtn.style.textAlign = 'left';
+      optBtn.style.marginTop = '4px';
+      optBtn.textContent = opt;
+      optBtn.onclick = ()=>{
+        answers[qi] = oi;
+        qDiv.querySelectorAll('button').forEach(b=>b.style.background='');
+        optBtn.style.background = 'var(--chip)';
+      };
+      qDiv.appendChild(optBtn);
+    });
+    card.appendChild(qDiv);
+  });
+
+  const resultBox = document.createElement('div');
+  resultBox.style.marginTop = '14px';
+
+  const checkBtn = document.createElement('button');
+  checkBtn.className = 'action btn-mic';
+  checkBtn.style.marginTop = '14px';
+  checkBtn.textContent = 'Check answers';
+  checkBtn.onclick = ()=>{
+    if(answers.some(a=>a===null)){ resultBox.innerHTML = '<p class="small">Answer every question first.</p>'; return; }
+    const correct = answers.filter((a,i)=>a===p.questions[i].correct).length;
+    const allRight = correct === p.questions.length;
+    resultBox.className = allRight ? 'feedback good' : 'feedback bad';
+    resultBox.innerHTML = (allRight ? '✅ ' : '') + correct + '/' + p.questions.length + ' correct.';
+    if(allRight){ readingLog[readingIdx] = true; saveReadingLog(readingLog); }
+  };
+  card.appendChild(checkBtn);
+  card.appendChild(resultBox);
+
+  const nextRow = document.createElement('div');
+  nextRow.className = 'btn-row';
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'action btn-ghost';
+  nextBtn.textContent = 'Next passage →';
+  nextBtn.onclick = ()=>{ readingIdx = (readingIdx+1) % READING_PASSAGES.length; render(); };
+  nextRow.appendChild(nextBtn);
+  card.appendChild(nextRow);
+
+  main.appendChild(card);
 }
 
 function renderWriting(main, nav){
