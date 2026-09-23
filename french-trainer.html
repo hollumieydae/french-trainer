@@ -221,16 +221,18 @@ function hasFrenchVoice(){
 const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognizer = null;
 let recognizing = false;
-function getRecognizer(onResult, onEnd){
+function getRecognizer(onResult, onEnd, onInterim){
   if(!SpeechRecognitionAPI) return null;
   const r = new SpeechRecognitionAPI();
   r.lang = 'fr-FR';
-  r.interimResults = false;
+  r.interimResults = true;
   r.maxAlternatives = 3;
   r.onresult = (e)=>{
+    const result = e.results[e.results.length-1];
     const alts = [];
-    for(let i=0;i<e.results[0].length;i++){ alts.push(e.results[0][i].transcript); }
-    onResult(alts);
+    for(let i=0;i<result.length;i++){ alts.push(result[i].transcript); }
+    if(result.isFinal){ onResult(alts); }
+    else if(onInterim){ onInterim(alts); }
   };
   r.onerror = (e)=>{ recognizing=false; if(onEnd) onEnd(e.error || 'error'); };
   return r;
@@ -1816,7 +1818,8 @@ function practiceWidget(targetText, onCorrect, opts){
     micBtn.classList.add('listening');
     micBtn.innerHTML = '🔴 Listening...';
     let handledThisAttempt = false;
-    const rec = getRecognizer((alts)=>{
+    let lastInterimAlts = null;
+    function handleRecognitionResult(alts){
       handledThisAttempt = true;
       if(cancelled) return;
       const said = alts[0] || '';
@@ -1843,7 +1846,8 @@ function practiceWidget(targetText, onCorrect, opts){
       } else {
         handleMiss('You said: "' + said + '"');
       }
-    }, (err)=>{
+    }
+    const rec = getRecognizer(handleRecognitionResult, (err)=>{
       handledThisAttempt = true;
       micBtn.classList.remove('listening');
       micBtn.innerHTML = '🎤 Say it';
@@ -1862,7 +1866,7 @@ function practiceWidget(targetText, onCorrect, opts){
           ? "Didn't catch any speech that attempt — tap 🎤 and speak immediately, a little louder/closer to the mic."
           : "Couldn't hear you clearly that attempt — try again.");
       }
-    });
+    }, (alts)=>{ lastInterimAlts = alts; });
     if(!rec){ recognizing=false; return; }
     recognizer = rec;
     try{ rec.start(); }catch(e){ recognizing=false; }
@@ -1872,10 +1876,16 @@ function practiceWidget(targetText, onCorrect, opts){
       micBtn.classList.remove('listening');
       micBtn.innerHTML = '🎤 Say it';
       if(!handledThisAttempt){
-        // Recognition ended with no result AND no error at all — very short words
-        // like "mai" or "vingt" can end this way. Treat it as a genuine failed
-        // attempt so it's never silently invisible to the pending/override system.
-        handleMiss("Didn't catch any speech that attempt — tap 🎤 and speak immediately, a little louder/closer to the mic.");
+        if(lastInterimAlts && lastInterimAlts.length){
+          // Very short words (mai, août, vingt...) often never produce a
+          // finalized result before the recognizer gives up — but they do
+          // produce an interim guess along the way. Use it rather than
+          // discarding a perfectly usable attempt as "no speech caught".
+          handleRecognitionResult(lastInterimAlts);
+        } else {
+          // Genuinely nothing was heard, not even a low-confidence guess.
+          handleMiss("Didn't catch any speech that attempt — tap 🎤 and speak immediately, a little louder/closer to the mic.");
+        }
       }
     };
   };
