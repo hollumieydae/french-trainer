@@ -178,6 +178,7 @@ select{
   <button data-tab="verbs"><span class="ic">🔁</span>Verbs</button>
   <button data-tab="sentences"><span class="ic">✍️</span>Sentences</button>
   <button data-tab="conversation"><span class="ic">💬</span>Talk</button>
+  <button data-tab="writing"><span class="ic">📝</span>Write</button>
   <button data-tab="add"><span class="ic">➕</span>Add</button>
 </div>
 
@@ -1060,7 +1061,7 @@ const CONVERSATION = {
   tcf: {
     label: "TCF Canada",
     tasks: [
-      { title:"Task 1 — Guided Interview", desc:"Examiner asks simple personal questions. Answer in full sentences, don't just say one word.",
+      { title:"Task 1 — Guided Interview (1–2 min)", desc:"Examiner asks simple personal questions. Answer in full sentences, don't just say one word. Real timing: 1–2 minutes total.",
         prompts:[
           {fr:"Comment vous appelez-vous ?", en:"What is your name?",
             keywords:[["je m appelle"],["mon nom est"]],
@@ -1078,7 +1079,7 @@ const CONVERSATION = {
             keywords:[["j aime"],["mon loisir"]],
             model:"J'aime écouter de la musique et regarder le football." },
         ]},
-      { title:"Task 2 — Interaction", desc:"You must negotiate or resolve a problem. React and adapt.",
+      { title:"Task 2 — Interaction (2–3 min)", desc:"You must negotiate or resolve a problem, or ask a series of questions in a role-play. Real timing: 2–3 minutes. React naturally with Entendu / D'accord / C'est noté / Parfait / Bien sûr — and always close with a thank-you line like \"Merci beaucoup pour ces informations, cela va vraiment m'aider.\"",
         prompts:[
           {fr:"Vous avez réservé une chambre d'hôtel mais elle est déjà occupée à votre arrivée. Que dites-vous à la réception ?",
            en:"You booked a hotel room but it's already occupied when you arrive. What do you say at reception?",
@@ -1088,7 +1089,7 @@ const CONVERSATION = {
             keywords:[["mon vol"],["annule"],["que puis je faire"]],
             model:"Bonjour, mon vol est annulé. Quelles sont mes options pour un autre vol aujourd'hui ?" },
         ]},
-      { title:"Task 3 — Express an Opinion", desc:"Present a clear opinion with arguments, then defend it when challenged.",
+      { title:"Task 3 — Express an Opinion (4–5 min)", desc:"Present a clear opinion with arguments, then defend it when challenged. Real timing: 4–5 minutes — the longest task. If the topic is unclear, it's fine to ask: \"Est-ce que vous pouvez me donner un petit contexte par rapport au sujet ?\" Structure: intro → your view + 2-3 examples → opposing view + counter → short conclusion.",
         prompts:[
           {fr:"Pensez-vous que le télétravail est bénéfique pour les employés ?", en:"Do you think remote work is beneficial for employees?",
             keywords:[["a mon avis"],["je pense que"]],
@@ -1650,6 +1651,7 @@ function render(){
   else if(currentTab === 'verbs') renderVerbs(main, nav);
   else if(currentTab === 'sentences') renderSentences(main, nav);
   else if(currentTab === 'conversation') renderConversation(main, nav);
+  else if(currentTab === 'writing') renderWriting(main, nav);
   else if(currentTab === 'add') renderAdd(main, nav);
 }
 
@@ -2552,6 +2554,109 @@ function renderSentences(main, nav){
 }
 
 /* ---------- Conversation tab ---------- */
+/* ---------- Writing (Expression Écrite) ----------
+   No auto-grading is possible here — unlike pronunciation, checking written
+   French grammar/coherence needs real language understanding, which this
+   static site has no backend to provide. This is self-comparison practice:
+   write, then compare against a model built from vocabulary already in the app. */
+const WRITING_WARMUPS_A1 = [
+  { prompt: "Write 3–5 sentences introducing yourself: your name, nationality, family, and job.",
+    model: "Je m'appelle Olu. J'ai trente ans. Je suis nigérian. Je suis marié. Mon père est médecin.",
+    modelEn: "My name is Olu. I am thirty years old. I am Nigerian. I am married. My father is a doctor." },
+  { prompt: "Describe your house — which rooms does it have?",
+    model: "J'habite dans un appartement. Il y a une chambre, une cuisine, un salon et une salle de bain.",
+    modelEn: "I live in an apartment. There is a bedroom, a kitchen, a living room, and a bathroom." },
+  { prompt: "Write about your daily routine — when you wake up, work, and go to bed.",
+    model: "Je me lève à sept heures. Je travaille du lundi au vendredi. Je me couche à dix heures.",
+    modelEn: "I get up at seven o'clock. I work from Monday to Friday. I go to bed at ten o'clock." },
+  { prompt: "Describe your family in a few sentences.",
+    model: "Nous sommes une petite famille. J'ai deux frères et une sœur. Ma mère est infirmière.",
+    modelEn: "We are a small family. I have two brothers and one sister. My mother is a nurse." },
+];
+function loadWritingLog(){
+  try{ return JSON.parse(localStorage.getItem('frt_writing')||'{}'); }catch(e){ return {}; }
+}
+function saveWritingLog(l){ try{ localStorage.setItem('frt_writing', JSON.stringify(l)); }catch(e){} scheduleFileBackup(); }
+let writingLog = loadWritingLog();
+let writingIdx = 0;
+
+function renderWriting(main, nav){
+  nav.innerHTML = '';
+  main.innerHTML = '';
+
+  const infoCard = document.createElement('div');
+  infoCard.className = 'card';
+  infoCard.innerHTML = `
+    <p class="item-en" style="margin-bottom:4px;">Expression Écrite — Writing</p>
+    <p class="small" style="margin-bottom:10px;">
+      The real exam has 3 writing tasks (60 min total): a short message (80–120 words),
+      an article/opinion (120–150 words), and an argumentative essay comparing two documents
+      (180–220 words). Those are genuinely B1+ tasks — the warm-ups below are simplified A1
+      versions using words and sentences you've already learned.
+    </p>
+    <p class="small">
+      No auto-grading here — write your own version, then compare against the model.
+      That comparison <i>is</i> the practice.
+    </p>
+  `;
+  main.appendChild(infoCard);
+
+  if(writingIdx >= WRITING_WARMUPS_A1.length) writingIdx = 0;
+  const item = WRITING_WARMUPS_A1[writingIdx];
+  const practiced = !!writingLog[writingIdx];
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="progress-line">Warm-up ${writingIdx+1} of ${WRITING_WARMUPS_A1.length}${practiced ? ' · ✅ practiced' : ''}</div>
+    <p class="item-en" style="font-size:1rem; margin-bottom:10px;">${item.prompt}</p>
+  `;
+
+  const textarea = document.createElement('textarea');
+  textarea.rows = 5;
+  textarea.placeholder = 'Write your response in French here...';
+  card.appendChild(textarea);
+
+  const btnRow = document.createElement('div');
+  btnRow.className = 'btn-row';
+
+  const modelBtn = document.createElement('button');
+  modelBtn.className = 'action btn-ghost';
+  modelBtn.textContent = 'Show model example';
+  const modelBox = document.createElement('div');
+  modelBox.className = 'model-answer';
+  modelBox.innerHTML = `<b>${item.model}</b><br><span class="small">${item.modelEn}</span>`;
+  modelBtn.onclick = ()=>{
+    modelBox.classList.toggle('show');
+    if(modelBox.classList.contains('show')) speak(item.model);
+  };
+  btnRow.appendChild(modelBtn);
+
+  const doneBtn = document.createElement('button');
+  doneBtn.className = 'action btn-next';
+  doneBtn.textContent = practiced ? '✅ Practiced' : 'Mark as practiced';
+  doneBtn.onclick = ()=>{
+    writingLog[writingIdx] = true;
+    saveWritingLog(writingLog);
+    render();
+  };
+  btnRow.appendChild(doneBtn);
+
+  card.appendChild(btnRow);
+  card.appendChild(modelBox);
+
+  const nextRow = document.createElement('div');
+  nextRow.className = 'btn-row';
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'action btn-ghost';
+  nextBtn.textContent = 'Next prompt →';
+  nextBtn.onclick = ()=>{ writingIdx = (writingIdx+1) % WRITING_WARMUPS_A1.length; render(); };
+  nextRow.appendChild(nextBtn);
+  card.appendChild(nextRow);
+
+  main.appendChild(card);
+}
+
 function renderConversation(main, nav){
   nav.innerHTML = '';
   if(!conversationUnlocked()){
