@@ -2580,6 +2580,23 @@ function saveWritingLog(l){ try{ localStorage.setItem('frt_writing', JSON.string
 let writingLog = loadWritingLog();
 let writingIdx = 0;
 
+/* ---------- Real grammar checking via LanguageTool's public API ----------
+   https://api.languagetool.org/v2/check — free, no key needed, French supported,
+   genuinely callable from a static site (confirmed: the whole ecosystem of browser
+   extensions built on it relies on cross-origin calls to this exact endpoint).
+   This covers the "correction de la langue" criterion officially used by TCF/TEF
+   correctors. It cannot judge task fulfillment, structure, or vocabulary register —
+   those three still need self/tutor judgment, covered by the checklist below. */
+async function checkGrammar(text){
+  const res = await fetch('https://api.languagetool.org/v2/check', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'text=' + encodeURIComponent(text) + '&language=fr'
+  });
+  if(!res.ok) throw new Error('LanguageTool request failed');
+  return res.json();
+}
+
 function renderWriting(main, nav){
   nav.innerHTML = '';
   main.innerHTML = '';
@@ -2589,14 +2606,17 @@ function renderWriting(main, nav){
   infoCard.innerHTML = `
     <p class="item-en" style="margin-bottom:4px;">Expression Écrite — Writing</p>
     <p class="small" style="margin-bottom:10px;">
-      The real exam has 3 writing tasks (60 min total): a short message (80–120 words),
-      an article/opinion (120–150 words), and an argumentative essay comparing two documents
-      (180–220 words). Those are genuinely B1+ tasks — the warm-ups below are simplified A1
-      versions using words and sentences you've already learned.
+      The real exam has 3 writing tasks (60 min total, word counts vary slightly by
+      source: roughly 80–120 / 120–150 / 180–220 words). Official correctors (trained
+      by France Éducation International) grade on 4 criteria: <b>adéquation</b> (did you
+      answer the prompt), <b>structure</b>, <b>lexique</b> (vocabulary), and
+      <b>correction de la langue</b> (grammar accuracy). Target for NCLC 7 (your CLB 7
+      goal) is roughly 10–11/20.
     </p>
     <p class="small">
-      No auto-grading here — write your own version, then compare against the model.
-      That comparison <i>is</i> the practice.
+      The warm-ups below are simplified A1 versions using words you've already learned.
+      "Check grammar" below gives real automated feedback on the <i>correction de la
+      langue</i> criterion — the other three still need your own judgment (checklist below).
     </p>
   `;
   main.appendChild(infoCard);
@@ -2617,8 +2637,51 @@ function renderWriting(main, nav){
   textarea.placeholder = 'Write your response in French here...';
   card.appendChild(textarea);
 
+  const wordCount = document.createElement('p');
+  wordCount.className = 'small';
+  wordCount.style.marginTop = '2px';
+  wordCount.textContent = '0 words';
+  textarea.addEventListener('input', ()=>{
+    const n = textarea.value.trim().split(/\s+/).filter(Boolean).length;
+    wordCount.textContent = n + ' words';
+  });
+  card.appendChild(wordCount);
+
   const btnRow = document.createElement('div');
   btnRow.className = 'btn-row';
+
+  const grammarBtn = document.createElement('button');
+  grammarBtn.className = 'action btn-mic';
+  grammarBtn.textContent = '✓ Check grammar';
+  const grammarResults = document.createElement('div');
+  grammarResults.style.marginTop = '10px';
+  grammarBtn.onclick = async ()=>{
+    if(!textarea.value.trim()){ grammarResults.innerHTML = '<p class="small">Write something first.</p>'; return; }
+    grammarBtn.disabled = true;
+    grammarBtn.textContent = 'Checking...';
+    grammarResults.innerHTML = '';
+    try{
+      const data = await checkGrammar(textarea.value);
+      if(!data.matches || data.matches.length === 0){
+        grammarResults.innerHTML = '<div class="feedback good">✅ No grammar or spelling issues found!</div>';
+      } else {
+        grammarResults.innerHTML = data.matches.map(m => {
+          const snippet = m.context ? m.context.text.slice(Math.max(0,m.context.offset-15), m.context.offset+m.context.length+15) : '';
+          const suggestions = (m.replacements||[]).slice(0,3).map(r=>r.value).join(', ');
+          return '<div class="feedback bad" style="margin-bottom:8px;">' +
+            '❌ ' + m.message +
+            (snippet ? '<div class="heard">"...' + snippet + '..."</div>' : '') +
+            (suggestions ? '<div class="heard">Suggestion: <b>' + suggestions + '</b></div>' : '') +
+            '</div>';
+        }).join('');
+      }
+    }catch(e){
+      grammarResults.innerHTML = '<p class="small">⚠️ Could not reach the grammar checker (it\'s a free public service — try again in a moment).</p>';
+    }
+    grammarBtn.disabled = false;
+    grammarBtn.textContent = '✓ Check grammar';
+  };
+  btnRow.appendChild(grammarBtn);
 
   const modelBtn = document.createElement('button');
   modelBtn.className = 'action btn-ghost';
@@ -2643,7 +2706,18 @@ function renderWriting(main, nav){
   btnRow.appendChild(doneBtn);
 
   card.appendChild(btnRow);
+  card.appendChild(grammarResults);
   card.appendChild(modelBox);
+
+  const checklistCard = document.createElement('div');
+  checklistCard.className = 'card';
+  checklistCard.innerHTML = `
+    <p class="item-en" style="margin-bottom:6px; font-size:0.95rem;">Self-check: the other 3 official criteria</p>
+    <p class="small">☐ <b>Adéquation</b> — did I actually answer what was asked?</p>
+    <p class="small">☐ <b>Structure</b> — clear beginning, middle, end (or greeting → point → close)?</p>
+    <p class="small">☐ <b>Lexique</b> — did I use varied, appropriate vocabulary, not just repeat the same 3 words?</p>
+  `;
+  card.appendChild(checklistCard);
 
   const nextRow = document.createElement('div');
   nextRow.className = 'btn-row';
