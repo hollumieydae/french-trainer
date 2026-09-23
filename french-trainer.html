@@ -927,6 +927,16 @@ const VOCAB = [
   {cat:"Adjectifs", fr:"droit", en:"straight/right (adj.)", p:"drwah", lvl:"A1"},
   {cat:"Idées", fr:"le droit", en:"law / a right", p:"luh drwah", lvl:"A1"},
   {cat:"Mois", fr:"mars", en:"March", p:"mars", lvl:"A1"},
+  {cat:"Ville", fr:"la bibliothèque", en:"library", p:"lah bee-blee-oh-tek", lvl:"A1"},
+  {cat:"Ville", fr:"le palais de justice", en:"courthouse", p:"luh pah-leh duh zhew-stees", lvl:"A1"},
+  {cat:"Ville", fr:"la librairie", en:"bookstore", p:"lah lee-brer-ee", lvl:"A1"},
+  {cat:"Ville", fr:"la boutique", en:"shop/boutique", p:"lah boo-teek", lvl:"A1"},
+  {cat:"Ville", fr:"la boîte de nuit", en:"nightclub", p:"lah bwaht duh nwee", lvl:"A1"},
+  {cat:"Ville", fr:"la gare routière", en:"bus station", p:"lah gar roo-tyair", lvl:"A1"},
+  {cat:"Ville", fr:"le salon de beauté", en:"beauty salon", p:"luh sah-lohn duh boh-tay", lvl:"A1"},
+  {cat:"Expressions", fr:"désolé", en:"sorry", p:"day-zoh-lay", lvl:"A1"},
+  {cat:"Ville", fr:"la mosquée", en:"mosque", p:"lah mos-kay", lvl:"A1"},
+  {cat:"Idées", fr:"l'environnement", en:"environment", p:"lahn-vee-rohn-mahn", lvl:"A1"},
 ];
 
 const VERBS = [
@@ -939,6 +949,10 @@ const VERBS = [
   {inf:"aller", en:"to go", irregular:true,
     present:{je:"vais",tu:"vas",il:"va",nous:"allons",vous:"allez",ils:"vont"},
     imperative:{tu:"Va",nous:"Allons",vous:"Allez"}},
+  {inf:"vouloir", en:"to want", irregular:true,
+    present:{je:"veux",tu:"veux",il:"veut",nous:"voulons",vous:"voulez",ils:"veulent"},
+    pc:{je:"ai voulu",tu:"as voulu",il:"a voulu",nous:"avons voulu",vous:"avez voulu",ils:"ont voulu"},
+    imperative:{tu:"Veuille",nous:"Veuillons",vous:"Veuillez"}},
   {inf:"chanter", en:"to sing",
     present:{je:"chante",tu:"chantes",il:"chante",nous:"chantons",vous:"chantez",ils:"chantent"},
     pc:{je:"ai chanté",tu:"as chanté",il:"a chanté",nous:"avons chanté",vous:"avez chanté",ils:"ont chanté"},
@@ -976,7 +990,7 @@ const ALLER_PRESENT = {je:"vais",tu:"vas",il:"va",nous:"allons",vous:"allez",ils
 // everything else, including avoir/aller, follows the regular rule even though
 // they're irregular in présent tense.
 const IMPARFAIT_ENDINGS = {je:"ais",tu:"ais",il:"ait",nous:"ions",vous:"iez",ils:"aient"};
-const IMPARFAIT_IRREGULAR_STEMS = {"être":"ét","avoir":"av","aller":"all"};
+const IMPARFAIT_IRREGULAR_STEMS = {"être":"ét","avoir":"av","aller":"all","vouloir":"voul"};
 function imparfaitStem(verb){
   return IMPARFAIT_IRREGULAR_STEMS[verb.inf] || verb.inf.replace(/er$/,'');
 }
@@ -1076,6 +1090,8 @@ const SENTENCES = [
   {fr:"Où habites-tu ?", en:"Where do you live?", p:"oo ah-beet tew", lvl:"A1"},
   {fr:"Est-ce que vous aimez le café ?", en:"Do you like coffee?", p:"es-kuh voo zay-may luh kah-fay", lvl:"A1"},
   {fr:"Quel âge as-tu ?", en:"How old are you?", p:"kel ahzh ah tew", lvl:"A1"},
+  {fr:"Je vais à la banque.", en:"I'm going to the bank.", p:"zhuh vay ah lah bahnk", lvl:"A1"},
+  {fr:"Je vais au marché.", en:"I'm going to the market.", p:"zhuh vay oh mar-shay", lvl:"A1"},
 ];
 
 const CONVERSATION = {
