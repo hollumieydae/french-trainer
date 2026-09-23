@@ -263,8 +263,28 @@ const NUMBER_WORD_TO_DIGIT = {
   "cent":"100","deux-cents":"200","mille":"1000","dix-mille":"10000","cent-mille":"100000",
   "un million":"1000000","un milliard":"1000000000",
 };
+// Speech recognition occasionally transcribes a correctly-said word or phrase
+// as an exact repeat of itself (e.g. "jeudi" heard as "jeudi jeudi") — a
+// transcription artifact, not a wrong answer. Collapse an exact whole-string
+// repetition down to one copy before matching, so a real correct answer
+// doesn't fail just because the recognizer echoed it.
+function collapseRepeatedTranscript(s){
+  const words = s.split(' ').filter(Boolean);
+  for(let n=1; n<=words.length/2; n++){
+    if(words.length % n !== 0) continue;
+    const chunk = words.slice(0,n).join(' ');
+    let allMatch = true;
+    for(let i=n; i<words.length; i+=n){
+      if(words.slice(i,i+n).join(' ') !== chunk){ allMatch=false; break; }
+    }
+    if(allMatch) return chunk;
+  }
+  return s;
+}
 function isMatch(target, said){
-  const nt = normalize(target), ns = normalize(said);
+  const nt = normalize(target);
+  let ns = normalize(said);
+  ns = collapseRepeatedTranscript(ns);
   if(nt === ns) return true;
   // Small tolerance, scaled to length — catches homophones (mère/mer) and minor
   // speech-recognition transcription quirks without accepting genuinely different words.
