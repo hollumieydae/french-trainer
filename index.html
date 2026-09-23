@@ -177,9 +177,7 @@ select{
   <button data-tab="vocab"><span class="ic">🔤</span>Vocab</button>
   <button data-tab="verbs"><span class="ic">🔁</span>Verbs</button>
   <button data-tab="sentences"><span class="ic">✍️</span>Sentences</button>
-  <button data-tab="reading"><span class="ic">📖</span>Read</button>
-  <button data-tab="conversation"><span class="ic">💬</span>Talk</button>
-  <button data-tab="writing"><span class="ic">📝</span>Write</button>
+  <button data-tab="examprep"><span class="ic">🎯</span>Exam</button>
   <button data-tab="add"><span class="ic">➕</span>Add</button>
 </div>
 
@@ -970,6 +968,25 @@ const SUBJECTS = {je:"Je",tu:"Tu",il:"Il",nous:"Nous",vous:"Vous",ils:"Ils"};
 // Futur proche = aller (conjugated) + infinitive — a formula, not something to
 // hand-write per verb. DELF A1 requires this tense alongside présent.
 const ALLER_PRESENT = {je:"vais",tu:"vas",il:"va",nous:"allons",vous:"allez",ils:"vont"};
+// Imparfait: for regular -ER verbs, stem = infinitive minus "-er" (same stem
+// used for présent). être is the ONE true irregular stem in French grammar —
+// everything else, including avoir/aller, follows the regular rule even though
+// they're irregular in présent tense.
+const IMPARFAIT_ENDINGS = {je:"ais",tu:"ais",il:"ait",nous:"ions",vous:"iez",ils:"aient"};
+const IMPARFAIT_IRREGULAR_STEMS = {"être":"ét","avoir":"av","aller":"all"};
+function imparfaitStem(verb){
+  return IMPARFAIT_IRREGULAR_STEMS[verb.inf] || verb.inf.replace(/er$/,'');
+}
+// -ger verbs (manger, etc.) keep the "e" before an ending that starts with "a"
+// or "o" to preserve the soft-g sound — mangeais, not mangais — but not before
+// "ions"/"iez", where the following "i" already softens it. A real, well-
+// established French spelling rule the plain stem-strip formula was missing.
+function imparfaitForm(verb, subj){
+  const stem = imparfaitStem(verb);
+  const ending = IMPARFAIT_ENDINGS[subj];
+  const needsSoftE = /ger$/.test(verb.inf) && /^[ao]/.test(ending);
+  return stem + (needsSoftE ? 'e' : '') + ending;
+}
 // Imperative never shows a subject pronoun — that's the whole grammatical
 // point of a command. Every other tense does. This is the one place that
 // distinction has to be handled, since everything else assumes 6 subject forms.
@@ -1278,7 +1295,17 @@ async function tryRestoreLinkedFile(){
    Box 0: due immediately (new/failed)  Box 1: +1 day  Box 2: +3 days
    Box 3: +7 days  Box 4: +14 days  Box 5: +30 days (mastered)
    A wrong answer always drops back to box 0 (immediate re-review). */
-const SRS_INTERVALS_DAYS = [0, 1, 3, 7, 14, 30];
+/* ---------- Spaced repetition (research-based intervals) ----------
+   Real SM-2/FSRS (the algorithms behind Anki) keep growing intervals well past
+   30 days for well-established memories — sequences like 1,3,7,14,30,60,120
+   days. Plateauing at 30 days forever, as an earlier version of this did,
+   over-reviews mature words and wastes daily capacity that should go toward
+   newer material still being consolidated.
+   Box 0: due immediately (new/failed)  Box 1: +1 day  Box 2: +3 days
+   Box 3: +7 days  Box 4: +14 days  Box 5: +30 days  Box 6: +60 days
+   Box 7: +120 days (genuinely long-term secure)
+   A wrong answer always drops back to box 0 (immediate re-review). */
+const SRS_INTERVALS_DAYS = [0, 1, 3, 7, 14, 30, 60, 120];
 const MS_DAY = 24*60*60*1000;
 
 function loadProgress(){
@@ -1429,6 +1456,14 @@ function getAllItems(){
         items.push({key:'verb:'+verb.inf+':imperatif:'+subj, fr:full, en:imperativeMeaning(verb, subj), source:'Verbes', lvl:'A1', reverse:false});
       });
     }
+    // Imparfait (A2) — formula-generated from the infinitive stem for every verb.
+    {
+      Object.keys(IMPARFAIT_ENDINGS).forEach(subj=>{
+        const form = imparfaitForm(verb, subj);
+        const full = conjugatedDisplay(subj, form, 'imparfait');
+        items.push({key:'verb:'+verb.inf+':imparfait:'+subj, fr:full, en:'was '+verb.en.replace(/^to /,'')+'ing ('+SUBJECTS[subj]+')', source:'Verbes', lvl:'A2', reverse:false});
+      });
+    }
   });
   const CONV_TASK_LEVELS = { 'tcf:0':'A2', 'tcf:1':'B1', 'tcf:2':'B1', 'tef:0':'A2', 'tef:1':'B1' };
   Object.keys(CONVERSATION).forEach(examKey=>{
@@ -1465,7 +1500,32 @@ function buildDailyPlan(){
   if(stage3Due.length > 0) return { phase:'stage3', queue: stage3Due.slice(0,20), counts };
   if(stage2Due.length > 0) return { phase:'stage2', queue: stage2Due.slice(0,20), counts };
   if(sentDue.length   > 0) return { phase:'sentences', queue: sentDue.slice(0,5), counts };
-  if(stage1Due.length > 0) return { phase:'stage1', queue: stage1Due.slice(0,20), counts };
+  if(stage1Due.length > 0){
+    // Research-grounded throttle: cramming more new words than your review
+    // capacity can sustain measurably hurts long-term retention (10/day with
+    // full spacing beats 50/day cramming — penguen.io citing Webb 2007 & Nation
+    // 2006), even though it feels like faster progress. Only truly first-time
+    // words get throttled — words already due for a scheduled repeat review
+    // (already in the pipeline) are never held back.
+    // Research-grounded throttle: cramming more new words than your review
+    // capacity can sustain measurably hurts long-term retention. Nakata (2015,
+    // Studies in Second Language Acquisition) found ~15 new items/session
+    // retained 73% a week later vs. only 42% at ~40/session — a real, measured
+    // ceiling, not a guess. Only truly first-time words get throttled — words
+    // already due for a scheduled repeat review are never held back.
+    const isNew = i => { const p = getItemProgress(i.key); return p.box===0 && p.missStreak===0; };
+    const stage1New = stage1Due.filter(isNew);
+    const stage1Review = stage1Due.filter(i=>!isNew(i));
+    const wordsInProgress = allVocab().filter(v=>{
+      const f=getItemProgress('vocab:'+v.fr).box, r=getItemProgress('vocab:rev:'+v.fr).box, t=getItemProgress('vocab:test:'+v.fr).box;
+      return (f>0||r>0||t>0) && !(f>=2&&r>=2&&t>=2);
+    }).length;
+    let newCap = 15;
+    if(wordsInProgress > 200) newCap = 7;
+    else if(wordsInProgress > 100) newCap = 10;
+    const cappedQueue = stage1Review.concat(stage1New.slice(0, newCap)).slice(0,20);
+    return { phase:'stage1', queue: cappedQueue, counts, newWordCap: newCap, wordsInProgress };
+  }
 
   // Everything due is cleared — offer the Daily Quiz capstone from what was
   // actually practiced today (no SRS effect, just closes the day out).
@@ -1610,6 +1670,7 @@ function lockedCard(main, title, current, needed, explain, goTab, goLabel){
 
 /* ---------- Router ---------- */
 let currentTab = 'home';
+let examSkill = 'listening';
 let sessionQueue = [];
 let sessionPendingMode = false;
 let sessionPhase = 'stage1';
@@ -1651,9 +1712,7 @@ function render(){
   else if(currentTab === 'vocab') renderVocab(main, nav);
   else if(currentTab === 'verbs') renderVerbs(main, nav);
   else if(currentTab === 'sentences') renderSentences(main, nav);
-  else if(currentTab === 'conversation') renderConversation(main, nav);
-  else if(currentTab === 'writing') renderWriting(main, nav);
-  else if(currentTab === 'reading') renderReading(main, nav);
+  else if(currentTab === 'examprep') renderExamPrep(main, nav);
   else if(currentTab === 'add') renderAdd(main, nav);
 }
 
@@ -1870,7 +1929,7 @@ function renderHome(main, nav){
   const meta = touchStreak();
   const all = getAllItems();
   const plan = buildDailyPlan();
-  const mastered = all.filter(i=>getItemProgress(i.key).box===5).length;
+  const mastered = all.filter(i=>getItemProgress(i.key).box>=SRS_INTERVALS_DAYS.length-1).length;
 
   main.innerHTML = '';
 
@@ -1906,10 +1965,14 @@ function renderHome(main, nav){
       <div class="hero-label">pending — nothing else shows until these are cleared</div>
     `;
   } else {
+    const throttleNote = plan.phase === 'stage1' && plan.newWordCap && plan.newWordCap < 20
+      ? `<p class="small" style="margin-top:6px;">📊 ${plan.wordsInProgress} words currently mid-pipeline — new-word intake automatically reduced to ${plan.newWordCap}/day today so reviews stay sustainable (research: cramming past your review capacity hurts long-term retention).</p>`
+      : '';
     card.innerHTML = `
       <p class="item-en" style="margin-bottom:0;">Bonjour ! Today's plan:</p>
       <p class="item-fr" style="font-size:1.3rem; margin-top:4px;">${STAGE_LABELS[plan.phase]}</p>
       <div class="hero-label">${plan.queue.length} item(s) up next</div>
+      ${throttleNote}
     `;
   }
 
@@ -2350,8 +2413,8 @@ function renderVocab(main, nav){
 
 /* ---------- Verbs tab ---------- */
 function renderVerbs(main, nav){
-  const MODE_LABELS = {present:'Présent', pc:'Passé composé', futur:'Futur proche', imperatif:'Impératif'};
-  ['present','futur','imperatif','pc'].forEach(mode=>{
+  const MODE_LABELS = {present:'Présent', pc:'Passé composé', futur:'Futur proche', imperatif:'Impératif', imparfait:'Imparfait'};
+  ['present','futur','imperatif','imparfait','pc'].forEach(mode=>{
     const b = document.createElement('button');
     b.textContent = MODE_LABELS[mode];
     if(mode===verbMode) b.classList.add('active');
@@ -2371,6 +2434,10 @@ function renderVerbs(main, nav){
   if(verbMode==='present') forms = verb.present;
   else if(verbMode==='pc') forms = verb.pc;
   else if(verbMode==='imperatif') forms = verb.imperative;
+  else if(verbMode==='imparfait'){
+    forms = {};
+    Object.keys(IMPARFAIT_ENDINGS).forEach(s=>{ forms[s] = imparfaitForm(verb, s); });
+  }
   else {
     forms = {};
     Object.keys(ALLER_PRESENT).forEach(s=>{ forms[s] = ALLER_PRESENT[s] + ' ' + verb.inf; });
@@ -2645,6 +2712,192 @@ function loadReadingLog(){
 function saveReadingLog(l){ try{ localStorage.setItem('frt_reading', JSON.stringify(l)); }catch(e){} scheduleFileBackup(); }
 let readingLog = loadReadingLog();
 let readingIdx = 0;
+
+function renderExamPrep(main, nav){
+  nav.innerHTML = '';
+  const SKILLS = {listening:'🎧 Listen', reading:'📖 Read', writing:'📝 Write', conversation:'🗣 Speak'};
+  Object.keys(SKILLS).forEach(sk=>{
+    const b = document.createElement('button');
+    b.textContent = SKILLS[sk];
+    if(sk===examSkill) b.classList.add('active');
+    b.onclick = ()=>{ examSkill=sk; render(); };
+    nav.appendChild(b);
+  });
+
+  main.innerHTML = '';
+  const subNav = document.createElement('div');
+  subNav.className = 'sub-tabs';
+  const subMain = document.createElement('div');
+  main.appendChild(subNav);
+  main.appendChild(subMain);
+
+  if(examSkill==='listening') renderListening(subMain, subNav);
+  else if(examSkill==='reading') renderReading(subMain, subNav);
+  else if(examSkill==='writing') renderWriting(subMain, subNav);
+  else if(examSkill==='conversation') renderConversation(subMain, subNav);
+}
+
+/* ---------- Listening Comprehension (Compréhension Orale) ----------
+   TCF Canada CO: 40 MCQs, 35 min, CLB 7 needs 458-502/699 — same backloaded
+   scoring as Reading. Uses the browser's existing TTS engine (already powering
+   pronunciation practice) so no new audio infrastructure is needed — only content.
+   Structured per Vandergrift's research-backed sequence (the dominant scholar in
+   L2 listening pedagogy): predict -> first listen for gist -> second listen for
+   detail -> reveal transcript for review. A naive "play once, quiz" approach
+   measurably underperforms this structure in the actual research. */
+const LISTENING_ITEMS = [
+  { lvl:'A1', type:'Dialogue', context:"Two people are meeting for the first time.",
+    script:"Bonjour ! Comment vous appelez-vous ? — Je m'appelle Sophie. Et vous ? — Je m'appelle Marc. Enchanté !",
+    gist:{ q:"What are they talking about?", options:["Their names","The weather","Their jobs"], correct:0 },
+    detail:{ q:"What is the woman's name?", options:["Sophie","Marc","Amina"], correct:0 } },
+  { lvl:'A1', type:'Message téléphonique', context:"You'll hear a voicemail message.",
+    script:"Bonjour, c'est Julie. Je ne peux pas venir au bureau aujourd'hui. Je suis malade. À demain !",
+    gist:{ q:"Why is Julie calling?", options:["To say she's sick","To invite someone","To ask for help"], correct:0 },
+    detail:{ q:"When will Julie be back?", options:["Tomorrow","Tonight","Next week"], correct:0 } },
+  { lvl:'A1', type:'Annonce (Announcement)', context:"You're at a train station.",
+    script:"Attention, le train pour Paris part du quai numéro trois à quinze heures.",
+    gist:{ q:"What is this about?", options:["A train","A plane","A bus"], correct:0 },
+    detail:{ q:"What time does the train leave?", options:["13h","15h","17h"], correct:1 } },
+  { lvl:'A1', type:'Météo (Weather)', context:"A short weather report.",
+    script:"Aujourd'hui, il fait beau et chaud. Demain, il va pleuvoir.",
+    gist:{ q:"What is being discussed?", options:["The weather","Vacation plans","Sports"], correct:0 },
+    detail:{ q:"What's the weather like tomorrow?", options:["Nice","Rainy","Cold"], correct:1 } },
+  { lvl:'A1', type:'Dialogue', context:"Someone arrives at a restaurant.",
+    script:"Bonjour, une table pour deux, s'il vous plaît. — Bien sûr, suivez-moi.",
+    gist:{ q:"Where are they?", options:["In a restaurant","In a shop","At school"], correct:0 },
+    detail:{ q:"How many people need a table?", options:["One","Two","Three"], correct:1 } },
+  { lvl:'A1', type:'Monologue', context:"Someone is talking about their family.",
+    script:"J'ai une petite famille. J'ai un frère et une sœur. Mon père est médecin.",
+    gist:{ q:"What is the person talking about?", options:["Their family","Their job","Their vacation"], correct:0 },
+    detail:{ q:"What does the father do?", options:["He's a doctor","He's a teacher","He's a lawyer"], correct:0 } },
+  { lvl:'A1', type:'Dialogue', context:"Someone is shopping for clothes.",
+    script:"Bonjour, je cherche une chemise bleue. — Nous avons des chemises bleues, taille moyenne.",
+    gist:{ q:"What is the customer looking for?", options:["A shirt","Pants","Shoes"], correct:0 },
+    detail:{ q:"What color?", options:["Red","Blue","Green"], correct:1 } },
+  { lvl:'A1', type:'Message', context:"An appointment confirmation message.",
+    script:"Votre rendez-vous chez le médecin est confirmé pour lundi à dix heures.",
+    gist:{ q:"What is this about?", options:["An appointment","A party","A trip"], correct:0 },
+    detail:{ q:"What day?", options:["Monday","Tuesday","Friday"], correct:0 } },
+];
+function loadListeningLog(){
+  try{ return JSON.parse(localStorage.getItem('frt_listening')||'{}'); }catch(e){ return {}; }
+}
+function saveListeningLog(l){ try{ localStorage.setItem('frt_listening', JSON.stringify(l)); }catch(e){} scheduleFileBackup(); }
+let listeningLog = loadListeningLog();
+let listeningIdx = 0;
+let listeningPhase = 'predict'; // predict -> gist -> detail -> done
+
+function renderListening(main, nav){
+  main.innerHTML = '';
+
+  const solvedCount = LISTENING_ITEMS.filter((p,i)=>listeningLog[i]).length;
+  const infoCard = document.createElement('div');
+  infoCard.className = 'card';
+  infoCard.innerHTML = `
+    <p class="item-en" style="margin-bottom:4px;">Compréhension Orale — Listening</p>
+    <p class="small" style="margin-bottom:6px;">
+      The real exam: 40 MCQs, 35 minutes, CLB 7 needs 458–502/699 (same backloaded
+      scoring as Reading). No transcript is shown while listening — that's the whole
+      point. Predict first, listen for the gist, listen again for detail, then reveal
+      the transcript afterward to review what you actually heard.
+    </p>
+    <p class="small">${solvedCount} of ${LISTENING_ITEMS.length} items completed.</p>
+  `;
+  main.appendChild(infoCard);
+
+  if(listeningIdx >= LISTENING_ITEMS.length) listeningIdx = 0;
+  const item = LISTENING_ITEMS[listeningIdx];
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="pill">${item.type}</div>
+    <div class="progress-line" style="margin-top:8px;">Item ${listeningIdx+1} of ${LISTENING_ITEMS.length}${listeningLog[listeningIdx] ? ' · ✅ done' : ''}</div>
+  `;
+
+  if(listeningPhase === 'predict'){
+    card.innerHTML += `<p class="item-en" style="margin-top:8px;">${item.context}</p>
+      <p class="small" style="margin-top:6px;">Take a second to predict what you might hear — then listen.</p>`;
+    const listenBtn = document.createElement('button');
+    listenBtn.className = 'big-btn';
+    listenBtn.textContent = '🎧 Listen';
+    listenBtn.onclick = ()=>{ speak(item.script); listeningPhase = 'gist'; render(); };
+    card.appendChild(listenBtn);
+
+  } else if(listeningPhase === 'gist' || listeningPhase === 'detail'){
+    const q = listeningPhase === 'gist' ? item.gist : item.detail;
+    card.innerHTML += `<p class="small" style="margin-top:8px;">${listeningPhase === 'gist' ? 'First listen — gist question:' : 'Listen again — detail question:'}</p>
+      <p class="item-en" style="font-weight:600; margin-top:4px;">${q.q}</p>`;
+
+    const replayBtn = document.createElement('button');
+    replayBtn.className = 'action btn-play';
+    replayBtn.textContent = '🔁 Listen again';
+    replayBtn.onclick = ()=> speak(item.script);
+    card.appendChild(replayBtn);
+
+    let selected = null;
+    const optWrap = document.createElement('div');
+    optWrap.style.marginTop = '10px';
+    q.options.forEach((opt, oi)=>{
+      const optBtn = document.createElement('button');
+      optBtn.className = 'action btn-ghost';
+      optBtn.style.display = 'block';
+      optBtn.style.width = '100%';
+      optBtn.style.textAlign = 'left';
+      optBtn.style.marginTop = '4px';
+      optBtn.textContent = opt;
+      optBtn.onclick = ()=>{
+        selected = oi;
+        optWrap.querySelectorAll('button').forEach(b=>b.style.background='');
+        optBtn.style.background = 'var(--chip)';
+      };
+      optWrap.appendChild(optBtn);
+    });
+    card.appendChild(optWrap);
+
+    const resultBox = document.createElement('div');
+    resultBox.style.marginTop = '10px';
+    card.appendChild(resultBox);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'action btn-mic';
+    submitBtn.style.marginTop = '10px';
+    submitBtn.textContent = listeningPhase === 'gist' ? 'Submit — listen again for detail' : 'Submit';
+    submitBtn.onclick = ()=>{
+      if(selected === null){ resultBox.innerHTML = '<p class="small">Pick an answer first.</p>'; return; }
+      const correct = selected === q.correct;
+      resultBox.className = 'feedback ' + (correct ? 'good' : 'bad');
+      resultBox.innerHTML = correct ? '✅ Correct!' : '❌ Not quite.';
+      setTimeout(()=>{
+        if(listeningPhase === 'gist'){ listeningPhase = 'detail'; }
+        else { listeningPhase = 'done'; if(correct) { listeningLog[listeningIdx] = true; saveListeningLog(listeningLog); } }
+        render();
+      }, 900);
+    };
+    card.appendChild(submitBtn);
+
+  } else if(listeningPhase === 'done'){
+    card.innerHTML += `<div class="feedback good" style="margin-top:8px;">✅ Both questions answered.</div>`;
+    const transcriptBtn = document.createElement('button');
+    transcriptBtn.className = 'action btn-ghost';
+    transcriptBtn.style.marginTop = '10px';
+    transcriptBtn.textContent = 'Show transcript';
+    const transcriptBox = document.createElement('div');
+    transcriptBox.className = 'model-answer';
+    transcriptBox.innerHTML = `<b>${item.script}</b>`;
+    transcriptBtn.onclick = ()=> transcriptBox.classList.toggle('show');
+    card.appendChild(transcriptBtn);
+    card.appendChild(transcriptBox);
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'big-btn';
+    nextBtn.textContent = 'Next item →';
+    nextBtn.onclick = ()=>{ listeningIdx = (listeningIdx+1) % LISTENING_ITEMS.length; listeningPhase = 'predict'; render(); };
+    card.appendChild(nextBtn);
+  }
+
+  main.appendChild(card);
+}
 
 function renderReading(main, nav){
   nav.innerHTML = '';
