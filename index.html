@@ -1282,7 +1282,7 @@ async function idbGet(key){
 async function writeBackupNow(){
   if(!linkedFileHandle) return;
   try{
-    const payload = { exportedAt: new Date().toISOString(), progress, custom, stats };
+    const payload = { exportedAt: new Date().toISOString(), progress, custom, stats, meta: loadMeta() };
     const writable = await linkedFileHandle.createWritable();
     await writable.write(JSON.stringify(payload));
     await writable.close();
@@ -1353,6 +1353,15 @@ function mergeIncoming(incoming){
     stats.correct += (incoming.stats.correct||0);
     stats.attempts += (incoming.stats.attempts||0);
     saveStreak(stats);
+  }
+  if(incoming.meta){
+    const localMeta = loadMeta();
+    const mergedMeta = {
+      streak: Math.max(localMeta.streak||0, incoming.meta.streak||0),
+      lastActive: (incoming.meta.lastActive && (!localMeta.lastActive || incoming.meta.lastActive > localMeta.lastActive))
+        ? incoming.meta.lastActive : localMeta.lastActive
+    };
+    saveMeta(mergedMeta);
   }
   return { updated, kept, addedWords };
 }
@@ -1482,7 +1491,7 @@ function loadMeta(){
   try{ return JSON.parse(localStorage.getItem('frt_meta')||'{"lastActive":null,"streak":0}'); }
   catch(e){ return {lastActive:null, streak:0}; }
 }
-function saveMeta(m){ try{ localStorage.setItem('frt_meta', JSON.stringify(m)); }catch(e){} }
+function saveMeta(m){ try{ localStorage.setItem('frt_meta', JSON.stringify(m)); }catch(e){} scheduleFileBackup(); }
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function touchStreak(){
   const m = loadMeta();
