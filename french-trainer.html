@@ -1272,6 +1272,18 @@ async function linkBackupFile(){
     linkedFileHandle = handle;
     needsReconnect = false;
     await idbSet('progressFileHandle', handle);
+    // If this file already has progress in it (e.g. another browser/device has
+    // been backing up to it), merge that in BEFORE writing — otherwise linking
+    // to an existing file silently overwrites it with this browser's own,
+    // possibly-empty state instead of importing what was already there.
+    try{
+      const file = await handle.getFile();
+      const text = await file.text();
+      if(text && text.trim()){
+        const incoming = JSON.parse(text);
+        if(incoming && incoming.progress){ mergeIncoming(incoming); }
+      }
+    }catch(e){ /* empty or unreadable file — nothing to merge, proceed as new */ }
     await writeBackupNow();
     return true;
   }catch(e){ return false; }
