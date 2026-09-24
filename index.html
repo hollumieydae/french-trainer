@@ -1441,7 +1441,7 @@ async function driveFindFile(){
     encodeURIComponent("name='" + DRIVE_FILE_NAME + "'") + '&fields=files(id,name)', {
     headers: { Authorization: 'Bearer ' + googleAccessToken }
   });
-  if(!res.ok) throw new Error('drive list failed: ' + res.status);
+  if(!res.ok){ const t = await res.text().catch(()=>''); throw new Error('drive list failed (' + res.status + '): ' + t); }
   const data = await res.json();
   return (data.files && data.files[0]) || null;
 }
@@ -1449,7 +1449,7 @@ async function driveReadFile(fileId){
   const res = await fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media', {
     headers: { Authorization: 'Bearer ' + googleAccessToken }
   });
-  if(!res.ok) throw new Error('drive read failed: ' + res.status);
+  if(!res.ok){ const t = await res.text().catch(()=>''); throw new Error('drive read failed (' + res.status + '): ' + t); }
   return res.json();
 }
 async function driveWriteFile(existingId){
@@ -1468,9 +1468,10 @@ async function driveWriteFile(existingId){
     headers: { Authorization: 'Bearer ' + googleAccessToken, 'Content-Type': 'multipart/related; boundary=' + boundary },
     body
   });
-  if(!res.ok) throw new Error('drive write failed: ' + res.status);
+  if(!res.ok){ const t = await res.text().catch(()=>''); throw new Error('drive write failed (' + res.status + '): ' + t); }
 }
 
+let googleSyncErrorDetail = '';
 async function syncWithGoogleDrive(){
   if(!googleAccessToken) return;
   googleSyncStatus = 'syncing';
@@ -1484,8 +1485,11 @@ async function syncWithGoogleDrive(){
       await driveWriteFile(null);
     }
     googleSyncStatus = 'synced';
+    googleSyncErrorDetail = '';
   }catch(e){
     googleSyncStatus = 'error';
+    googleSyncErrorDetail = (e && e.message) ? e.message : String(e);
+    console.error('Google Drive sync failed:', googleSyncErrorDetail);
   }
 }
 function scheduleDriveSync(){
@@ -3487,6 +3491,7 @@ function renderAdd(main, nav){
       folder in your own Drive that only this app can see.
     </p>
     <p class="small" id="driveStatus" style="margin-bottom:10px;">${STATUS_LABEL[googleSyncStatus] || googleSyncStatus}</p>
+    ${googleSyncStatus === 'error' && googleSyncErrorDetail ? '<p class="small" style="color:var(--bad); margin-bottom:10px; word-break:break-word;">' + googleSyncErrorDetail.replace(/</g,'&lt;').slice(0,300) + '</p>' : ''}
     <div class="btn-row">
       ${isGoogleSignedIn()
         ? '<button class="action btn-ghost" id="googleSignOutBtn">Sign out</button>'
