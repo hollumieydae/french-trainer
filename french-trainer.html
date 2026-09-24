@@ -160,6 +160,7 @@ select{
 }
 .big-btn:disabled{ opacity:0.5;}
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -1289,6 +1290,7 @@ async function writeBackupNow(){
   }catch(e){ /* localStorage remains the source of truth either way */ }
 }
 function scheduleFileBackup(){
+  scheduleDriveSync();
   if(!linkedFileHandle) return;
   clearTimeout(backupTimer);
   backupTimer = setTimeout(writeBackupNow, 800);
@@ -1364,6 +1366,132 @@ function mergeIncoming(incoming){
     saveMeta(mergedMeta);
   }
   return { updated, kept, addedWords };
+}
+
+/* ---------- Google Drive sync (appDataFolder — hidden, per-app, tied to identity) ----------
+   Uses Google Identity Services for client-side OAuth (no backend, no client secret —
+   that stays unused since this is a browser app). Progress lives in a hidden file only
+   this app can see in the signed-in user's own Drive. Same merge logic as the local file
+   backup (mergeIncoming) so this composes cleanly with that system rather than fighting it. */
+const GOOGLE_CLIENT_ID = '908571034767-mmu3on5krh2n41fa3tvrfts6umlvp7jh.apps.googleusercontent.com';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const DRIVE_FILE_NAME = 'french-trainer-progress.json';
+let googleAccessToken = null;
+let googleTokenClient = null;
+let googleSyncStatus = 'signed-out'; // signed-out | signing-in | syncing | synced | error
+let driveSyncTimer = null;
+
+function isGoogleSignedIn(){ return !!googleAccessToken; }
+
+function initGoogleTokenClient(callback){
+  if(!window.google || !window.google.accounts || !window.google.accounts.oauth2) return null;
+  return google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback
+  });
+}
+
+function signInWithGoogle(){
+  googleSyncStatus = 'signing-in';
+  render();
+  const client = initGoogleTokenClient(async (response)=>{
+    if(response.error){ googleSyncStatus = 'error'; render(); return; }
+    googleAccessToken = response.access_token;
+    try{ localStorage.setItem('frt_google_was_signed_in', '1'); }catch(e){}
+    await syncWithGoogleDrive();
+    render();
+  });
+  if(!client){ googleSyncStatus = 'error'; render(); return; }
+  googleTokenClient = client;
+  googleTokenClient.requestAccessToken();
+}
+
+function signOutGoogle(){
+  if(googleAccessToken && window.google && google.accounts && google.accounts.oauth2){
+    google.accounts.oauth2.revoke(googleAccessToken, ()=>{});
+  }
+  googleAccessToken = null;
+  googleSyncStatus = 'signed-out';
+  try{ localStorage.removeItem('frt_google_was_signed_in'); }catch(e){}
+  render();
+}
+
+// Attempt a silent re-sign-in on load if this browser was previously signed in —
+// Google will issue a token without a prompt if the user still has an active session.
+function tryAutoSignInGoogle(){
+  let wasSignedIn = false;
+  try{ wasSignedIn = localStorage.getItem('frt_google_was_signed_in') === '1'; }catch(e){}
+  if(!wasSignedIn) return;
+  const client = initGoogleTokenClient(async (response)=>{
+    if(response.error) return;
+    googleAccessToken = response.access_token;
+    googleSyncStatus = 'syncing';
+    render();
+    await syncWithGoogleDrive();
+    render();
+  });
+  if(!client) return;
+  googleTokenClient = client;
+  googleTokenClient.requestAccessToken({prompt: ''});
+}
+
+async function driveFindFile(){
+  const res = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=' +
+    encodeURIComponent("name='" + DRIVE_FILE_NAME + "'") + '&fields=files(id,name)', {
+    headers: { Authorization: 'Bearer ' + googleAccessToken }
+  });
+  if(!res.ok) throw new Error('drive list failed: ' + res.status);
+  const data = await res.json();
+  return (data.files && data.files[0]) || null;
+}
+async function driveReadFile(fileId){
+  const res = await fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media', {
+    headers: { Authorization: 'Bearer ' + googleAccessToken }
+  });
+  if(!res.ok) throw new Error('drive read failed: ' + res.status);
+  return res.json();
+}
+async function driveWriteFile(existingId){
+  const payload = { exportedAt: new Date().toISOString(), progress, custom, stats, meta: loadMeta() };
+  const metadata = existingId ? {name: DRIVE_FILE_NAME} : {name: DRIVE_FILE_NAME, parents: ['appDataFolder']};
+  const boundary = 'frt_boundary_' + Date.now();
+  const body =
+    '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata) + '\r\n' +
+    '--' + boundary + '\r\nContent-Type: application/json\r\n\r\n' + JSON.stringify(payload) + '\r\n' +
+    '--' + boundary + '--';
+  const url = existingId
+    ? 'https://www.googleapis.com/upload/drive/v3/files/' + existingId + '?uploadType=multipart'
+    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+  const res = await fetch(url, {
+    method: existingId ? 'PATCH' : 'POST',
+    headers: { Authorization: 'Bearer ' + googleAccessToken, 'Content-Type': 'multipart/related; boundary=' + boundary },
+    body
+  });
+  if(!res.ok) throw new Error('drive write failed: ' + res.status);
+}
+
+async function syncWithGoogleDrive(){
+  if(!googleAccessToken) return;
+  googleSyncStatus = 'syncing';
+  try{
+    const existing = await driveFindFile();
+    if(existing){
+      const incoming = await driveReadFile(existing.id);
+      if(incoming && incoming.progress){ mergeIncoming(incoming); }
+      await driveWriteFile(existing.id);
+    } else {
+      await driveWriteFile(null);
+    }
+    googleSyncStatus = 'synced';
+  }catch(e){
+    googleSyncStatus = 'error';
+  }
+}
+function scheduleDriveSync(){
+  if(!googleAccessToken) return;
+  clearTimeout(driveSyncTimer);
+  driveSyncTimer = setTimeout(syncWithGoogleDrive, 1500);
 }
 
 async function tryRestoreLinkedFile(){
@@ -3342,6 +3470,35 @@ function renderAdd(main, nav){
   main.appendChild(listCard);
   renderAddList();
 
+  const driveCard = document.createElement('div');
+  driveCard.className = 'card';
+  const STATUS_LABEL = {
+    'signed-out': 'Not signed in',
+    'signing-in': 'Signing in...',
+    'syncing': '🔄 Syncing...',
+    'synced': '✅ Synced',
+    'error': '⚠️ Sync error — try again'
+  };
+  driveCard.innerHTML = `
+    <p class="item-en" style="margin-bottom:4px;">Cloud sync (Google Drive)</p>
+    <p class="small" style="margin-bottom:12px;">
+      Sign in once on any browser or device with the same Google account and your progress
+      is automatically the same everywhere — no linking, no file-picking. Stored in a hidden
+      folder in your own Drive that only this app can see.
+    </p>
+    <p class="small" id="driveStatus" style="margin-bottom:10px;">${STATUS_LABEL[googleSyncStatus] || googleSyncStatus}</p>
+    <div class="btn-row">
+      ${isGoogleSignedIn()
+        ? '<button class="action btn-ghost" id="googleSignOutBtn">Sign out</button>'
+        : '<button class="action btn-play" id="googleSignInBtn">Sign in with Google</button>'}
+    </div>
+  `;
+  main.appendChild(driveCard);
+  const signInBtn = document.getElementById('googleSignInBtn');
+  if(signInBtn) signInBtn.onclick = signInWithGoogle;
+  const signOutBtn = document.getElementById('googleSignOutBtn');
+  if(signOutBtn) signOutBtn.onclick = signOutGoogle;
+
   const fileCard = document.createElement('div');
   fileCard.className = 'card';
   if(fileBackupSupported){
@@ -3350,7 +3507,8 @@ function renderAdd(main, nav){
       <p class="small" style="margin-bottom:12px;">
         Link a real file on this device (e.g. in Downloads). Every change auto-saves there too —
         it survives a browser cache/site-data clear because it isn't stored inside the browser at all.
-        This is per-device, not cross-device — use Export/Import below to move progress between phones.
+        This is per-device, not cross-device — use Google Drive sync above, or Export/Import below,
+        to move progress between devices.
       </p>
       <p class="small" id="fileStatus" style="margin-bottom:10px;">${linkedFileHandle ? '🔗 Linked' : (needsReconnect ? '⚠️ Was linked — needs reconnecting' : 'Not linked yet')}</p>
       <div class="btn-row">
@@ -3360,7 +3518,7 @@ function renderAdd(main, nav){
   } else {
     fileCard.innerHTML = `
       <p class="item-en" style="margin-bottom:4px;">Local file backup</p>
-      <p class="small">Not available in this browser (Safari/iOS doesn't support it). Use Export/Import below instead.</p>
+      <p class="small">Not available in this browser (Safari/iOS doesn't support it). Use Google Drive sync above, or Export/Import below.</p>
     `;
   }
   main.appendChild(fileCard);
@@ -3501,6 +3659,10 @@ if(fileBackupSupported){
     }
   }).catch(()=>{});
 }
+
+window.addEventListener('load', ()=>{
+  setTimeout(()=>{ try{ tryAutoSignInGoogle(); }catch(e){} }, 300);
+});
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
