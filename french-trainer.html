@@ -1053,6 +1053,13 @@ const VOCAB = [
   {cat:"Personnes", fr:"les gens", en:"people", p:"lay zhahn", lvl:"A1"},
   {cat:"Expressions", fr:"beaucoup de", en:"a lot of / many / much", p:"boh-koo duh", lvl:"A1"},
   {cat:"Expressions", fr:"où tu habites", en:"where you live", p:"oo tew ah-beet", lvl:"A1"},
+  {cat:"Personnes", fr:"l'ami", en:"friend (masc.)", p:"lah-mee", lvl:"A1"},
+  {cat:"Personnes", fr:"l'amie", en:"friend (fem.)", p:"lah-mee", lvl:"A1"},
+  {cat:"Personnes", fr:"les amis", en:"friends", p:"lay zah-mee", lvl:"A1"},
+  {cat:"Idées", fr:"la question", en:"question", p:"lah kes-tyohn", lvl:"A1"},
+  {cat:"Idées", fr:"l'idée", en:"idea", p:"lee-day", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"le jouet", en:"toy", p:"luh zhoo-eh", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"le crayon", en:"pencil", p:"luh kreh-yohn", lvl:"A1"},
 ];
 
 const VERBS = [
@@ -1338,8 +1345,10 @@ function saveCustom(data){
 }
 let custom = loadCustom();
 
+function sane(n){ return (typeof n==='number' && isFinite(n) && n>=0 && n<=1e6) ? n : 0; }
 function loadStreak(){
-  try{ return JSON.parse(localStorage.getItem('frt_stats')||'{"correct":0,"attempts":0}'); }
+  // sanitised: an earlier sync bug compounded these counters on every cycle
+  try{ const s = JSON.parse(localStorage.getItem('frt_stats')||'{"correct":0,"attempts":0}'); return {correct:sane(s.correct), attempts:sane(s.attempts)}; }
   catch(e){ return {correct:0,attempts:0}; }
 }
 function saveStreak(s){ try{ localStorage.setItem('frt_stats', JSON.stringify(s)); }catch(e){} scheduleFileBackup(); }
@@ -1392,13 +1401,48 @@ async function idbGet(key){
 async function writeBackupNow(){
   if(!linkedFileHandle) return;
   try{
-    const payload = { exportedAt: new Date().toISOString(), progress, custom, stats, meta: loadMeta() };
+    const payload = buildBackupPayload();
     const writable = await linkedFileHandle.createWritable();
     await writable.write(JSON.stringify(payload));
     await writable.close();
   }catch(e){ /* localStorage remains the source of truth either way */ }
 }
+// Everything that should be identical on every browser/device.
+function buildBackupPayload(){
+  const logs = {};
+  try{ logs.reading = readingLog; }catch(e){}
+  try{ logs.listening = listeningLog; }catch(e){}
+  try{ logs.writing = writingLog; }catch(e){}
+  try{ logs.quiz = quizLog; }catch(e){}
+  return { exportedAt: new Date().toISOString(), progress, custom, stats, meta: loadMeta(), logs };
+}
+// Reading/listening/writing completions: once done on any device, done everywhere.
+// Quiz: best score wins. Idempotent, so it is safe to run on every sync.
+function mergeExtraLogs(logs){
+  if(!logs) return;
+  [['reading', ()=>readingLog, ()=>saveReadingLog(readingLog)],
+   ['listening', ()=>listeningLog, ()=>saveListeningLog(listeningLog)],
+   ['writing', ()=>writingLog, ()=>saveWritingLog(writingLog)]].forEach(([k, get, save])=>{
+    try{
+      const local = get(), inc = logs[k] || {}; let ch = false;
+      Object.keys(inc).forEach(id=>{ if(inc[id] && !local[id]){ local[id] = true; ch = true; } });
+      if(ch) save();
+    }catch(e){}
+  });
+  try{
+    const inc = logs.quiz || {}; let ch = false;
+    Object.keys(inc).forEach(id=>{
+      const a = inc[id], b = quizLog[id];
+      if(a && a.total && (!b || a.best/a.total > b.best/b.total)){ quizLog[id] = a; ch = true; }
+    });
+    if(ch) saveQuizLog(quizLog);
+  }catch(e){}
+}
+// While merging data that came FROM another device/file, don't schedule a write-back:
+// that made every sync trigger another sync, forever (a self-sustaining loop).
+let suppressSyncSchedule = false;
 function scheduleFileBackup(){
+  if(suppressSyncSchedule) return;
   scheduleDriveSync();
   if(!linkedFileHandle) return;
   clearTimeout(backupTimer);
@@ -1444,6 +1488,11 @@ async function reconnectBackupFile(){
 
 // Same smart merge used by Import: whichever side is further ahead per item wins.
 function mergeIncoming(incoming){
+  suppressSyncSchedule = true;
+  try{ return mergeIncomingInner(incoming); }
+  finally{ suppressSyncSchedule = false; }
+}
+function mergeIncomingInner(incoming){
   let updated = 0, kept = 0, addedWords = 0;
   Object.keys(incoming.progress || {}).forEach(key=>{
     const local = progress[key];
@@ -1461,8 +1510,9 @@ function mergeIncoming(incoming){
   });
   saveCustom(custom);
   if(incoming.stats){
-    stats.correct += (incoming.stats.correct||0);
-    stats.attempts += (incoming.stats.attempts||0);
+    // max, not add: this runs on every sync, so adding compounded the counters each cycle
+    stats.correct = Math.max(sane(stats.correct), sane(incoming.stats.correct));
+    stats.attempts = Math.max(sane(stats.attempts), sane(incoming.stats.attempts));
     saveStreak(stats);
   }
   if(incoming.meta){
@@ -1474,6 +1524,7 @@ function mergeIncoming(incoming){
     };
     saveMeta(mergedMeta);
   }
+  mergeExtraLogs(incoming.logs);
   return { updated, kept, addedWords };
 }
 
@@ -1562,7 +1613,7 @@ async function driveReadFile(fileId){
   return res.json();
 }
 async function driveWriteFile(existingId){
-  const payload = { exportedAt: new Date().toISOString(), progress, custom, stats, meta: loadMeta() };
+  const payload = buildBackupPayload();
   const metadata = existingId ? {name: DRIVE_FILE_NAME} : {name: DRIVE_FILE_NAME, parents: ['appDataFolder']};
   const boundary = 'frt_boundary_' + Date.now();
   const body =
@@ -3053,9 +3104,278 @@ function saveReadingLog(l){ try{ localStorage.setItem('frt_reading', JSON.string
 let readingLog = loadReadingLog();
 let readingIdx = 0;
 
+/* ---------- Quiz / L'épreuve (tutor-style multiple choice) ----------
+   Your tutor's tests are stored here to retake any time (options reshuffle on every
+   attempt so you can't just memorise "B, C, A..."). The generator builds a fresh
+   conjugation quiz for any verb/tense already in the app, so every new verb you add
+   automatically gets quizzes for free. Quizzes are a check-up: they don't touch the
+   spaced-repetition boxes, they only keep a best score. */
+function loadQuizLog(){ try{ return JSON.parse(localStorage.getItem('frt_quiz')||'{}'); }catch(e){ return {}; } }
+function saveQuizLog(l){ try{ localStorage.setItem('frt_quiz', JSON.stringify(l)); }catch(e){} scheduleFileBackup(); }
+let quizLog = loadQuizLog();
+let quizSession = null;
+let quizGenVerb = 'avoir';
+let quizGenMode = 'present';
+
+function shuffleArr(a){
+  const b = a.slice();
+  for(let i=b.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); const t=b[i]; b[i]=b[j]; b[j]=t; }
+  return b;
+}
+const AVOIR_NOTE = "avoir (présent): j'ai · tu as · il/elle a · nous avons · vous avez · ils/elles ont";
+const QUIZZES = [
+  { id:'tutor-avoir-1', title:"Épreuve — avoir (présent)", source:"From your tutor", note:AVOIR_NOTE, questions:[
+    { q:'Choose the correct conjugation of "avoir" for "je":', options:['ai','a','avons'], correct:0, say:"J'ai" },
+    { q:'Complete the sentence with the correct form of "avoir": "Tu __ (avoir) un nouveau jouet."', options:['avez','a','as'], correct:2 },
+    { q:'Which sentence is correct?', options:['Nous avez une voiture.','Nous avons une voiture.','Nous a une voiture.'], correct:1 },
+    { q:'Select the correct translation for "He has":', options:['Il as','Il a','Ils ont'], correct:1 },
+    { q:'Fill in the blank with the correct form of "avoir": "Ils __ (avoir) un chien."', options:['avez','ont','a'], correct:1 },
+    { q:'Choose the correct option: "Vous __ (avoir) des amis."', options:['avez','a','ont'], correct:0 },
+    { q:'Complete the sentence: "Elle __ (avoir) un livre."', options:['a','as','avons'], correct:0 },
+    { q:'Identify the correct translation for "We have":', options:['Nous avez',"J'ai",'Nous avons'], correct:2 },
+    { q:'Choose the correct form: "Tu __ (avoir) des questions."', options:['avez','as','a'], correct:1 },
+    { q:'Which option completes the sentence correctly? "Je __ (avoir) un chat."', options:['ai','a','avons'], correct:0 },
+    { q:'Select the correct answer: "Ils __ (avoir) une grande maison."', options:['ont','avez','a'], correct:0 },
+    { q:'Complete the sentence: "Vous __ (avoir) le temps."', options:['avez','a','ont'], correct:0 },
+    { q:'Choose the correct translation for "I have a pencil":', options:["J'ai un stylo.","Je avoir un crayon.","J'ai un crayon."], correct:2, note:"crayon = pencil, stylo = pen — the first option is a vocabulary trap." },
+    { q:'Fill in the blank: "Nous __ (avoir) des livres."', options:['avez','avons','ont'], correct:1 },
+    { q:'Which sentence is correct?', options:['Elles a un chien.','Elles ont un chien.','Elles avez un chien.'], correct:1 },
+    { q:'Select the correct option: "Tu __ (avoir) un problème."', options:['a','as','avons'], correct:1 },
+    { q:'Choose the correct conjugation for "vous":', options:['avez','ai','ont'], correct:0, say:"Vous avez" },
+    { q:'Complete the sentence: "Je __ (avoir) une idée."', options:['ai','a','avons'], correct:0 },
+    { q:'Fill in the blank: "Il __ (avoir) un ordinateur."', options:['ont','a','avez'], correct:1 },
+    { q:'Select the correct translation for "They have a car":', options:['Ils ont une voiture.','Ils avoir une voiture.','Ils a une voiture.'], correct:0 },
+  ]},
+];
+const QUIZ_MODE_LABELS = {present:'Présent', pc:'Passé composé', imparfait:'Imparfait', futur:'Futur proche'};
+const QUIZ_PRONOUN = {je:'je', tu:'tu', il:'il / elle', nous:'nous', vous:'vous', ils:'ils / elles'};
+
+function verbFormsFor(verb, mode){
+  if(mode==='present') return verb.present || null;
+  if(mode==='pc') return verb.pc || null;
+  if(mode==='imparfait'){ const f={}; Object.keys(IMPARFAIT_ENDINGS).forEach(s=>{ f[s]=imparfaitForm(verb,s); }); return f; }
+  if(mode==='futur'){ if(verb.inf==='aller') return null; const f={}; Object.keys(ALLER_PRESENT).forEach(s=>{ f[s]=ALLER_PRESENT[s]+' '+verb.inf; }); return f; }
+  return null;
+}
+function generateConjugationQuiz(inf, mode){
+  const verb = VERBS.find(v=>v.inf===inf);
+  if(!verb) return null;
+  const forms = verbFormsFor(verb, mode);
+  if(!forms) return null;
+  const label = QUIZ_MODE_LABELS[mode];
+  const note = inf + ' (' + label + '): ' + Object.keys(forms).map(s=>conjugatedDisplay(s, forms[s], mode)).join(' · ');
+  const qs = [];
+  Object.keys(forms).forEach(subj=>{
+    const correct = forms[subj];
+    const pool = [];
+    Object.keys(forms).forEach(s=>{ if(s!==subj && forms[s]!==correct && pool.indexOf(forms[s])<0) pool.push(forms[s]); });
+    const dist = shuffleArr(pool).slice(0,2);
+    if(dist.length<2) return;
+    const phrase = conjugatedDisplay(subj, correct, mode);
+    qs.push({ q:'Choose the correct form of "'+inf+'" ('+label+') for "'+QUIZ_PRONOUN[subj]+'":', options:[correct].concat(dist), correct:0, say:phrase, note:note });
+    qs.push({ q:'Which sentence is correct?', options:[phrase].concat(dist.map(f=>conjugatedDisplay(subj, f, mode))), correct:0, say:phrase, note:note });
+  });
+  return { id:'gen:'+inf+':'+mode, title:'Quiz — '+inf+' ('+label+')', questions:qs, generated:true, note:note };
+}
+function prepareQuizQuestions(def, shuffleOrder){
+  const qs = def.questions.map(q=>{
+    const idx = shuffleArr(q.options.map((_,i)=>i));
+    return Object.assign({}, q, { options: idx.map(i=>q.options[i]), correct: idx.indexOf(q.correct), note: q.note || def.note || '' });
+  });
+  return shuffleOrder ? shuffleArr(qs) : qs;
+}
+function quizSayText(q){
+  if(q.say) return q.say;
+  const correct = q.options[q.correct];
+  const m = q.q.match(/"([^"]*__[^"]*)"/);
+  if(m) return m[1].replace(/__\s*\([^)]*\)/, correct);
+  return correct;
+}
+function startQuiz(def, opts){
+  opts = opts || {};
+  quizSession = { def:def, id:def.id, title:def.title, questions: prepareQuizQuestions(def, !!opts.shuffleOrder),
+    idx:0, answers:[], picked:null, retry:!!opts.retry, saved:false };
+  render();
+}
+
+function renderQuiz(main, nav){
+  main.innerHTML = '';
+  if(!quizSession){ renderQuizMenu(main); return; }
+  const s = quizSession;
+  if(s.idx >= s.questions.length){ renderQuizResults(main); return; }
+  const q = s.questions[s.idx];
+  const answered = s.picked !== null;
+  const rightSoFar = s.answers.filter((a,i)=>a===s.questions[i].correct).length;
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  const prog = document.createElement('div');
+  prog.className = 'progress-line';
+  prog.textContent = s.title + ' · Question ' + (s.idx+1) + ' of ' + s.questions.length + ' · ' + rightSoFar + ' correct so far';
+  card.appendChild(prog);
+  const qp = document.createElement('p');
+  qp.className = 'item-en';
+  qp.style.cssText = 'font-size:1.02rem; line-height:1.45; margin-top:8px;';
+  qp.textContent = q.q;
+  card.appendChild(qp);
+
+  const LETTERS = ['A','B','C','D'];
+  q.options.forEach((opt, oi)=>{
+    const b = document.createElement('button');
+    b.className = 'action btn-ghost';
+    b.style.cssText = 'display:block; width:100%; text-align:left; margin-top:6px;';
+    let label = LETTERS[oi] + ') ' + opt;
+    if(answered){
+      if(oi===q.correct) label = '✅ ' + label;
+      else if(oi===s.picked) label = '❌ ' + label;
+      b.disabled = true;
+    }
+    b.textContent = label;
+    b.onclick = ()=>{ if(s.picked!==null) return; s.picked = oi; s.answers[s.idx] = oi; render(); };
+    card.appendChild(b);
+  });
+
+  if(answered){
+    const ok = s.picked === q.correct;
+    const fb = document.createElement('div');
+    fb.className = 'feedback ' + (ok ? 'good' : 'bad');
+    fb.style.marginTop = '12px';
+    fb.textContent = ok ? '✅ Correct!' : '❌ Not quite — the answer is: ' + q.options[q.correct];
+    if(q.note){ const n = document.createElement('div'); n.className = 'heard'; n.textContent = q.note; fb.appendChild(n); }
+    card.appendChild(fb);
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+    const hear = document.createElement('button');
+    hear.className = 'action btn-play';
+    hear.textContent = '🔊 Hear it';
+    hear.onclick = ()=> speak(quizSayText(q));
+    row.appendChild(hear);
+    card.appendChild(row);
+    const next = document.createElement('button');
+    next.className = 'big-btn';
+    next.textContent = (s.idx+1 >= s.questions.length) ? 'See results' : 'Next question →';
+    next.onclick = ()=>{ s.idx++; s.picked = null; render(); };
+    card.appendChild(next);
+  }
+  const quit = document.createElement('button');
+  quit.className = 'action btn-ghost';
+  quit.style.marginTop = '10px';
+  quit.textContent = 'Quit quiz';
+  quit.onclick = ()=>{ quizSession = null; render(); };
+  card.appendChild(quit);
+  main.appendChild(card);
+}
+
+function renderQuizResults(main){
+  const s = quizSession;
+  const total = s.questions.length;
+  const missed = [];
+  s.questions.forEach((q,i)=>{ if(s.answers[i] !== q.correct) missed.push(i); });
+  const right = total - missed.length;
+  if(!s.saved){
+    s.saved = true;
+    if(!s.retry){
+      const prev = quizLog[s.id];
+      if(!prev || right/total > prev.best/prev.total){ quizLog[s.id] = { best:right, total:total, date:todayStr() }; saveQuizLog(quizLog); }
+    }
+  }
+  const pct = Math.round(100*right/total);
+  const card = document.createElement('div');
+  card.className = 'card';
+  const verdict = pct>=90 ? 'Excellent — you have this.' : (pct>=70 ? 'Good — review the ones you missed.' : 'Keep going — review the answers below, then retake it.');
+  card.innerHTML = '<div class="progress-line"></div><p class="item-en" style="margin-bottom:4px;"></p><p class="small"></p>';
+  card.querySelector('.progress-line').textContent = s.title + (s.retry ? ' (retry)' : '');
+  card.querySelector('.item-en').textContent = 'Score: ' + right + ' / ' + total + ' (' + pct + '%)';
+  card.querySelector('p.small').textContent = verdict;
+  missed.forEach(i=>{
+    const q = s.questions[i];
+    const d = document.createElement('div');
+    d.className = 'feedback bad';
+    d.style.marginTop = '10px';
+    d.textContent = 'Q' + (i+1) + '. ' + q.q;
+    const a = document.createElement('div');
+    a.className = 'heard';
+    a.textContent = 'Your answer: ' + q.options[s.answers[i]] + '  ·  Correct: ' + q.options[q.correct];
+    d.appendChild(a);
+    card.appendChild(d);
+  });
+  const row = document.createElement('div');
+  row.className = 'btn-row';
+  if(missed.length){
+    const retry = document.createElement('button');
+    retry.className = 'action btn-mic';
+    retry.textContent = '🔁 Retry the ' + missed.length + ' missed';
+    retry.onclick = ()=> startQuiz({ id:s.id, title:s.title, note:s.def.note, questions: missed.map(i=>s.questions[i]) }, { retry:true });
+    row.appendChild(retry);
+  }
+  const again = document.createElement('button');
+  again.className = 'action btn-play';
+  again.textContent = '↺ Retake';
+  again.onclick = ()=> startQuiz(s.def, { shuffleOrder: !!s.def.generated });
+  row.appendChild(again);
+  const back = document.createElement('button');
+  back.className = 'action btn-ghost';
+  back.textContent = 'All quizzes';
+  back.onclick = ()=>{ quizSession = null; render(); };
+  row.appendChild(back);
+  card.appendChild(row);
+  main.appendChild(card);
+}
+
+function renderQuizMenu(main){
+  const info = document.createElement('div');
+  info.className = 'card';
+  info.innerHTML = '<p class="item-en" style="margin-bottom:4px;">L\'épreuve — Quiz</p>' +
+    '<p class="small">Multiple-choice tests in your tutor\'s style. Retake your tutor\'s tests any time (the options reshuffle each attempt), or generate a fresh conjugation quiz for any verb in the app. Quizzes are a check-up — they don\'t change your spaced-repetition schedule.</p>';
+  main.appendChild(info);
+
+  QUIZZES.forEach(def=>{
+    const best = quizLog[def.id];
+    const c = document.createElement('div');
+    c.className = 'card';
+    c.innerHTML = '<p class="item-en" style="margin-bottom:2px;"></p><p class="small"></p>';
+    c.querySelector('.item-en').textContent = def.title;
+    c.querySelector('.small').textContent = def.source + ' · ' + def.questions.length + ' questions · ' +
+      (best ? 'Best: ' + best.best + '/' + best.total + ' (' + Math.round(100*best.best/best.total) + '%)' : 'Not taken yet');
+    const b = document.createElement('button');
+    b.className = 'big-btn';
+    b.textContent = best ? 'Retake' : 'Start';
+    b.onclick = ()=> startQuiz(def, {});
+    c.appendChild(b);
+    main.appendChild(c);
+  });
+
+  const gen = document.createElement('div');
+  gen.className = 'card';
+  gen.innerHTML = '<p class="item-en" style="margin-bottom:4px;">Generate a conjugation quiz</p><p class="small" style="margin-bottom:10px;">Pick any verb and tense — 12 fresh questions every time.</p>';
+  const verb = VERBS.find(v=>v.inf===quizGenVerb) || VERBS[0];
+  quizGenVerb = verb.inf;
+  const modes = Object.keys(QUIZ_MODE_LABELS).filter(m=>verbFormsFor(verb, m));
+  if(modes.indexOf(quizGenMode) < 0) quizGenMode = modes[0];
+
+  const vSel = document.createElement('select');
+  vSel.style.cssText = 'width:100%; margin-bottom:8px;';
+  VERBS.forEach(v=>{ const o = document.createElement('option'); o.value = v.inf; o.textContent = v.inf + ' — ' + v.en; if(v.inf===quizGenVerb) o.selected = true; vSel.appendChild(o); });
+  vSel.onchange = ()=>{ quizGenVerb = vSel.value; render(); };
+  gen.appendChild(vSel);
+  const mSel = document.createElement('select');
+  mSel.style.cssText = 'width:100%;';
+  modes.forEach(m=>{ const o = document.createElement('option'); o.value = m; o.textContent = QUIZ_MODE_LABELS[m]; if(m===quizGenMode) o.selected = true; mSel.appendChild(o); });
+  mSel.onchange = ()=>{ quizGenMode = mSel.value; render(); };
+  gen.appendChild(mSel);
+  const gbest = quizLog['gen:'+quizGenVerb+':'+quizGenMode];
+  if(gbest){ const p = document.createElement('p'); p.className = 'small'; p.style.marginTop = '8px'; p.textContent = 'Best on this one: ' + gbest.best + '/' + gbest.total; gen.appendChild(p); }
+  const go = document.createElement('button');
+  go.className = 'big-btn';
+  go.textContent = 'Start quiz';
+  go.onclick = ()=>{ const def = generateConjugationQuiz(quizGenVerb, quizGenMode); if(def) startQuiz(def, { shuffleOrder:true }); };
+  gen.appendChild(go);
+  main.appendChild(gen);
+}
+
 function renderExamPrep(main, nav){
   nav.innerHTML = '';
-  const SKILLS = {listening:'🎧 Listen', reading:'📖 Read', writing:'📝 Write', conversation:'🗣 Speak'};
+  const SKILLS = {listening:'🎧 Listen', reading:'📖 Read', writing:'📝 Write', conversation:'🗣 Speak', quiz:'✅ Quiz'};
   Object.keys(SKILLS).forEach(sk=>{
     const b = document.createElement('button');
     b.textContent = SKILLS[sk];
@@ -3075,6 +3395,7 @@ function renderExamPrep(main, nav){
   else if(examSkill==='reading') renderReading(subMain, subNav);
   else if(examSkill==='writing') renderWriting(subMain, subNav);
   else if(examSkill==='conversation') renderConversation(subMain, subNav);
+  else if(examSkill==='quiz') renderQuiz(subMain, subNav);
 }
 
 /* ---------- Listening Comprehension (Compréhension Orale) ----------
@@ -3674,12 +3995,7 @@ function renderAdd(main, nav){
   main.appendChild(syncCard);
 
   document.getElementById('exportBtn').onclick = ()=>{
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      progress: progress,
-      custom: custom,
-      stats: stats
-    };
+    const payload = buildBackupPayload();
     const json = JSON.stringify(payload);
     const box = document.getElementById('exportBox');
     box.value = json;
@@ -3700,6 +4016,7 @@ function renderAdd(main, nav){
     catch(e){ resultEl.textContent = "That doesn't look like valid exported text."; return; }
 
     const { updated, kept, addedWords } = mergeIncoming(incoming);
+    scheduleFileBackup();
     resultEl.textContent = `Merged: ${updated} items updated, ${kept} already further ahead here, ${addedWords} custom entries added. Your streak stays local to this device.`;
     document.getElementById('importBox').value = '';
   };
