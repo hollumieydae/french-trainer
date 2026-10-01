@@ -1060,6 +1060,7 @@ const VOCAB = [
   {cat:"Idées", fr:"l'idée", en:"idea", p:"lee-day", lvl:"A1"},
   {cat:"Objets du quotidien", fr:"le jouet", en:"toy", p:"luh zhoo-eh", lvl:"A1"},
   {cat:"Objets du quotidien", fr:"le crayon", en:"pencil", p:"luh kreh-yohn", lvl:"A1"},
+  {cat:"Lieux", fr:"la ferme", en:"farm", p:"lah fairm", lvl:"A1"},
 ];
 
 const VERBS = [
@@ -3146,6 +3147,28 @@ const QUIZZES = [
     { q:'Fill in the blank: "Il __ (avoir) un ordinateur."', options:['ont','a','avez'], correct:1 },
     { q:'Select the correct translation for "They have a car":', options:['Ils ont une voiture.','Ils avoir une voiture.','Ils a une voiture.'], correct:0 },
   ]},
+  { id:'tutor-aller-1', title:"Épreuve — aller (présent)", source:"From your tutor — Choisissez la bonne réponse", note:"aller (présent): je vais · tu vas · il/elle va · nous allons · vous allez · ils/elles vont", questions:[
+    { q:"Je __ à l'école.", options:["vas", "vais", "va", "vont"], correct:1 },
+    { q:"Tu __ au marché.", options:["vais", "va", "vas", "allez"], correct:2 },
+    { q:"Il __ à la maison.", options:["vont", "allez", "va", "vas"], correct:2 },
+    { q:"Elle __ à l'église.", options:["vais", "va", "vas", "vont"], correct:1 },
+    { q:"Nous __ au cinéma.", options:["allez", "vont", "vais", "allons"], correct:3 },
+    { q:"Vous __ à l'école.", options:["allez", "allons", "va", "vont"], correct:0 },
+    { q:"Ils __ au marché.", options:["vas", "va", "vont", "allez"], correct:2 },
+    { q:"Elles __ à la plage.", options:["allons", "vont", "vais", "vas"], correct:1 },
+    { q:"Je __ au parc.", options:["va", "vais", "vont", "vas"], correct:1 },
+    { q:"Tu __ à Lagos.", options:["vas", "vais", "allez", "vont"], correct:0 },
+    { q:"Nous __ à la ferme.", options:["va", "vont", "allons", "allez"], correct:2 },
+    { q:"Vous __ au restaurant.", options:["vais", "vont", "allez", "allons"], correct:2 },
+    { q:"Paul __ à l'école.", options:["vas", "vont", "va", "vais"], correct:2, note:"aller (présent): je vais · tu vas · il/elle va · nous allons · vous allez · ils/elles vont — Paul = il → va." },
+    { q:"Marie et Anne __ au marché.", options:["va", "allons", "vont", "allez"], correct:2, note:"aller (présent): je vais · tu vas · il/elle va · nous allons · vous allez · ils/elles vont — Marie et Anne = elles → vont." },
+    { q:"Mon frère et moi __ à la maison.", options:["allons", "allez", "vont", "vas"], correct:0, note:"aller (présent): je vais · tu vas · il/elle va · nous allons · vous allez · ils/elles vont — Mon frère et moi = nous → allons." },
+    { q:"__-tu à l'école ?", options:["Vais", "Va", "Vas", "Allez"], correct:2, note:"aller (présent): je vais · tu vas · il/elle va · nous allons · vous allez · ils/elles vont — Questions by inversion: verb + hyphen + pronoun (Vas-tu…?)." },
+    { q:"__-vous au cinéma ?", options:["Allez", "Allons", "Vont", "Vas"], correct:0, note:"aller (présent): je vais · tu vas · il/elle va · nous allons · vous allez · ils/elles vont — Questions by inversion: verb + hyphen + pronoun (Allez-vous…?)." },
+    { q:"Je ne __ pas au marché.", options:["vas", "vont", "vais", "va"], correct:2, note:"aller (présent): je vais · tu vas · il/elle va · nous allons · vous allez · ils/elles vont — Negation wraps the verb: je ne vais pas." },
+    { q:"Les enfants __ à l'école.", options:["allez", "vont", "vais", "va"], correct:1, note:"aller (présent): je vais · tu vas · il/elle va · nous allons · vous allez · ils/elles vont — Les enfants = ils → vont." },
+    { q:"Nous __ à la plage demain.", options:["allez", "vont", "allons", "vais"], correct:2 },
+  ]},
 ];
 const QUIZ_MODE_LABELS = {present:'Présent', pc:'Passé composé', imparfait:'Imparfait', futur:'Futur proche'};
 const QUIZ_PRONOUN = {je:'je', tu:'tu', il:'il / elle', nous:'nous', vous:'vous', ils:'ils / elles'};
@@ -3189,6 +3212,7 @@ function quizSayText(q){
   const correct = q.options[q.correct];
   const m = q.q.match(/"([^"]*__[^"]*)"/);
   if(m) return m[1].replace(/__\s*\([^)]*\)/, correct);
+  if(q.q.indexOf('__') >= 0) return q.q.replace('__', correct);
   return correct;
 }
 function startQuiz(def, opts){
