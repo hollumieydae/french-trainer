@@ -124,7 +124,7 @@ select{
 .footer-nav button{
   background:none; border:none; border-top:2px solid transparent; color:var(--sub); font-size:0.68rem;
   display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer;
-  padding:6px 8px 4px; margin-top:-2px; font-family:var(--sans);
+  padding:6px 5px 4px; margin-top:-2px; font-family:var(--sans);
 }
 .footer-nav button.active{ color:var(--ink); font-weight:600; border-top-color:var(--margin);}
 .footer-nav .ic{ font-size:1.15rem;}
@@ -178,6 +178,7 @@ select{
   <button data-tab="vocab"><span class="ic">🔤</span>Vocab</button>
   <button data-tab="verbs"><span class="ic">🔁</span>Verbs</button>
   <button data-tab="sentences"><span class="ic">✍️</span>Sentences</button>
+  <button data-tab="moi"><span class="ic">🙋</span>Moi</button>
   <button data-tab="examprep"><span class="ic">🎯</span>Exam</button>
   <button data-tab="add"><span class="ic">➕</span>Add</button>
 </div>
@@ -299,8 +300,11 @@ function isMatch(target, said){
   return false;
 }
 function keywordMatch(said, keywordSets){
-  const n = normalize(said);
-  return keywordSets.some(set => set.every(kw => n.includes(normalize(kw))));
+  // Speech recognition returns "j'habite" / "je m'appelle" with apostrophes; the keyword lists are
+  // written as "j habite" / "je m appelle". Treat apostrophes as spaces on both sides so they match.
+  const fix = s => normalize(String(s).replace(/['’‘`]/g, ' '));
+  const n = fix(said);
+  return keywordSets.some(set => set.every(kw => n.includes(fix(kw))));
 }
 
 /* ---------- Data ---------- */
@@ -552,11 +556,11 @@ const VOCAB = [
   {cat:"Transport", fr:"l'avion", en:"the airplane", p:"lah-vyohn", lvl:"A1"},
   {cat:"Transport", fr:"le taxi", en:"the taxi", p:"luh tak-see", lvl:"A1"},
   {cat:"Transport", fr:"à pied", en:"on foot", p:"ah pyay", lvl:"A1"},
-  {cat:"Expressions", fr:"s'il vous plaît", en:"please (formal)", p:"seel voo pleh", lvl:"A1"},
-  {cat:"Expressions", fr:"merci", en:"thank you", p:"mair-see", lvl:"A1"},
-  {cat:"Expressions", fr:"de rien", en:"you're welcome", p:"duh ryan", lvl:"A1"},
-  {cat:"Expressions", fr:"pardon", en:"sorry/excuse me", p:"par-dohn", lvl:"A1"},
-  {cat:"Expressions", fr:"excusez-moi", en:"excuse me (formal)", p:"ex-kew-zay mwah", lvl:"A1"},
+  {cat:"Expressions", fr:"s'il vous plaît", en:"please (formal)", p:"seel voo pleh", lvl:"A1", pri:1},
+  {cat:"Expressions", fr:"merci", en:"thank you", p:"mair-see", lvl:"A1", pri:1},
+  {cat:"Expressions", fr:"de rien", en:"you're welcome", p:"duh ryan", lvl:"A1", pri:1},
+  {cat:"Expressions", fr:"pardon", en:"sorry/excuse me", p:"par-dohn", lvl:"A1", pri:1},
+  {cat:"Expressions", fr:"excusez-moi", en:"excuse me (formal)", p:"ex-kew-zay mwah", lvl:"A1", pri:1},
   {cat:"Expressions", fr:"je ne sais pas", en:"I don't know", p:"zhuh nuh say pah", lvl:"A1"},
   {cat:"Expressions", fr:"je ne comprends pas", en:"I don't understand", p:"zhuh nuh kohm-prahn pah", lvl:"A1"},
   {cat:"Expressions", fr:"pas de problème", en:"no problem", p:"pah duh proh-blem", lvl:"A1"},
@@ -731,12 +735,12 @@ const VOCAB = [
   {cat:"Personnes", fr:"la dame", en:"lady", p:"lah dahm", lvl:"A1"},
   {cat:"Personnes", fr:"l'enfant", en:"child", p:"lahn-fahn", lvl:"A1"},
   {cat:"Personnes", fr:"l'adolescent", en:"teenager", p:"lah-doh-leh-sahn", lvl:"A1"},
-  {cat:"Expressions", fr:"à bientôt", en:"see you soon", p:"ah byan-toh", lvl:"A1"},
-  {cat:"Expressions", fr:"à demain", en:"see you tomorrow", p:"ah duh-man", lvl:"A1"},
+  {cat:"Expressions", fr:"à bientôt", en:"see you soon", p:"ah byan-toh", lvl:"A1", pri:1},
+  {cat:"Expressions", fr:"à demain", en:"see you tomorrow", p:"ah duh-man", lvl:"A1", pri:1},
   {cat:"Expressions", fr:"bon appétit", en:"enjoy your meal", p:"bohn ah-pay-tee", lvl:"A1"},
   {cat:"Expressions", fr:"bonne chance", en:"good luck", p:"bon shahns", lvl:"A1"},
   {cat:"Expressions", fr:"félicitations", en:"congratulations", p:"fay-lee-see-tah-syohn", lvl:"A1"},
-  {cat:"Expressions", fr:"bienvenue", en:"welcome", p:"byan-vuh-new", lvl:"A1"},
+  {cat:"Expressions", fr:"bienvenue", en:"welcome", p:"byan-vuh-new", lvl:"A1", pri:1},
   {cat:"Expressions", fr:"ça dépend", en:"it depends", p:"sah day-pahn", lvl:"A1"},
   {cat:"Expressions", fr:"d'accord", en:"okay/agreed", p:"dah-kor", lvl:"A1"},
   {cat:"Expressions", fr:"avec plaisir", en:"with pleasure", p:"ah-vek pleh-zeer", lvl:"A1"},
@@ -955,7 +959,7 @@ const VOCAB = [
   {cat:"Ville", fr:"la boîte de nuit", en:"nightclub", p:"lah bwaht duh nwee", lvl:"A1"},
   {cat:"Ville", fr:"la gare routière", en:"bus station", p:"lah gar roo-tyair", lvl:"A1"},
   {cat:"Ville", fr:"le salon de beauté", en:"beauty salon", p:"luh sah-lohn duh boh-tay", lvl:"A1"},
-  {cat:"Expressions", fr:"désolé", en:"sorry", p:"day-zoh-lay", lvl:"A1"},
+  {cat:"Expressions", fr:"désolé", en:"sorry", p:"day-zoh-lay", lvl:"A1", pri:1},
   {cat:"Ville", fr:"la mosquée", en:"mosque", p:"lah mos-kay", lvl:"A1"},
   {cat:"Idées", fr:"l'environnement", en:"environment", p:"lahn-vee-rohn-mahn", lvl:"A1"},
   {cat:"Expressions", fr:"avoir besoin de", en:"to need", p:"ah-vwar buh-zwan duh", lvl:"A1"},
@@ -1061,10 +1065,66 @@ const VOCAB = [
   {cat:"Objets du quotidien", fr:"le jouet", en:"toy", p:"luh zhoo-eh", lvl:"A1"},
   {cat:"Objets du quotidien", fr:"le crayon", en:"pencil", p:"luh kreh-yohn", lvl:"A1"},
   {cat:"Lieux", fr:"la ferme", en:"farm", p:"lah fairm", lvl:"A1"},
-  {cat:"Expressions", fr:"bonjour", en:"hello / good morning", p:"bohn-zhoor", lvl:"A1"},
-  {cat:"Expressions", fr:"bonsoir", en:"good evening", p:"bohn-swahr", lvl:"A1"},
-  {cat:"Expressions", fr:"ça va", en:"it's going well / I'm fine / how's it going?", p:"sah vah", lvl:"A1"},
-  {cat:"Expressions", fr:"très bien", en:"very well / very good", p:"treh byan", lvl:"A1"},
+  {cat:"Expressions", fr:"bonjour", en:"hello / good morning", p:"bohn-zhoor", lvl:"A1", pri:1},
+  {cat:"Expressions", fr:"bonsoir", en:"good evening", p:"bohn-swahr", lvl:"A1", pri:1},
+  {cat:"Expressions", fr:"ça va", en:"it's going well / I'm fine / how's it going?", p:"sah vah", lvl:"A1", pri:1},
+  {cat:"Expressions", fr:"très bien", en:"very well / very good", p:"treh byan", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"oui", en:"yes", p:"wee", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"non", en:"no", p:"nohn", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"salut", en:"hi / bye (informal)", p:"sah-lew", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"au revoir", en:"goodbye", p:"oh ruh-vwahr", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"à tout à l'heure", en:"see you later (same day)", p:"ah too tah luhr", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"bonne journée", en:"have a good day", p:"bon zhoor-nay", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"bonne soirée", en:"have a good evening", p:"bon swah-ray", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"bonne nuit", en:"good night", p:"bon nwee", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"merci beaucoup", en:"thank you very much", p:"mair-see boh-koo", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"je vous en prie", en:"you're welcome (formal)", p:"zhuh voo zahn pree", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"s'il te plaît", en:"please (informal)", p:"seel tuh pleh", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"madame", en:"Madam / Mrs.", p:"mah-dahm", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"mademoiselle", en:"Miss (less used today)", p:"mahd-mwah-zel", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"enchanté", en:"pleased to meet you (man speaking)", p:"ahn-shahn-tay", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"enchantée", en:"pleased to meet you (woman speaking)", p:"ahn-shahn-tay", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"comme ci, comme ça", en:"so-so", p:"kom see, kom sah", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"pas mal", en:"not bad", p:"pah mahl", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"et toi ?", en:"and you? (informal)", p:"ay twah", lvl:"A1", pri:1},
+  {cat:"Salutations", fr:"et vous ?", en:"and you? (formal)", p:"ay voo", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"le prénom", en:"first name", p:"luh pray-nohn", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"le nom de famille", en:"surname / family name", p:"luh nohm duh fah-mee-y", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"l'âge", en:"age", p:"lahzh", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"l'adresse", en:"address", p:"lah-dres", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"la nationalité", en:"nationality", p:"lah nah-syoh-nah-lee-tay", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"la langue", en:"language", p:"lah lahng", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"l'anglais", en:"English (language)", p:"lahn-glay", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"le français", en:"French (language)", p:"luh frahn-say", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"la profession", en:"profession", p:"lah proh-feh-syohn", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"le métier", en:"trade / occupation", p:"luh may-tyay", lvl:"A2", pri:1},
+  {cat:"Se présenter", fr:"le mari", en:"husband", p:"luh mah-ree", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"les enfants", en:"children", p:"lay zahn-fahn", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"les loisirs", en:"hobbies / leisure", p:"lay lwah-zeer", lvl:"A1", pri:1},
+  {cat:"Se présenter", fr:"le temps libre", en:"free time", p:"luh tahn leebr", lvl:"A2", pri:1},
+  {cat:"Se présenter", fr:"le niveau", en:"level", p:"luh nee-voh", lvl:"A2", pri:1},
+  {cat:"Se présenter", fr:"les études", en:"studies", p:"lay zay-tewd", lvl:"A2", pri:1},
+  {cat:"Se présenter", fr:"ensemble", en:"together", p:"ahn-sahnbl", lvl:"A2", pri:1},
+  {cat:"Se présenter", fr:"étudier", en:"to study", p:"ay-tew-dyay", lvl:"A2", pri:1},
+  {cat:"Se présenter", fr:"créer", en:"to create / build", p:"kray-ay", lvl:"A2", pri:1},
+  {cat:"Travail pro", fr:"la finance", en:"finance", p:"lah fee-nahns", lvl:"A2"},
+  {cat:"Travail pro", fr:"la fintech", en:"fintech", p:"lah feen-tek", lvl:"B1"},
+  {cat:"Travail pro", fr:"la trésorerie", en:"treasury / cash management", p:"lah tray-zoh-ruh-ree", lvl:"B1"},
+  {cat:"Travail pro", fr:"le règlement", en:"settlement (of payments) / regulation", p:"luh reg-luh-mahn", lvl:"B1"},
+  {cat:"Travail pro", fr:"le rapprochement bancaire", en:"bank reconciliation", p:"luh rah-prohsh-mahn bahn-kair", lvl:"B2"},
+  {cat:"Travail pro", fr:"la rétrofacturation", en:"chargeback", p:"lah ray-troh-fahk-too-rah-syohn", lvl:"B2"},
+  {cat:"Travail pro", fr:"le contrôle financier", en:"financial control", p:"luh kohn-trohl fee-nahn-syay", lvl:"B1"},
+  {cat:"Travail pro", fr:"l'automatisation", en:"automation", p:"loh-toh-mah-tee-zah-syohn", lvl:"B1"},
+  {cat:"Travail pro", fr:"l'intelligence artificielle", en:"artificial intelligence", p:"lan-teh-lee-zhahns ar-tee-fee-syel", lvl:"B1"},
+  {cat:"Travail pro", fr:"l'opération", en:"operation", p:"loh-pay-rah-syohn", lvl:"A2"},
+  {cat:"Travail pro", fr:"spécialiste", en:"specialist (m. or f.)", p:"spay-syah-leest", lvl:"A2"},
+  {cat:"Travail pro", fr:"l'entreprise", en:"company", p:"lahn-truh-preez", lvl:"A2"},
+  {cat:"Travail pro", fr:"le télétravail", en:"remote work", p:"luh tay-lay-trah-vye", lvl:"B1"},
+  {cat:"Travail pro", fr:"à domicile", en:"at home (work)", p:"ah doh-mee-seel", lvl:"A2"},
+  {cat:"Travail pro", fr:"la certification", en:"certification", p:"lah sair-tee-fee-kah-syohn", lvl:"B1"},
+  {cat:"Travail pro", fr:"l'immigration", en:"immigration", p:"lee-mee-grah-syohn", lvl:"B1"},
+  {cat:"Travail pro", fr:"immigrer", en:"to immigrate", p:"ee-mee-gray", lvl:"B1"},
+  {cat:"Travail pro", fr:"s'occuper de", en:"to take care of / handle", p:"soh-kew-pay duh", lvl:"B1"},
 ];
 
 const VERBS = [
@@ -1110,6 +1170,31 @@ const VERBS = [
     present:{je:"veux",tu:"veux",il:"veut",nous:"voulons",vous:"voulez",ils:"veulent"},
     pc:{je:"ai voulu",tu:"as voulu",il:"a voulu",nous:"avons voulu",vous:"avez voulu",ils:"ont voulu"},
     imperative:{tu:"Veuille",nous:"Veuillons",vous:"Veuillez"}},
+  {inf:"s'appeler", en:"to be called", irregular:true, noDerived:true,
+    present:{je:"m'appelle",tu:"t'appelles",il:"s'appelle",nous:"nous appelons",vous:"vous appelez",ils:"s'appellent"}},
+  {inf:"habiter", en:"to live (reside)",
+    present:{je:"habite",tu:"habites",il:"habite",nous:"habitons",vous:"habitez",ils:"habitent"},
+    pc:{je:"ai habité",tu:"as habité",il:"a habité",nous:"avons habité",vous:"avez habité",ils:"ont habité"},
+    imperative:{tu:"Habites",nous:"Habitons",vous:"Habitez"}},
+  {inf:"travailler", en:"to work",
+    present:{je:"travaille",tu:"travailles",il:"travaille",nous:"travaillons",vous:"travaillez",ils:"travaillent"},
+    pc:{je:"ai travaillé",tu:"as travaillé",il:"a travaillé",nous:"avons travaillé",vous:"avez travaillé",ils:"ont travaillé"},
+    imperative:{tu:"Travailles",nous:"Travaillons",vous:"Travaillez"}},
+  {inf:"parler", en:"to speak",
+    present:{je:"parle",tu:"parles",il:"parle",nous:"parlons",vous:"parlez",ils:"parlent"},
+    pc:{je:"ai parlé",tu:"as parlé",il:"a parlé",nous:"avons parlé",vous:"avez parlé",ils:"ont parlé"},
+    imperative:{tu:"Parles",nous:"Parlons",vous:"Parlez"}},
+  {inf:"aimer", en:"to like / love",
+    present:{je:"aime",tu:"aimes",il:"aime",nous:"aimons",vous:"aimez",ils:"aiment"},
+    pc:{je:"ai aimé",tu:"as aimé",il:"a aimé",nous:"avons aimé",vous:"avez aimé",ils:"ont aimé"},
+    imperative:{tu:"Aimes",nous:"Aimons",vous:"Aimez"}},
+  {inf:"venir", en:"to come", irregular:true,
+    present:{je:"viens",tu:"viens",il:"vient",nous:"venons",vous:"venez",ils:"viennent"},
+    imperative:{tu:"Viens",nous:"Venons",vous:"Venez"}},
+  {inf:"faire", en:"to do / make", irregular:true,
+    present:{je:"fais",tu:"fais",il:"fait",nous:"faisons",vous:"faites",ils:"font"},
+    pc:{je:"ai fait",tu:"as fait",il:"a fait",nous:"avons fait",vous:"avez fait",ils:"ont fait"},
+    imperative:{tu:"Fais",nous:"Faisons",vous:"Faites"}},
   {inf:"chanter", en:"to sing",
     present:{je:"chante",tu:"chantes",il:"chante",nous:"chantons",vous:"chantez",ils:"chantent"},
     pc:{je:"ai chanté",tu:"as chanté",il:"a chanté",nous:"avons chanté",vous:"avez chanté",ils:"ont chanté"},
@@ -1147,7 +1232,7 @@ const ALLER_PRESENT = {je:"vais",tu:"vas",il:"va",nous:"allons",vous:"allez",ils
 // everything else, including avoir/aller, follows the regular rule even though
 // they're irregular in présent tense.
 const IMPARFAIT_ENDINGS = {je:"ais",tu:"ais",il:"ait",nous:"ions",vous:"iez",ils:"aient"};
-const IMPARFAIT_IRREGULAR_STEMS = {"être":"ét","avoir":"av","aller":"all","vouloir":"voul","boire":"buv","apprendre":"appren","comprendre":"compren","savoir":"sav"};
+const IMPARFAIT_IRREGULAR_STEMS = {"être":"ét","avoir":"av","aller":"all","vouloir":"voul","boire":"buv","apprendre":"appren","comprendre":"compren","savoir":"sav","venir":"ven","faire":"fais"};
 function imparfaitStem(verb){
   return IMPARFAIT_IRREGULAR_STEMS[verb.inf] || verb.inf.replace(/er$/,'');
 }
@@ -1205,11 +1290,11 @@ const SENTENCES = [
   {fr:"Les chaises sont sur les tables.", en:"The chairs are on the tables.", p:"lay shez sohn sewr lay tahbl", lvl:"A1"},
   {fr:"Les draps sont sur le lit.", en:"The sheets are on the bed.", p:"lay drah sohn sewr luh lee", lvl:"A1"},
 
-  {fr:"Je m'appelle Olu.", en:"My name is Olu.", p:"zhuh mah-pel oh-loo", lvl:"A1"},
+  {fr:"Je m'appelle Olu.", en:"My name is Olu.", p:"zhuh mah-pel oh-loo", lvl:"A1", grp:"intro", pri:1},
   {fr:"J'ai trente ans.", en:"I am thirty years old.", p:"zhay trahnt ahn", lvl:"A1"},
-  {fr:"Je suis nigérian.", en:"I am Nigerian.", p:"zhuh swee nee-zhay-ryan", lvl:"A1"},
-  {fr:"Je suis marié.", en:"I am married.", p:"zhuh swee mah-ryay", lvl:"A1"},
-  {fr:"J'habite au Nigeria.", en:"I live in Nigeria.", p:"zhah-beet oh nee-zhay-rya", lvl:"A1"},
+  {fr:"Je suis nigérian.", en:"I am Nigerian.", p:"zhuh swee nee-zhay-ryan", lvl:"A1", grp:"intro", pri:1},
+  {fr:"Je suis marié.", en:"I am married.", p:"zhuh swee mah-ryay", lvl:"A1", grp:"intro", pri:1},
+  {fr:"J'habite au Nigeria.", en:"I live in Nigeria.", p:"zhah-beet oh nee-zhay-rya", lvl:"A1", grp:"intro", pri:1},
   {fr:"Je suis ingénieur.", en:"I am an engineer.", p:"zhuh swee zan-zhay-nyuhr", lvl:"A1"},
   {fr:"Ma famille est grande.", en:"My family is big.", p:"mah fah-mee-y eh grahnd", lvl:"A1"},
   {fr:"J'ai deux frères et une sœur.", en:"I have two brothers and one sister.", p:"zhay duh frair ay ewn suhr", lvl:"A1"},
@@ -1230,7 +1315,7 @@ const SENTENCES = [
   {fr:"Mon frère est avocat.", en:"My brother is a lawyer.", p:"mohn frair eh tah-voh-kah", lvl:"A1"},
   {fr:"J'habite en France.", en:"I live in France.", p:"zhah-beet ahn frahns", lvl:"A1"},
   {fr:"Nous parlons français.", en:"We speak French.", p:"noo par-lohn frahn-say", lvl:"A1"},
-  {fr:"Je ne comprends pas.", en:"I don't understand.", p:"zhuh nuh kohm-prahn pah", lvl:"A1"},
+  {fr:"Je ne comprends pas.", en:"I don't understand.", p:"zhuh nuh kohm-prahn pah", lvl:"A1", grp:"help", pri:1},
   {fr:"Je ne suis pas fatigué.", en:"I am not tired.", p:"zhuh nuh swee pah fah-tee-gay", lvl:"A1"},
   {fr:"Il n'est pas grand.", en:"He is not tall.", p:"eel neh pah grahn", lvl:"A1"},
   {fr:"Nous ne sommes pas mariés.", en:"We are not married.", p:"noo nuh som pah mah-ryay", lvl:"A1"},
@@ -1242,11 +1327,11 @@ const SENTENCES = [
   {fr:"Votre maison est belle.", en:"Your house is beautiful.", p:"votr meh-zohn eh bel", lvl:"A1"},
   {fr:"Leurs enfants sont gentils.", en:"Their children are kind.", p:"luhr zahn-fahn sohn zhahn-tee", lvl:"A1"},
   {fr:"Ma sœur habite en France.", en:"My sister lives in France.", p:"mah suhr ah-beet ahn frahns", lvl:"A1"},
-  {fr:"Est-ce que tu es marié ?", en:"Are you married?", p:"es-kuh too eh mah-ryay", lvl:"A1"},
-  {fr:"Comment vous appelez-vous ?", en:"What is your name?", p:"koh-mahn voo zah-play voo", lvl:"A1"},
-  {fr:"Où habites-tu ?", en:"Where do you live?", p:"oo ah-beet tew", lvl:"A1"},
+  {fr:"Est-ce que tu es marié ?", en:"Are you married?", p:"es-kuh too eh mah-ryay", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Comment vous appelez-vous ?", en:"What is your name?", p:"koh-mahn voo zah-play voo", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Où habites-tu ?", en:"Where do you live?", p:"oo ah-beet tew", lvl:"A1", grp:"ask", pri:1},
   {fr:"Est-ce que vous aimez le café ?", en:"Do you like coffee?", p:"es-kuh voo zay-may luh kah-fay", lvl:"A1"},
-  {fr:"Quel âge as-tu ?", en:"How old are you?", p:"kel ahzh ah tew", lvl:"A1"},
+  {fr:"Quel âge as-tu ?", en:"How old are you?", p:"kel ahzh ah tew", lvl:"A1", grp:"ask", pri:1},
   {fr:"Je vais à la banque.", en:"I'm going to the bank.", p:"zhuh vay ah lah bahnk", lvl:"A1"},
   {fr:"Je vais au marché.", en:"I'm going to the market.", p:"zhuh vay oh mar-shay", lvl:"A1"},
   {fr:"C'est un bon homme.", en:"He's a good man.", p:"seh tuhn boh-nom", lvl:"A1"},
@@ -1265,11 +1350,69 @@ const SENTENCES = [
   {fr:"Beaucoup de gens.", en:"A lot of people.", p:"boh-koo duh zhahn", lvl:"A1"},
   {fr:"Beaucoup de gens riches.", en:"A lot of rich people.", p:"boh-koo duh zhahn reesh", lvl:"A1"},
   {fr:"Beaucoup de gens pauvres.", en:"A lot of poor people.", p:"boh-koo duh zhahn pohvr", lvl:"A1"},
-  {fr:"Bonjour Monsieur.", en:"Good morning, sir.", p:"bohn-zhoor muh-syuh", lvl:"A1"},
-  {fr:"Bonsoir Monsieur.", en:"Good evening, sir.", p:"bohn-swahr muh-syuh", lvl:"A1"},
-  {fr:"Comment allez-vous ?", en:"How are you? (formal)", p:"koh-mahn tah-lay voo", lvl:"A1"},
-  {fr:"Comment vous allez ?", en:"How are you? (formal, spoken)", p:"koh-mahn voo zah-lay", lvl:"A1"},
-  {fr:"Ça va très bien, et vous ?", en:"I'm doing very well, and you?", p:"sah vah treh byan, ay voo", lvl:"A1"},
+  {fr:"Bonjour Monsieur.", en:"Good morning, sir.", p:"bohn-zhoor muh-syuh", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Bonsoir Monsieur.", en:"Good evening, sir.", p:"bohn-swahr muh-syuh", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Comment allez-vous ?", en:"How are you? (formal)", p:"koh-mahn tah-lay voo", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Comment vous allez ?", en:"How are you? (formal, spoken)", p:"koh-mahn voo zah-lay", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Ça va très bien, et vous ?", en:"I'm doing very well, and you?", p:"sah vah treh byan, ay voo", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Salut !", en:"Hi! / Bye! (informal)", p:"sah-lew", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Au revoir.", en:"Goodbye.", p:"oh ruh-vwahr", lvl:"A1", grp:"greet", pri:1},
+  {fr:"À tout à l'heure.", en:"See you later (same day).", p:"ah too tah luhr", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Bonne journée !", en:"Have a good day!", p:"bon zhoor-nay", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Bonne soirée !", en:"Have a good evening!", p:"bon swah-ray", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Bonne nuit.", en:"Good night.", p:"bon nwee", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Merci beaucoup.", en:"Thank you very much.", p:"mair-see boh-koo", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Je vous en prie.", en:"You're welcome. (formal)", p:"zhuh voo zahn pree", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Enchanté de faire votre connaissance.", en:"Pleased to meet you. (formal)", p:"ahn-shahn-tay duh fair votr koh-neh-sahns", lvl:"A2", grp:"greet", pri:1},
+  {fr:"Je vais bien, merci. Et vous ?", en:"I'm well, thank you. And you?", p:"zhuh vay byan, mair-see. ay voo", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Comment vas-tu ?", en:"How are you? (informal)", p:"koh-mahn vah tew", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Comme ci, comme ça.", en:"So-so.", p:"kom see, kom sah", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Pas mal, merci.", en:"Not bad, thank you.", p:"pah mahl, mair-see", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Bonjour, je m'appelle Olumide Solomon.", en:"Hello, my name is Olumide Solomon.", p:"bohn-zhoor, zhuh mah-pel oh-loo-mee-day soh-loh-mohn", lvl:"A1", grp:"intro", pri:1},
+  {fr:"On m'appelle Olu.", en:"People call me Olu.", p:"ohn mah-pel oh-loo", lvl:"A2", grp:"intro", pri:1},
+  {fr:"Je viens du Nigeria.", en:"I come from Nigeria.", p:"zhuh vyan dew nee-zhay-ryah", lvl:"A1", grp:"intro", pri:1},
+  {fr:"Ma femme s'appelle Busayomi.", en:"My wife's name is Busayomi.", p:"mah fahm sah-pel boo-sah-yoh-mee", lvl:"A1", grp:"intro", pri:1},
+  {fr:"Ma femme travaille dans les ressources humaines.", en:"My wife works in human resources.", p:"mah fahm trah-vye dahn lay ruh-soors ew-men", lvl:"A2", grp:"intro", pri:1},
+  {fr:"Je parle anglais et j'apprends le français.", en:"I speak English and I'm learning French.", p:"zhuh parl ahn-glay ay zhah-prahn luh frahn-say", lvl:"A1", grp:"intro", pri:1},
+  {fr:"Je suis spécialiste des opérations de paiement et de trésorerie.", en:"I am a payments and treasury operations specialist.", p:"zhuh swee spay-syah-leest day zoh-pay-rah-syohn duh peh-mahn ay duh tray-zoh-ruh-ree", lvl:"A2", grp:"work", pri:1},
+  {fr:"Je travaille chez Zone Switch.", en:"I work at Zone Switch.", p:"zhuh trah-vye shay zohn sweech", lvl:"A2", grp:"work", pri:1},
+  {fr:"Je travaille de chez moi.", en:"I work from home.", p:"zhuh trah-vye duh shay mwah", lvl:"A2", grp:"work", pri:1},
+  {fr:"J'ai plus de dix ans d'expérience dans la banque et la fintech.", en:"I have more than ten years of experience in banking and fintech.", p:"zhay plew duh dee zahn dayk-spay-ryahns dahn lah bahnk ay lah feen-tek", lvl:"A2", grp:"work", pri:1},
+  {fr:"Je m'occupe des règlements, des rapprochements bancaires et des rétrofacturations.", en:"I handle settlements, bank reconciliations and chargebacks.", p:"zhuh moh-kewp day reg-luh-mahn, day rah-prohsh-mahn bahn-kair ay day ray-troh-fahk-too-rah-syohn", lvl:"B2", grp:"work", pri:1},
+  {fr:"Je suis spécialisé dans l'automatisation.", en:"I specialise in automation.", p:"zhuh swee spay-syah-lee-zay dahn loh-toh-mah-tee-zah-syohn", lvl:"B1", grp:"work", pri:1},
+  {fr:"Je prépare une certification en automatisation.", en:"I am preparing an automation certification.", p:"zhuh pray-par ewn sair-tee-fee-kah-syohn ahn oh-toh-mah-tee-zah-syohn", lvl:"B1", grp:"work", pri:1},
+  {fr:"J'ai fait mes études à l'Université de Lagos.", en:"I did my studies at the University of Lagos.", p:"zhay fay may zay-tewd ah lew-nee-vair-see-tay duh lah-gohs", lvl:"A2", grp:"work", pri:1},
+  {fr:"J'apprends le français depuis huit mois.", en:"I have been learning French for eight months.", p:"zhah-prahn luh frahn-say duh-pwee wee mwah", lvl:"A2", grp:"goals", pri:1},
+  {fr:"J'étudie le français avec un professeur trois fois par semaine.", en:"I study French with a teacher three times a week.", p:"zhay-tew-dee luh frahn-say ah-vek uhn proh-feh-suhr trwah fwah par suh-men", lvl:"A2", grp:"goals", pri:1},
+  {fr:"Je prépare l'examen de français pour immigrer au Canada.", en:"I am preparing the French exam to immigrate to Canada.", p:"zhuh pray-par leg-zah-man duh frahn-say poor ee-mee-gray oh kah-nah-dah", lvl:"A2", grp:"goals", pri:1},
+  {fr:"Je veux immigrer au Canada avec ma femme.", en:"I want to immigrate to Canada with my wife.", p:"zhuh vuh zee-mee-gray oh kah-nah-dah ah-vek mah fahm", lvl:"A2", grp:"goals", pri:1},
+  {fr:"Je veux avoir le niveau sept en avril.", en:"I want to reach level seven in April.", p:"zhuh vuh zah-vwahr luh nee-voh set ahn ah-vreel", lvl:"A2", grp:"goals", pri:1},
+  {fr:"Dans mon temps libre, je joue à la Fantasy Premier League.", en:"In my free time, I play Fantasy Premier League.", p:"dahn mohn tahn leebr, zhuh zhoo ah lah fahn-tah-zee prem-yair leeg", lvl:"A2", grp:"goals", pri:1},
+  {fr:"Dans mon temps libre, je crée aussi des applications web.", en:"In my free time, I also build web apps.", p:"dahn mohn tahn leebr, zhuh kray oh-see day zah-plee-kah-syohn wehb", lvl:"A2", grp:"goals", pri:1},
+  {fr:"Présentez-vous, s'il vous plaît.", en:"Please introduce yourself.", p:"pray-zahn-tay voo, seel voo pleh", lvl:"A2", grp:"ask", pri:1},
+  {fr:"Quel est votre prénom ?", en:"What is your first name?", p:"kel eh votr pray-nohn", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Quel est votre nom de famille ?", en:"What is your surname?", p:"kel eh votr nohn duh fah-mee-y", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Quel âge avez-vous ?", en:"How old are you?", p:"kel ahzh ah-vay voo", lvl:"A1", grp:"ask", pri:1},
+  {fr:"D'où venez-vous ?", en:"Where are you from?", p:"doo vuh-nay voo", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Quelle est votre nationalité ?", en:"What is your nationality?", p:"kel eh votr nah-syoh-nah-lee-tay", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Où habitez-vous ?", en:"Where do you live?", p:"oo ah-bee-tay voo", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Quelle est votre profession ?", en:"What is your profession?", p:"kel eh votr proh-feh-syohn", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Où travaillez-vous ?", en:"Where do you work?", p:"oo trah-vah-yay voo", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Que faites-vous dans la vie ?", en:"What do you do for a living?", p:"kuh fet voo dahn lah vee", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Parlez-vous français ?", en:"Do you speak French?", p:"par-lay voo frahn-say", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Quelles langues parlez-vous ?", en:"Which languages do you speak?", p:"kel lahng par-lay voo", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Êtes-vous marié ?", en:"Are you married?", p:"et voo mah-ryay", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Avez-vous des enfants ?", en:"Do you have children?", p:"ah-vay voo day zahn-fahn", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Quels sont vos loisirs ?", en:"What are your hobbies?", p:"kel sohn voh lwah-zeer", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Depuis quand apprenez-vous le français ?", en:"How long have you been learning French?", p:"duh-pwee kahn ah-pruh-nay voo luh frahn-say", lvl:"A2", grp:"ask", pri:1},
+  {fr:"Pourquoi apprenez-vous le français ?", en:"Why are you learning French?", p:"poor-kwah ah-pruh-nay voo luh frahn-say", lvl:"A2", grp:"ask", pri:1},
+  {fr:"Pourquoi voulez-vous immigrer au Canada ?", en:"Why do you want to immigrate to Canada?", p:"poor-kwah voo-lay voo zee-mee-gray oh kah-nah-dah", lvl:"A2", grp:"ask", pri:1},
+  {fr:"Excusez-moi, je ne comprends pas.", en:"Excuse me, I don't understand.", p:"ek-skew-zay mwah, zhuh nuh kohm-prahn pah", lvl:"A1", grp:"help", pri:1},
+  {fr:"Pouvez-vous répéter, s'il vous plaît ?", en:"Can you repeat, please?", p:"poo-vay voo ray-pay-tay, seel voo pleh", lvl:"A1", grp:"help", pri:1},
+  {fr:"Parlez plus lentement, s'il vous plaît.", en:"Speak more slowly, please.", p:"par-lay plew lahnt-mahn, seel voo pleh", lvl:"A1", grp:"help", pri:1},
+  {fr:"Comment ça s'écrit ?", en:"How do you spell that?", p:"koh-mahn sah say-kree", lvl:"A1", grp:"help", pri:1},
+  {fr:"Pouvez-vous épeler votre nom ?", en:"Can you spell your name?", p:"poo-vay voo ay-play votr nohn", lvl:"A2", grp:"help", pri:1},
+  {fr:"Comment dit-on ça en français ?", en:"How do you say that in French?", p:"koh-mahn dee-tohn sah ahn frahn-say", lvl:"A1", grp:"help", pri:1},
 ];
 
 const CONVERSATION = {
@@ -1279,20 +1422,35 @@ const CONVERSATION = {
       { title:"Task 1 — Guided Interview (1–2 min)", desc:"Examiner asks simple personal questions. Answer in full sentences, don't just say one word. Real timing: 1–2 minutes total.",
         prompts:[
           {fr:"Comment vous appelez-vous ?", en:"What is your name?",
-            keywords:[["je m appelle"],["mon nom est"]],
-            model:"Je m'appelle [votre nom]." },
+            keywords:[["je m appelle"], ["mon nom est"], ["on m appelle"]],
+            model:"Je m'appelle Olumide Solomon. On m'appelle Olu." },
           {fr:"Où habitez-vous ?", en:"Where do you live?",
-            keywords:[["j habite"],["je vis"],["j habite a"]],
-            model:"J'habite à Lagos, au Nigeria." },
+            keywords:[["j habite"], ["je vis"]],
+            model:"J'habite au Nigeria." },
           {fr:"Qu'est-ce que vous faites dans la vie ?", en:"What do you do for a living?",
-            keywords:[["je travaille"],["je suis"]],
-            model:"Je travaille dans les opérations de paiement." },
+            keywords:[["je travaille"], ["je suis"]],
+            model:"Je suis spécialiste des opérations de paiement et de trésorerie. Je travaille chez Zone Switch, de chez moi." },
           {fr:"Parlez-moi de votre famille.", en:"Tell me about your family.",
-            keywords:[["j ai"],["ma famille"]],
-            model:"J'ai une femme. Nous sommes une petite famille." },
+            keywords:[["j ai"], ["ma famille"], ["ma femme"], ["je suis marie"]],
+            model:"Je suis marié. Ma femme s'appelle Busayomi. Elle travaille dans les ressources humaines." },
           {fr:"Quels sont vos loisirs ?", en:"What are your hobbies?",
-            keywords:[["j aime"],["mon loisir"]],
-            model:"J'aime écouter de la musique et regarder le football." },
+            keywords:[["j aime"], ["mon loisir"], ["je joue"], ["temps libre"]],
+            model:"Dans mon temps libre, je joue à la Fantasy Premier League et je crée des applications web." },
+          {fr:"Quel âge avez-vous ?", en:"How old are you?",
+            keywords:[["j ai", "ans"]],
+            model:"J'ai [votre âge] ans." },
+          {fr:"D'où venez-vous ?", en:"Where are you from?",
+            keywords:[["je viens"], ["nigeria"]],
+            model:"Je viens du Nigeria." },
+          {fr:"Quelles langues parlez-vous ?", en:"Which languages do you speak?",
+            keywords:[["je parle"], ["j apprends"]],
+            model:"Je parle anglais et j'apprends le français." },
+          {fr:"Pourquoi apprenez-vous le français ?", en:"Why are you learning French?",
+            keywords:[["canada"], ["immigrer"]],
+            model:"J'apprends le français pour immigrer au Canada avec ma femme." },
+          {fr:"Où travaillez-vous ?", en:"Where do you work?",
+            keywords:[["je travaille"]],
+            model:"Je travaille chez Zone Switch, de chez moi." },
         ]},
       { title:"Task 2 — Interaction (2–3 min)", desc:"You must negotiate or resolve a problem, or ask a series of questions in a role-play. Real timing: 2–3 minutes. React naturally with Entendu / D'accord / C'est noté / Parfait / Bien sûr — and always close with a thank-you line like \"Merci beaucoup pour ces informations, cela va vraiment m'aider.\"",
         prompts:[
@@ -1810,7 +1968,7 @@ function touchStreak(){
 function getAllItems(){
   const items = [];
   allVocab().forEach(v=>{
-    items.push({key:'vocab:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:false, stage:1});
+    items.push({key:'vocab:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:false, stage:1, pri:v.pri||0});
     if(getItemProgress('vocab:'+v.fr).box >= 1){
       items.push({key:'vocab:rev:'+v.fr, fr:v.fr, en:v.en, source:'Vocabulaire', p:v.p, lvl:v.lvl, reverse:true, stage:2});
       if(getItemProgress('vocab:rev:'+v.fr).box >= 1){
@@ -1819,7 +1977,7 @@ function getAllItems(){
     }
   });
   allSentences().forEach(s=>{
-    items.push({key:'sent:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:false, stage:1});
+    items.push({key:'sent:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:false, stage:1, pri:s.pri||0});
     if(getItemProgress('sent:'+s.fr).box >= 2){
       items.push({key:'sent:rev:'+s.fr, fr:s.fr, en:s.en, source:'Phrases', p:s.p, lvl:s.lvl, reverse:true, stage:2});
     }
@@ -1835,7 +1993,7 @@ function getAllItems(){
     });
     // Futur proche: aller (conjugated) + infinitive — formula-generated for
     // every verb except "aller" itself (to avoid the redundant "je vais aller").
-    if(verb.inf !== 'aller'){
+    if(verb.inf !== 'aller' && !verb.noDerived){
       Object.keys(ALLER_PRESENT).forEach(subj=>{
         const allerForm = ALLER_PRESENT[subj];
         const full = (subj==='je') ? "Je vais "+verb.inf : SUBJECTS[subj]+' '+allerForm+' '+verb.inf;
@@ -1850,7 +2008,7 @@ function getAllItems(){
       });
     }
     // Imparfait (A2) — formula-generated from the infinitive stem for every verb.
-    {
+    if(!verb.noDerived){
       Object.keys(IMPARFAIT_ENDINGS).forEach(subj=>{
         const form = imparfaitForm(verb, subj);
         const full = conjugatedDisplay(subj, form, 'imparfait');
@@ -1892,7 +2050,7 @@ function buildDailyPlan(){
   // never run out and a completed batch would never get to progress to Stage 2/3.
   if(stage3Due.length > 0) return { phase:'stage3', queue: stage3Due.slice(0,20), counts };
   if(stage2Due.length > 0) return { phase:'stage2', queue: stage2Due.slice(0,20), counts };
-  if(sentDue.length   > 0) return { phase:'sentences', queue: sentDue.slice(0,5), counts };
+  if(sentDue.length   > 0) return { phase:'sentences', queue: sentDue.slice().sort((a,b)=>(b.pri||0)-(a.pri||0)).slice(0,5), counts };
   if(stage1Due.length > 0){
     // Research-grounded throttle: cramming more new words than your review
     // capacity can sustain measurably hurts long-term retention (10/day with
@@ -1916,7 +2074,13 @@ function buildDailyPlan(){
     let newCap = 15;
     if(wordsInProgress > 200) newCap = 7;
     else if(wordsInProgress > 100) newCap = 10;
-    const cappedQueue = stage1Review.concat(stage1New.slice(0, newCap)).slice(0,20);
+    // Priority content (the self-introduction set) gets up to half of each day's new-word slots,
+    // so it is learned now instead of waiting behind hundreds of older words.
+    const priNew = stage1New.filter(i=>i.pri), restNew = stage1New.filter(i=>!i.pri);
+    const half = Math.ceil(newCap/2);
+    let picks = priNew.slice(0, half).concat(restNew).slice(0, newCap);
+    if(picks.length < newCap) picks = picks.concat(priNew.slice(half)).slice(0, newCap);
+    const cappedQueue = stage1Review.concat(picks).slice(0,20);
     return { phase:'stage1', queue: cappedQueue, counts, newWordCap: newCap, wordsInProgress };
   }
 
@@ -2105,6 +2269,7 @@ function render(){
   else if(currentTab === 'vocab') renderVocab(main, nav);
   else if(currentTab === 'verbs') renderVerbs(main, nav);
   else if(currentTab === 'sentences') renderSentences(main, nav);
+  else if(currentTab === 'moi') renderMoi(main, nav);
   else if(currentTab === 'examprep') renderExamPrep(main, nav);
   else if(currentTab === 'add') renderAdd(main, nav);
 }
@@ -2825,8 +2990,9 @@ function renderVerbs(main, nav){
 
   const verbsAvailable = VERBS.filter(v=> {
     if(verbMode==='pc') return !!v.pc;
-    if(verbMode==='futur') return v.inf !== 'aller';
+    if(verbMode==='futur') return v.inf !== 'aller' && !v.noDerived;
     if(verbMode==='imperatif') return !!v.imperative;
+    if(verbMode==='imparfait') return !v.noDerived;
     return true;
   });
   if(verbIndex>=verbsAvailable.length) verbIndex=0;
@@ -3031,8 +3197,8 @@ function renderSentences(main, nav){
    write, then compare against a model built from vocabulary already in the app. */
 const WRITING_WARMUPS_A1 = [
   { prompt: "Write 3–5 sentences introducing yourself: your name, nationality, family, and job.",
-    model: "Je m'appelle Olu. J'ai trente ans. Je suis nigérian. Je suis marié. Mon père est médecin.",
-    modelEn: "My name is Olu. I am thirty years old. I am Nigerian. I am married. My father is a doctor." },
+    model: "Je m'appelle Olumide Solomon. Je viens du Nigeria. Je suis marié. Ma femme s'appelle Busayomi. Je suis spécialiste des opérations de paiement et de trésorerie.",
+    modelEn: "My name is Olumide Solomon. I come from Nigeria. I am married. My wife's name is Busayomi. I am a payments and treasury operations specialist." },
   { prompt: "Describe your house — which rooms does it have?",
     model: "J'habite dans un appartement. Il y a une chambre, une cuisine, un salon et une salle de bain.",
     modelEn: "I live in an apartment. There is a bedroom, a kitchen, a living room, and a bathroom." },
@@ -3040,8 +3206,11 @@ const WRITING_WARMUPS_A1 = [
     model: "Je me lève à sept heures. Je travaille du lundi au vendredi. Je me couche à dix heures.",
     modelEn: "I get up at seven o'clock. I work from Monday to Friday. I go to bed at ten o'clock." },
   { prompt: "Describe your family in a few sentences.",
-    model: "Nous sommes une petite famille. J'ai deux frères et une sœur. Ma mère est infirmière.",
-    modelEn: "We are a small family. I have two brothers and one sister. My mother is a nurse." },
+    model: "Je suis marié. Ma femme s'appelle Busayomi. Ma femme travaille dans les ressources humaines.",
+    modelEn: "I am married. My wife's name is Busayomi. My wife works in human resources." },
+  { prompt: "Write your full introduction (10–12 sentences): who you are, where you live, your work, your French, your goals, your free time.",
+    model: "Bonjour, je m'appelle Olumide Solomon. On m'appelle Olu. Je viens du Nigeria. J'habite au Nigeria. Je suis marié. Ma femme s'appelle Busayomi. Je suis spécialiste des opérations de paiement et de trésorerie. Je travaille chez Zone Switch. J'ai plus de dix ans d'expérience dans la banque et la fintech. J'apprends le français depuis huit mois. Je veux immigrer au Canada avec ma femme. Dans mon temps libre, je joue à la Fantasy Premier League.",
+    modelEn: "Hello, my name is Olumide Solomon. People call me Olu. I come from Nigeria. I live in Nigeria. I am married. My wife's name is Busayomi. I am a payments and treasury operations specialist. I work at Zone Switch. I have more than ten years of experience in banking and fintech. I have been learning French for eight months. I want to immigrate to Canada with my wife. In my free time, I play Fantasy Premier League." },
 ];
 function loadWritingLog(){
   try{ return JSON.parse(localStorage.getItem('frt_writing')||'{}'); }catch(e){ return {}; }
@@ -3183,6 +3352,7 @@ const QUIZ_MODE_LABELS = {present:'Présent', pc:'Passé composé', imparfait:'I
 const QUIZ_PRONOUN = {je:'je', tu:'tu', il:'il / elle', nous:'nous', vous:'vous', ils:'ils / elles'};
 
 function verbFormsFor(verb, mode){
+  if(verb.noDerived && (mode==='imparfait' || mode==='futur')) return null;
   if(mode==='present') return verb.present || null;
   if(mode==='pc') return verb.pc || null;
   if(mode==='imparfait'){ const f={}; Object.keys(IMPARFAIT_ENDINGS).forEach(s=>{ f[s]=imparfaitForm(verb,s); }); return f; }
@@ -3404,6 +3574,138 @@ function renderQuizMenu(main){
   go.onclick = ()=>{ const def = generateConjugationQuiz(quizGenVerb, quizGenMode); if(def) startQuiz(def, { shuffleOrder:true }); };
   gen.appendChild(go);
   main.appendChild(gen);
+}
+
+/* ---------- Moi: greetings + my own introduction ----------
+   Built straight from the SENTENCES bank (entries carry a `grp`), so there is one source
+   of truth: practising a line here moves the same spaced-repetition box as the Sentences
+   tab — but without waiting for Sentences to unlock. */
+const MOI_GROUPS = [
+  ['greet','👋 Saluer','Greetings and politeness — the first ten seconds of any conversation or exam.'],
+  ['intro','🙋 Moi','Who you are: your name, where you are from, your family. Start here.'],
+  ['work','💼 Travail','What you do and where — the answer to "Que faites-vous dans la vie ?"'],
+  ['goals','🎯 Projets','Your French, Canada, and your free time.'],
+  ['ask','❓ Questions','What the examiner will ask you. Learn to recognise every one of them.'],
+  ['help','🆘 Aide','When you do not understand, say so in French — never freeze.'],
+];
+const MOI_SCRIPT = [
+  "Bonjour, je m'appelle Olumide Solomon.",
+  "On m'appelle Olu.",
+  "Je viens du Nigeria.",
+  "J'habite au Nigeria.",
+  "Je suis marié.",
+  "Ma femme s'appelle Busayomi.",
+  "Je suis spécialiste des opérations de paiement et de trésorerie.",
+  "Je travaille chez Zone Switch.",
+  "J'ai plus de dix ans d'expérience dans la banque et la fintech.",
+  "J'apprends le français depuis huit mois.",
+  "Je veux immigrer au Canada avec ma femme.",
+  "Dans mon temps libre, je joue à la Fantasy Premier League.",
+  "Enchanté de faire votre connaissance.",
+];
+let moiGroup = 'intro';
+
+function moiSentence(fr){ return SENTENCES.find(s=>s.fr===fr); }
+
+function moiRow(s){
+  const key = 'sent:' + s.fr;
+  const ip = getItemProgress(key);
+  const stage = stageInfo(ip.box);
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.padding = '14px 16px';
+
+  const pill = document.createElement('span');
+  pill.className = 'stage-pill ' + stage.cls;
+  pill.textContent = stage.label;
+  card.appendChild(pill);
+  if(ip.pending){ const pp = document.createElement('span'); pp.className = 'stage-pill stage-learning'; pp.textContent = '⏳ Pending'; pp.style.marginLeft = '6px'; card.appendChild(pp); }
+
+  const fr = document.createElement('p');
+  fr.className = 'item-fr';
+  fr.style.cssText = 'font-size:1.08rem; margin-top:8px;';
+  fr.textContent = s.fr;
+  card.appendChild(fr);
+  if(s.p){ const pr = document.createElement('p'); pr.className = 'item-pron'; pr.textContent = '[ ' + s.p + ' ]'; card.appendChild(pr); }
+  const en = document.createElement('p');
+  en.className = 'item-en';
+  en.textContent = s.en;
+  card.appendChild(en);
+
+  const row = document.createElement('div');
+  row.className = 'btn-row';
+  const hear = document.createElement('button');
+  hear.className = 'action btn-play';
+  hear.textContent = '🔊 Hear it';
+  hear.onclick = ()=> speak(s.fr);
+  row.appendChild(hear);
+  const prac = document.createElement('button');
+  prac.className = 'action btn-mic';
+  prac.textContent = '🎤 Practice';
+  row.appendChild(prac);
+  card.appendChild(row);
+
+  const holder = document.createElement('div');
+  card.appendChild(holder);
+  prac.onclick = ()=>{
+    if(holder.childNodes.length){ holder.innerHTML = ''; prac.textContent = '🎤 Practice'; return; }
+    const opts = { progressKey: key };
+    if(s.p) opts.pron = s.p;
+    holder.appendChild(practiceWidget(s.fr, null, opts));
+    prac.textContent = '✕ Close';
+  };
+  return card;
+}
+
+function renderMoi(main, nav){
+  nav.innerHTML = '';
+  MOI_GROUPS.forEach(g=>{
+    const b = document.createElement('button');
+    b.textContent = g[1];
+    if(g[0]===moiGroup) b.classList.add('active');
+    b.onclick = ()=>{ moiGroup = g[0]; render(); };
+    nav.appendChild(b);
+  });
+  main.innerHTML = '';
+  const group = MOI_GROUPS.find(g=>g[0]===moiGroup) || MOI_GROUPS[0];
+  const items = SENTENCES.filter(s=>s.grp===group[0]);
+  const started = items.filter(s=>getItemProgress('sent:'+s.fr).box >= 1).length;
+
+  const head = document.createElement('div');
+  head.className = 'card';
+  head.innerHTML = '<p class="item-en" style="margin-bottom:4px;"></p><p class="small" style="margin-bottom:6px;"></p><p class="small"></p>';
+  head.querySelector('.item-en').textContent = group[1];
+  head.querySelectorAll('p.small')[0].textContent = group[2];
+  head.querySelectorAll('p.small')[1].textContent = started + ' of ' + items.length + ' practised. Tap 🔊 to hear a line, 🎤 to say it — your speaking counts toward your spaced-repetition progress.';
+  main.appendChild(head);
+
+  if(group[0]==='intro'){
+    const parts = MOI_SCRIPT.map(moiSentence).filter(Boolean);
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = '<p class="item-en" style="margin-bottom:6px;">Ma présentation <span class="small">(about one minute)</span></p>';
+    const frBlock = document.createElement('div');
+    const fr = document.createElement('p'); fr.className = 'item-fr'; fr.style.cssText = 'font-size:1.02rem; line-height:1.6;';
+    fr.textContent = parts.map(s=>s.fr).join(' ');
+    const pr = document.createElement('p'); pr.className = 'item-pron'; pr.textContent = '[ ' + parts.map(s=>s.p).join(' · ') + ' ]';
+    frBlock.appendChild(fr); frBlock.appendChild(pr);
+    card.appendChild(frBlock);
+    const en = document.createElement('p'); en.className = 'item-en'; en.textContent = parts.map(s=>s.en).join(' ');
+    card.appendChild(en);
+    const row = document.createElement('div'); row.className = 'btn-row';
+    const hear = document.createElement('button'); hear.className = 'action btn-play'; hear.textContent = '🔊 Hear all of it';
+    hear.onclick = ()=> speak(parts.map(s=>s.fr).join(' '));
+    const hide = document.createElement('button'); hide.className = 'action btn-ghost'; hide.textContent = '🙈 Hide the French';
+    hide.onclick = ()=>{ const h = frBlock.style.display === 'none'; frBlock.style.display = h ? '' : 'none'; hide.textContent = h ? '🙈 Hide the French' : '👁 Show the French'; };
+    row.appendChild(hear); row.appendChild(hide);
+    card.appendChild(row);
+    const tip = document.createElement('p'); tip.className = 'small'; tip.style.marginTop = '8px';
+    tip.textContent = 'Goal: say the whole thing from the English alone, then tap Hide and recite it from memory. Every sentence below is one line of this introduction.';
+    card.appendChild(tip);
+    main.appendChild(card);
+  }
+
+  items.forEach(s=> main.appendChild(moiRow(s)));
 }
 
 function renderExamPrep(main, nav){
