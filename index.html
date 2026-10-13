@@ -283,11 +283,37 @@ function collapseRepeatedTranscript(s){
   }
   return s;
 }
+// Words the browser's speech engine reliably mishears even when pronounced
+// correctly (it picks a more common, similar-sounding French word), plus
+// legitimate spelling variants. Anything here counts as correct.
+const BUILTIN_ALIASES = {
+  "l'oreiller": ["laurier","loreiller","l oreiller","oreiller","lorayer","l'orayer"],
+  "le yaourt": ["yogourt","le yogourt","yahourt","le yahourt","yaourt","yogurt","le yogurt"],
+};
+function getLearnedAliases(){
+  try{ return JSON.parse(localStorage.getItem('frt_aliases')||'{}') || {}; }catch(e){ return {}; }
+}
+function saveLearnedAlias(target, heard){
+  const h = normalize(heard||''); if(!h) return;
+  try{
+    const all = getLearnedAliases(); const k = normalize(target);
+    all[k] = all[k] || [];
+    if(!all[k].includes(h)) all[k].push(h);
+    localStorage.setItem('frt_aliases', JSON.stringify(all));
+  }catch(e){}
+}
+function aliasMatch(target, said){
+  const nt = normalize(target), ns = collapseRepeatedTranscript(normalize(said));
+  const built = (BUILTIN_ALIASES[target] || []).map(normalize);
+  const learned = getLearnedAliases()[nt] || [];
+  return built.concat(learned).includes(ns);
+}
 function isMatch(target, said){
   const nt = normalize(target);
   let ns = normalize(said);
   ns = collapseRepeatedTranscript(ns);
   if(nt === ns) return true;
+  if(aliasMatch(target, said)) return true;
   // Small tolerance, scaled to length — catches homophones (mère/mer) and minor
   // speech-recognition transcription quirks without accepting genuinely different words.
   const tolerance = nt.length <= 4 ? 0 : (nt.length <= 10 ? 1 : 2);
@@ -2339,6 +2365,8 @@ function practiceWidget(targetText, onCorrect, opts){
   const micSupported = !!SpeechRecognitionAPI;
   let checkOverrideVisibility = ()=>{};
   let cancelled = false;
+  let overridden = false;
+  let lastHeard = '';
 
   function handleMiss(reasonHtml){
     if(cancelled) return;
@@ -2435,8 +2463,9 @@ function practiceWidget(targetText, onCorrect, opts){
     let lastInterimAlts = null;
     function handleRecognitionResult(alts){
       handledThisAttempt = true;
-      if(cancelled) return;
+      if(cancelled || overridden) return;
       const said = alts[0] || '';
+      lastHeard = said;
       let ok;
       if(opts.keywordSets){
         ok = alts.some(a=>keywordMatch(a, opts.keywordSets));
@@ -2465,7 +2494,7 @@ function practiceWidget(targetText, onCorrect, opts){
       handledThisAttempt = true;
       micBtn.classList.remove('listening');
       micBtn.innerHTML = '🎤 Say it';
-      if(cancelled) return;
+      if(cancelled || overridden) return;
       if(err === 'not-allowed' || err === 'service-not-allowed'){
         feedback.className = 'feedback bad';
         feedback.innerHTML = "⚠️ Microphone permission is blocked. Tap the 🔒/ⓘ icon next to the address bar → Permissions → Microphone → Allow, then reload the page.";
@@ -2489,7 +2518,7 @@ function practiceWidget(targetText, onCorrect, opts){
       playBtn.disabled = false;
       micBtn.classList.remove('listening');
       micBtn.innerHTML = '🎤 Say it';
-      if(!handledThisAttempt){
+      if(!handledThisAttempt && !overridden){
         if(lastInterimAlts && lastInterimAlts.length){
           // Very short words (mai, août, vingt...) often never produce a
           // finalized result before the recognizer gives up — but they do
@@ -2514,24 +2543,30 @@ function practiceWidget(targetText, onCorrect, opts){
     const overrideBtn = document.createElement('button');
     overrideBtn.className = 'action btn-ghost';
     overrideBtn.style.fontSize = '0.78rem';
-    overrideBtn.textContent = "Confident you said it right? Mark correct manually";
+    overrideBtn.textContent = "I said it right — the app misheard me";
     overrideBtn.onclick = ()=>{
-      cancelled = true;
+      overridden = true;
       if(recognizing && recognizer){ try{ recognizer.abort(); }catch(e){} recognizing = false; }
       answeredCorrectly = true;
       micBtn.disabled = true;
-      recordAttempt(true);
-      updateProgress(opts.progressKey, true);
-      feedback.className = 'feedback good';
-      feedback.innerHTML = '✅ Marked correct manually.';
       overrideWrap.style.display = 'none';
-      if(onCorrect) onCorrect(true);
+      // Remember what the recogniser heard so the same mishearing is accepted next time.
+      saveLearnedAlias(targetText, lastHeard);
+      if(opts.fullTest){
+        showMeaningCheck();   // still has to state the meaning
+      } else {
+        recordAttempt(true);
+        updateProgress(opts.progressKey, true);
+        feedback.className = 'feedback good';
+        feedback.innerHTML = '✅ Marked correct — I\'ll accept that sound next time.';
+        if(onCorrect) onCorrect(true);
+      }
     };
     overrideWrap.appendChild(overrideBtn);
     wrap.appendChild(overrideWrap);
 
     checkOverrideVisibility = ()=>{
-      if(getItemProgress(opts.progressKey).missStreak >= 2){ overrideWrap.style.display = 'block'; }
+      if(getItemProgress(opts.progressKey).missStreak >= 1 && !answeredCorrectly){ overrideWrap.style.display = 'block'; }
     };
     checkOverrideVisibility();
   }
