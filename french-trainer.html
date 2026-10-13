@@ -1252,6 +1252,10 @@ const VOCAB = [
   {cat:"Expressions", fr:"l'expression", en:"the expression", p:"lek-spreh-syohn", lvl:"A1"},
   {cat:"Expressions", fr:"le nom", en:"the name", p:"luh nohn", lvl:"A1"},
   {cat:"Personnes", fr:"la personne", en:"the person", p:"lah pair-sun", lvl:"A1"},
+  {cat:"Se présenter", fr:"voici", en:"here is / this is (introducing)", p:"vwah-see", lvl:"A1"},
+  {cat:"Se présenter", fr:"présenter", en:"to introduce", p:"pray-zahn-tay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"saluer", en:"to greet", p:"sah-lew-ay", lvl:"A1"},
+  {cat:"Expressions", fr:"prendre congé", en:"to take leave / to say goodbye", p:"prahndr kohn-zhay", lvl:"A1"},
 ];
 
 const VERBS = [
@@ -1586,6 +1590,13 @@ const SENTENCES = [
   {fr:"Moi de même.", en:"Likewise.", p:"mwah duh mem", lvl:"A1", grp:"greet", pri:1},
   {fr:"Le plaisir est pour moi.", en:"The pleasure is mine.", p:"luh pleh-zeer eh poor mwah", lvl:"A1", grp:"greet", pri:1},
   {fr:"Quelle expression utilises-tu pour demander le nom d'une personne ?", en:"Which expression do you use to ask a person's name?", p:"kel ek-spreh-syohn ew-tee-leez tew poor duh-mahn-day luh nohn dewn pair-sun", lvl:"A2", grp:"ask", pri:1},
+  {fr:"As-tu des frères et sœurs ?", en:"Do you have brothers and sisters?", p:"ah tew day frair ay suhr", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Quel est ton prénom ?", en:"What is your first name? (informal)", p:"kel eh tohn pray-nohn", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Quel est ton nom de famille ?", en:"What is your surname? (informal)", p:"kel eh tohn nohn duh fah-mee-y", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Comment présentes-tu ton ami ?", en:"How do you introduce your friend?", p:"koh-mahn pray-zahnt tew tohn ah-mee", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Voici mon ami.", en:"This is my friend.", p:"vwah-see mohn ah-mee", lvl:"A1", grp:"greet", pri:1},
+  {fr:"Que dis-tu pour saluer quelqu'un le matin ?", en:"What do you say to greet someone in the morning?", p:"kuh dee tew poor sah-lew-ay kel-kuhn luh mah-tan", lvl:"A1", grp:"ask", pri:1},
+  {fr:"Que dis-tu pour prendre congé de quelqu'un ?", en:"What do you say to take leave of someone?", p:"kuh dee tew poor prahndr kohn-zhay duh kel-kuhn", lvl:"A1", grp:"ask", pri:1},
 ];
 
 const CONVERSATION = {
@@ -3528,6 +3539,28 @@ const QUIZZES = [
     { q:"Je ne __ pas au marché.", options:["vas", "vont", "vais", "va"], correct:2, note:"aller (présent): je vais · tu vas · il/elle va · nous allons · vous allez · ils/elles vont — Negation wraps the verb: je ne vais pas." },
     { q:"Les enfants __ à l'école.", options:["allez", "vont", "vais", "va"], correct:1, note:"aller (présent): je vais · tu vas · il/elle va · nous allons · vous allez · ils/elles vont — Les enfants = ils → vont." },
     { q:"Nous __ à la plage demain.", options:["allez", "vont", "allons", "vais"], correct:2 },
+  ]},
+  { id:'tutor-presenting-1', title:"Épreuve — se présenter", source:"From your tutor — Choisissez la bonne réponse", note:"Match each question with the answer that actually answers it: name, age, origin, home, nationality, job, family, languages, birth date, hobby, greetings.", questions:[
+    { q:"Comment t'appelles-tu ?", options:["J'ai douze ans.", "Je m'appelle Paul.", "Je suis nigérian.", "Je vais bien."], correct:1 },
+    { q:"Quel âge as-tu ?", options:["J'ai onze ans.", "Je m'appelle Jean.", "J'habite à Lagos.", "Je suis élève."], correct:0, note:"Only one option answers 'Quel âge' with an age — watch for options that are true but answer a different question." },
+    { q:"D'où viens-tu ?", options:["J'ai treize ans.", "Je vais bien.", "Je viens du Nigeria.", "Je m'appelle Marie."], correct:2 },
+    { q:"Où habites-tu ?", options:["Je suis heureux.", "J'habite à Lagos.", "J'ai dix ans.", "Je m'appelle Paul."], correct:1 },
+    { q:"Comment vas-tu ?", options:["Je vais bien, merci.", "J'ai douze ans.", "Je viens du Nigeria.", "J'habite à Abuja."], correct:0 },
+    { q:"Quelle est ta nationalité ?", options:["Je m'appelle Pierre.", "J'ai onze ans.", "Je suis nigérian.", "J'habite à Kano."], correct:2 },
+    { q:"Quelle est ta profession ?", options:["Je suis élève.", "J'ai douze ans.", "Je vais bien.", "Je viens de Lagos."], correct:0 },
+    { q:"Comment s'appelle ton père ?", options:["Il a quarante ans.", "Mon père s'appelle David.", "Il habite à Lagos.", "Il va bien."], correct:1 },
+    { q:"Comment s'appelle ta mère ?", options:["Ma mère s'appelle Marie.", "Elle a trente ans.", "Elle est gentille.", "Elle habite à Abuja."], correct:0 },
+    { q:"Quel est ton prénom ?", options:["Mon prénom est Paul.", "J'ai quinze ans.", "Je suis nigérian.", "Je vais à l'école."], correct:0 },
+    { q:"Quel est ton nom de famille ?", options:["J'ai douze ans.", "Mon nom de famille est Dupont.", "Je viens du Nigeria.", "Je suis élève."], correct:1 },
+    { q:"As-tu des frères et sœurs ?", options:["Oui, j'ai deux frères et une sœur.", "J'ai onze ans.", "Je m'appelle Pierre.", "J'habite à Lagos."], correct:0 },
+    { q:"Quelle langue parles-tu ?", options:["Je parle anglais et français.", "J'ai dix ans.", "Je suis élève.", "Je vais bien."], correct:0 },
+    { q:"Quelle est ta date de naissance ?", options:["Je m'appelle Paul.", "Je suis nigérian.", "Je suis né le 5 mai.", "J'habite à Lagos."], correct:2 },
+    { q:"Quel est ton passe-temps préféré ?", options:["Mon passe-temps préféré est la lecture.", "J'ai douze ans.", "Je viens du Nigeria.", "Je suis élève."], correct:0 },
+    { q:"Comment présentes-tu ton ami ?", options:["Voici mon ami, Jean.", "J'ai treize ans.", "Je m'appelle Jean.", "Je vais bien."], correct:0 },
+    { q:"Que dis-tu pour saluer quelqu'un le matin ?", options:["Bonsoir !", "Bonne nuit !", "Bonjour !", "Au revoir !"], correct:2 },
+    { q:"Que dis-tu pour prendre congé de quelqu'un ?", options:["Salut !", "Au revoir !", "Bonjour !", "Merci !"], correct:1, note:"« Salut ! » can also mean goodbye informally, but « Au revoir ! » is the standard way to take leave — the exam answer." },
+    { q:"Comment réponds-tu à « Enchanté(e) » ?", options:["Enchanté(e) également !", "J'ai douze ans.", "Je viens du Nigeria.", "Je suis élève."], correct:0 },
+    { q:"Quelle expression utilises-tu pour demander le nom d'une personne ?", options:["Où habites-tu ?", "Quel âge as-tu ?", "Comment t'appelles-tu ?", "Comment vas-tu ?"], correct:2 },
   ]},
 ];
 const QUIZ_MODE_LABELS = {present:'Présent', pc:'Passé composé', imparfait:'Imparfait', futur:'Futur proche'};
