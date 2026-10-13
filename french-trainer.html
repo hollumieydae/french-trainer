@@ -455,7 +455,7 @@ const VOCAB = [
   {cat:"Connecteurs", fr:"cependant", en:"however", p:"suh-pahn-dahn", lvl:"A2"},
   {cat:"Verbes courants", fr:"aller", en:"to go", p:"ah-lay", lvl:"A1"},
   {cat:"Verbes courants", fr:"faire", en:"to do/make", p:"fair", lvl:"A1"},
-  {cat:"Verbes courants", fr:"pouvoir", en:"to be able to / can", p:"poo-vwahr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"pouvoir", en:"to be able to / can", p:"poo-vwahr", lvl:"A1", forms:"peux peut pouvons pouvez peuvent"},
   {cat:"Verbes courants", fr:"vouloir", en:"to want", p:"voo-lwahr", lvl:"A1"},
   {cat:"Verbes courants", fr:"devoir", en:"to have to / must", p:"duh-vwahr", lvl:"A1"},
   {cat:"Verbes courants", fr:"savoir", en:"to know (a fact)", p:"sah-vwahr", lvl:"A1"},
@@ -465,7 +465,7 @@ const VOCAB = [
   {cat:"Verbes courants", fr:"venir", en:"to come", p:"vuh-neer", lvl:"A1"},
   {cat:"Verbes courants", fr:"sortir", en:"to go out", p:"sor-teer", lvl:"A1"},
   {cat:"Verbes courants", fr:"partir", en:"to leave", p:"par-teer", lvl:"A1"},
-  {cat:"Verbes courants", fr:"dire", en:"to say", p:"deer", lvl:"A1"},
+  {cat:"Verbes courants", fr:"dire", en:"to say", p:"deer", lvl:"A1", forms:"dis dit disons dites disent"},
   {cat:"Verbes courants", fr:"parler", en:"to speak", p:"par-lay", lvl:"A1"},
   {cat:"Verbes courants", fr:"penser", en:"to think", p:"pahn-say", lvl:"A1"},
   {cat:"Verbes courants", fr:"croire", en:"to believe", p:"krwahr", lvl:"A1"},
@@ -510,9 +510,9 @@ const VOCAB = [
   {cat:"Verbes courants", fr:"gagner", en:"to win/earn", p:"gah-nyay", lvl:"A1"},
   {cat:"Verbes courants", fr:"perdre", en:"to lose", p:"pairdr", lvl:"A1"},
   {cat:"Verbes courants", fr:"dormir", en:"to sleep", p:"dor-meer", lvl:"A1"},
-  {cat:"Verbes courants", fr:"se lever", en:"to get up", p:"suh luh-vay", lvl:"A1"},
-  {cat:"Verbes courants", fr:"se coucher", en:"to go to bed", p:"suh koo-shay", lvl:"A1"},
-  {cat:"Verbes courants", fr:"se laver", en:"to wash oneself", p:"suh lah-vay", lvl:"A1"},
+  {cat:"Verbes courants", fr:"se lever", en:"to get up", p:"suh luh-vay", lvl:"A1", forms:"lève lèves levons levez lèvent"},
+  {cat:"Verbes courants", fr:"se coucher", en:"to go to bed", p:"suh koo-shay", lvl:"A1", forms:"couche couches couchons couchez couchent"},
+  {cat:"Verbes courants", fr:"se laver", en:"to wash oneself", p:"suh lah-vay", lvl:"A1", forms:"lave laves lavons lavez lavent"},
   {cat:"Verbes courants", fr:"s'habiller", en:"to get dressed", p:"sah-bee-yay", lvl:"A1"},
   {cat:"Nourriture", fr:"le pain", en:"bread", p:"luh pan", lvl:"A1"},
   {cat:"Nourriture", fr:"le fromage", en:"cheese", p:"luh froh-mahzh", lvl:"A1"},
@@ -697,7 +697,7 @@ const VOCAB = [
   {cat:"Sport & Loisirs", fr:"le film", en:"movie", p:"luh feelm", lvl:"A1"},
   {cat:"Sport & Loisirs", fr:"le concert", en:"concert", p:"luh kohn-sair", lvl:"A1"},
   {cat:"Sport & Loisirs", fr:"lire", en:"to read", p:"leer", lvl:"A1"},
-  {cat:"Sport & Loisirs", fr:"écrire", en:"to write", p:"ay-kreer", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"écrire", en:"to write", p:"ay-kreer", lvl:"A1", forms:"écris écrit écrivons écrivez écrivent"},
   {cat:"Sport & Loisirs", fr:"dessiner", en:"to draw", p:"deh-see-nay", lvl:"A1"},
   {cat:"Sport & Loisirs", fr:"le jeu", en:"game", p:"luh zhuh", lvl:"A1"},
   {cat:"Nature & Animaux", fr:"l'arbre", en:"tree", p:"lartr", lvl:"A1"},
@@ -1150,7 +1150,7 @@ const VOCAB = [
   {cat:"Travail pro", fr:"la certification", en:"certification", p:"lah sair-tee-fee-kah-syohn", lvl:"B1"},
   {cat:"Travail pro", fr:"l'immigration", en:"immigration", p:"lee-mee-grah-syohn", lvl:"B1"},
   {cat:"Travail pro", fr:"immigrer", en:"to immigrate", p:"ee-mee-gray", lvl:"B1"},
-  {cat:"Travail pro", fr:"s'occuper de", en:"to take care of / handle", p:"soh-kew-pay duh", lvl:"B1"},
+  {cat:"Travail pro", fr:"s'occuper de", en:"to take care of / handle", p:"soh-kew-pay duh", lvl:"B1", forms:"occupe occupes occupons occupez occupent"},
   {cat:"Adjectifs", fr:"mince", en:"thin / slim", p:"manss", lvl:"A1"},
   {cat:"Adjectifs", fr:"intelligent", en:"intelligent (masc.)", p:"an-teh-lee-zhahn", lvl:"A1"},
   {cat:"Adjectifs", fr:"intelligente", en:"intelligent (fem.)", p:"an-teh-lee-zhahnt", lvl:"A1"},
@@ -1222,7 +1222,7 @@ const VOCAB = [
   {cat:"École & Travail", fr:"la science", en:"science", p:"lah syahns", lvl:"A1"},
   {cat:"Verbes courants", fr:"adorer", en:"to adore / to love", p:"ah-doh-ray", lvl:"A1"},
   {cat:"Verbes courants", fr:"retourner", en:"to go back / to return", p:"ruh-toor-nay", lvl:"A1"},
-  {cat:"Verbes courants", fr:"rendre visite à", en:"to visit (a person)", p:"rahndr vee-zeet ah", lvl:"A1"},
+  {cat:"Verbes courants", fr:"rendre visite à", en:"to visit (a person)", p:"rahndr vee-zeet ah", lvl:"A1", forms:"rends rend rendons rendez rendent"},
   {cat:"Expressions", fr:"la visite", en:"the visit", p:"lah vee-zeet", lvl:"A1"},
   {cat:"Adverbes", fr:"bien", en:"well", p:"byan", lvl:"A1"},
   {cat:"Adverbes", fr:"seulement", en:"only", p:"suhl-mahn", lvl:"A1"},
@@ -1256,6 +1256,23 @@ const VOCAB = [
   {cat:"Se présenter", fr:"présenter", en:"to introduce", p:"pray-zahn-tay", lvl:"A1"},
   {cat:"Verbes courants", fr:"saluer", en:"to greet", p:"sah-lew-ay", lvl:"A1"},
   {cat:"Expressions", fr:"prendre congé", en:"to take leave / to say goodbye", p:"prahndr kohn-zhay", lvl:"A1"},
+  {cat:"Maison", fr:"le ventilateur", en:"the fan", p:"luh vahn-tee-lah-tuhr", lvl:"A1"},
+  {cat:"Maison", fr:"le mur", en:"the wall", p:"luh mewr", lvl:"A1"},
+  {cat:"Personnes", fr:"le garçon", en:"the boy", p:"luh gar-sohn", lvl:"A1"},
+  {cat:"Adjectifs", fr:"formidable", en:"wonderful / great", p:"for-mee-dah-bl", lvl:"A1", forms:"formidables"},
+  {cat:"Adjectifs", fr:"spécialisé", en:"specialised (masc.)", p:"spay-syah-lee-zay", lvl:"A1", forms:"spécialisée spécialisés"},
+  {cat:"Expressions", fr:"avoir faim", en:"to be hungry", p:"ah-vwahr fan", lvl:"A1"},
+  {cat:"Expressions", fr:"avoir soif", en:"to be thirsty", p:"ah-vwahr swahf", lvl:"A1"},
+  {cat:"Expressions", fr:"quelqu'un", en:"someone", p:"kel-kuhn", lvl:"A1"},
+  {cat:"Expressions", fr:"la connaissance", en:"acquaintance / knowledge", p:"lah koh-neh-sahns", lvl:"A1"},
+  {cat:"Vêtements", fr:"les vêtements", en:"clothes", p:"lay vet-mahn", lvl:"A1"},
+  {cat:"Verbes courants", fr:"répéter", en:"to repeat", p:"ray-pay-tay", lvl:"A1", forms:"répète répètes répétons répétez répètent"},
+  {cat:"Verbes courants", fr:"épeler", en:"to spell", p:"ay-play", lvl:"A1", forms:"épelle épelles épelons épelez épellent"},
+  {cat:"Temps", fr:"le weekend", en:"the weekend", p:"luh wee-kend", lvl:"A1"},
+  {cat:"Temps", fr:"un an", en:"a year (also age: ans)", p:"uhn ahn", lvl:"A1", forms:"ans"},
+  {cat:"Temps", fr:"la fois", en:"the time / occasion", p:"lah fwah", lvl:"A1"},
+  {cat:"Technologie", fr:"le web", en:"the web", p:"luh web", lvl:"A1"},
+  {cat:"Travail pro", fr:"les ressources humaines", en:"human resources", p:"lay ruh-soors ew-men", lvl:"A1"},
 ];
 
 const VERBS = [
@@ -2213,6 +2230,61 @@ function getAllItems(){
 /* ---------- Daily Plan: Pending -> Stage1(Read) -> Stage2(Recall) -> Stage3(Full Test) -> Sentences -> Quiz ---------- */
 let todaysCompletedKeys = [];
 
+/* ---------- Sentence readiness: words before sentences ----------
+   A sentence is only offered once every content word in it has been tackled as a
+   single word (passed at least once in Read AND Recall). Function words (je, de,
+   et...) and capitalised names don't count. A word with no vocabulary entry at all
+   blocks the sentence too, so the missing word has to be added and learned first. */
+const FUNCTION_WORDS = new Set(("je tu il elle on nous vous ils elles le la les l un une des de du d a au aux et ou mais ne n pas ce c ca "+
+  "est es suis sommes etes sont ai as avons avez ont que qu s se m me t te y en dans sur sous avec sans pour par chez mon ma mes ton ta tes "+
+  "son sa ses notre nos votre vos leur leurs qui quoi comment quel quelle quels quelles si plus tres aussi non oui merci voici moi toi lui "+
+  "eux ici cela j peu trop tout tous toute toutes meme alors donc car puis").split(' '));
+function sentTokens(fr){
+  const noNames = fr.replace(/(?<=\S\s)[A-ZÀ-Ý][\wÀ-ÿ]*/g,' ');
+  return normalize(noNames.replace(/['’\-]/g,' ')).split(' ').filter(Boolean).filter(t=>!/^\d+$/.test(t));
+}
+function stemFr(t){ return t.length>3 ? t.replace(/(es|s|x|e)$/,'') : t; }
+function makeSentenceGate(){
+  const vocabIdx = {};           // stem -> [vocab fr]
+  allVocab().forEach(v=>{
+    sentTokens(v.fr+' '+(v.forms||'')).forEach(t=>{ const k=stemFr(t); (vocabIdx[k]=vocabIdx[k]||[]).push(v.fr); });
+  });
+  const infRoots = [];           // vocab infinitives -> root, for conjugated forms
+  allVocab().forEach(v=>{ const n=normalize(v.fr); if(/^[a-z]+(er|ir|re)$/.test(n) && n.length>=5) infRoots.push({root:n.slice(0,-2), fr:v.fr}); });
+  const verbIdx = {};            // stem -> infinitive
+  VERBS.forEach(verb=>{
+    const add = form=>String(form||'').split(/[\s']+/).forEach(w=>{ const t=normalize(w); if(t) verbIdx[stemFr(t)] = verb.inf; });
+    add(verb.inf);
+    [verb.present, verb.pc, verb.imperative].forEach(o=>{ if(o) Object.keys(o).forEach(k=>add(o[k])); });
+    if(!verb.noDerived){ try{ Object.keys(IMPARFAIT_ENDINGS).forEach(subj=>add(imparfaitForm(verb, subj))); }catch(e){} }
+  });
+  const wordReady = fr => getItemProgress('vocab:'+fr).box>=1 && getItemProgress('vocab:rev:'+fr).box>=1;
+  const cache = {};
+  const needed = new Set();
+  function check(fr){
+    if(cache[fr]) return cache[fr];
+    const missing = [], waiting = new Set(), covering = new Set();
+    sentTokens(fr).forEach(t=>{
+      if(FUNCTION_WORDS.has(t)) return;
+      const k = stemFr(t);
+      let cands = (vocabIdx[k]||[]).slice();
+      if(!cands.length && verbIdx[k] && vocabIdx[stemFr(normalize(verbIdx[k]))]){ cands = vocabIdx[stemFr(normalize(verbIdx[k]))].slice(); }
+      if(!cands.length){
+        // Conjugated form of a verb that is in vocabulary as an infinitive (regarde -> regarder)
+        infRoots.forEach(r=>{ if(t.startsWith(r.root) && t.length-r.root.length<=4) cands.push(r.fr); });
+      }
+      if(!cands.length){ if(verbIdx[k]) return; missing.push(t); return; }
+      cands.forEach(c=>covering.add(c));
+      if(!cands.some(wordReady)) waiting.add(cands[0]);
+    });
+    return cache[fr] = { ready: missing.length===0 && waiting.size===0, missing, waiting:[...waiting], covering:[...covering] };
+  }
+  const gate = check;
+  gate.needed = needed;
+  allSentences().filter(x=>x.pri).forEach(x=>check(x.fr).covering.forEach(c=>needed.add(c)));
+  return gate;
+}
+
 function buildDailyPlan(){
   let all = getAllItems();
   if(!sentencesUnlocked()) all = all.filter(i=>i.source!=='Phrases');
@@ -2226,7 +2298,8 @@ function buildDailyPlan(){
   const stage1Due = all.filter(i=>i.stage===1 && i.source==='Vocabulaire' && isDue(i.key));
   const stage2Due = all.filter(i=>i.stage===2 && i.source==='Vocabulaire' && isDue(i.key));
   const stage3Due = all.filter(i=>i.stage===3 && i.source==='Vocabulaire' && isDue(i.key));
-  const sentDue   = all.filter(i=>i.source==='Phrases' && isDue(i.key));
+  const sentGate = makeSentenceGate();
+  const sentDue   = all.filter(i=>i.source==='Phrases' && isDue(i.key) && sentGate(i.fr).ready);
   const counts = { stage1: stage1Due.length, stage2: stage2Due.length, stage3: stage3Due.length, sentences: sentDue.length };
 
   // Advancing words already in progress always comes before introducing new
@@ -2260,7 +2333,7 @@ function buildDailyPlan(){
     else if(wordsInProgress > 100) newCap = 10;
     // Priority content (the self-introduction set) gets up to half of each day's new-word slots,
     // so it is learned now instead of waiting behind hundreds of older words.
-    const priNew = stage1New.filter(i=>i.pri), restNew = stage1New.filter(i=>!i.pri);
+    const priNew = stage1New.filter(i=>i.pri || sentGate.needed.has(i.fr)), restNew = stage1New.filter(i=>!(i.pri || sentGate.needed.has(i.fr)));
     const half = Math.ceil(newCap/2);
     let picks = priNew.slice(0, half).concat(restNew).slice(0, newCap);
     if(picks.length < newCap) picks = picks.concat(priNew.slice(half)).slice(0, newCap);
