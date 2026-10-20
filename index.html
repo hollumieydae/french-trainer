@@ -1515,6 +1515,14 @@ const VERBS = [
     present:{je:"enchante",tu:"enchantes",il:"enchante",nous:"enchantons",vous:"enchantez",ils:"enchantent"},
     pc:{je:"ai enchanté",tu:"as enchanté",il:"a enchanté",nous:"avons enchanté",vous:"avez enchanté",ils:"ont enchanté"},
     imperative:{tu:"Enchante",nous:"Enchantons",vous:"Enchantez"}},
+  {inf:"voir", en:"to see", irregular:true,
+    present:{je:"vois",tu:"vois",il:"voit",nous:"voyons",vous:"voyez",ils:"voient"},
+    pc:{je:"ai vu",tu:"as vu",il:"a vu",nous:"avons vu",vous:"avez vu",ils:"ont vu"},
+    imperative:{tu:"Vois",nous:"Voyons",vous:"Voyez"}},
+  {inf:"célébrer", en:"to celebrate",
+    present:{je:"célèbre",tu:"célèbres",il:"célèbre",nous:"célébrons",vous:"célébrez",ils:"célèbrent"},
+    pc:{je:"ai célébré",tu:"as célébré",il:"a célébré",nous:"avons célébré",vous:"avez célébré",ils:"ont célébré"},
+    imperative:{tu:"Célèbre",nous:"Célébrons",vous:"Célébrez"}},
   {inf:"manger", en:"to eat",
     present:{je:"mange",tu:"manges",il:"mange",nous:"mangeons",vous:"mangez",ils:"mangent"},
     pc:{je:"ai mangé",tu:"as mangé",il:"a mangé",nous:"avons mangé",vous:"avez mangé",ils:"ont mangé"},
@@ -1544,7 +1552,7 @@ const ALLER_PRESENT = {je:"vais",tu:"vas",il:"va",nous:"allons",vous:"allez",ils
 // everything else, including avoir/aller, follows the regular rule even though
 // they're irregular in présent tense.
 const IMPARFAIT_ENDINGS = {je:"ais",tu:"ais",il:"ait",nous:"ions",vous:"iez",ils:"aient"};
-const IMPARFAIT_IRREGULAR_STEMS = {"être":"ét","avoir":"av","aller":"all","vouloir":"voul","boire":"buv","apprendre":"appren","comprendre":"compren","prendre":"pren","savoir":"sav","venir":"ven","faire":"fais"};
+const IMPARFAIT_IRREGULAR_STEMS = {"être":"ét","avoir":"av","aller":"all","vouloir":"voul","boire":"buv","apprendre":"appren","comprendre":"compren","prendre":"pren","voir":"voy","savoir":"sav","venir":"ven","faire":"fais"};
 function imparfaitStem(verb){
   return IMPARFAIT_IRREGULAR_STEMS[verb.inf] || verb.inf.replace(/er$/,'');
 }
