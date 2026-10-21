@@ -623,7 +623,7 @@ const VOCAB = [
   {cat:"Verbes courants", fr:"appeler", en:"to call", p:"ah-play", lvl:"A1"},
   {cat:"Verbes courants", fr:"jouer", en:"to play", p:"zhoo-ay", lvl:"A1"},
   {cat:"Verbes courants", fr:"gagner", en:"to win/earn", p:"gah-nyay", lvl:"A1"},
-  {cat:"Verbes courants", fr:"perdre", en:"to lose", p:"pairdr", lvl:"A1"},
+  {cat:"Verbes courants", fr:"perdre", en:"to lose", p:"pairdr", lvl:"A1", forms:"perds perd perdons perdez perdent"},
   {cat:"Verbes courants", fr:"dormir", en:"to sleep", p:"dor-meer", lvl:"A1"},
   {cat:"Verbes courants", fr:"se lever", en:"to get up", p:"suh luh-vay", lvl:"A1", forms:"lève lèves levons levez lèvent"},
   {cat:"Verbes courants", fr:"se coucher", en:"to go to bed", p:"suh koo-shay", lvl:"A1", forms:"couche couches couchons couchez couchent"},
@@ -1422,6 +1422,24 @@ const VOCAB = [
   {cat:"Prépositions", fr:"à célébrer avec mon amie", en:"to celebrate with my (female) friend", p:"ah say-lay-bray ah-vek mohn nah-mee", lvl:"A1"},
   {cat:"Prépositions", fr:"à avoir une voiture", en:"to have a car", p:"ah ah-vwahr ewn vwah-tewr", lvl:"A1"},
   {cat:"Prépositions", fr:"à avoir un vélo", en:"to have a bicycle", p:"ah ah-vwahr uhn vay-loh", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"mes clés", en:"my keys", p:"may klay", lvl:"A1"},
+  {cat:"Idées", fr:"le chemin", en:"the way / the path", p:"luh shuh-man", lvl:"A1"},
+  {cat:"Idées", fr:"mon chemin", en:"my way / my path", p:"mohn shuh-man", lvl:"A1"},
+  {cat:"Sports", fr:"le match", en:"the match / the game", p:"luh mahtch", lvl:"A1"},
+  {cat:"Sports", fr:"l'équipe", en:"the team", p:"lay-keep", lvl:"A1"},
+  {cat:"Sports", fr:"l'équipe de France", en:"the French team", p:"lay-keep duh frahns", lvl:"A1"},
+  {cat:"Pays", fr:"l'Allemagne", en:"Germany", p:"lahl-mahn-yuh", lvl:"A1"},
+  {cat:"Sports", fr:"l'équipe d'Allemagne", en:"the German team", p:"lay-keep dahl-mahn-yuh", lvl:"A1"},
+  {cat:"Idées", fr:"l'esprit", en:"the mind / the spirit", p:"less-pree", lvl:"A1"},
+  {cat:"Idées", fr:"mon esprit", en:"my mind", p:"mohn nes-pree", lvl:"A1"},
+  {cat:"Verbes courants", fr:"perdu", en:"lost (past participle of perdre)", p:"pair-dew", lvl:"A1"},
+  {cat:"Verbes courants", fr:"a perdu", en:"lost / has lost", p:"ah pair-dew", lvl:"A1"},
+  {cat:"Verbes courants", fr:"perdu son chien", en:"lost his/her dog", p:"pair-dew sohn shyan", lvl:"A1"},
+  {cat:"Verbes courants", fr:"perdu sa vie", en:"lost his/her life", p:"pair-dew sah vee", lvl:"A1"},
+  {cat:"Verbes courants", fr:"perdu sa voiture", en:"lost his/her car", p:"pair-dew sah vwah-tewr", lvl:"A1"},
+  {cat:"Grammaire", fr:"son", en:"his / her (before a masculine noun)", p:"sohn", lvl:"A1"},
+  {cat:"Grammaire", fr:"sa", en:"his / her (before a feminine noun)", p:"sah", lvl:"A1"},
+  {cat:"Grammaire", fr:"ses", en:"his / her (before a plural noun)", p:"say", lvl:"A1"},
 ];
 
 const VERBS = [
@@ -1523,6 +1541,10 @@ const VERBS = [
     present:{je:"célèbre",tu:"célèbres",il:"célèbre",nous:"célébrons",vous:"célébrez",ils:"célèbrent"},
     pc:{je:"ai célébré",tu:"as célébré",il:"a célébré",nous:"avons célébré",vous:"avez célébré",ils:"ont célébré"},
     imperative:{tu:"Célèbre",nous:"Célébrons",vous:"Célébrez"}},
+  {inf:"perdre", en:"to lose", irregular:true,
+    present:{je:"perds",tu:"perds",il:"perd",nous:"perdons",vous:"perdez",ils:"perdent"},
+    pc:{je:"ai perdu",tu:"as perdu",il:"a perdu",nous:"avons perdu",vous:"avez perdu",ils:"ont perdu"},
+    imperative:{tu:"Perds",nous:"Perdons",vous:"Perdez"}},
   {inf:"manger", en:"to eat",
     present:{je:"mange",tu:"manges",il:"mange",nous:"mangeons",vous:"mangez",ils:"mangent"},
     pc:{je:"ai mangé",tu:"as mangé",il:"a mangé",nous:"avons mangé",vous:"avez mangé",ils:"ont mangé"},
@@ -1552,7 +1574,7 @@ const ALLER_PRESENT = {je:"vais",tu:"vas",il:"va",nous:"allons",vous:"allez",ils
 // everything else, including avoir/aller, follows the regular rule even though
 // they're irregular in présent tense.
 const IMPARFAIT_ENDINGS = {je:"ais",tu:"ais",il:"ait",nous:"ions",vous:"iez",ils:"aient"};
-const IMPARFAIT_IRREGULAR_STEMS = {"être":"ét","avoir":"av","aller":"all","vouloir":"voul","boire":"buv","apprendre":"appren","comprendre":"compren","prendre":"pren","voir":"voy","savoir":"sav","venir":"ven","faire":"fais"};
+const IMPARFAIT_IRREGULAR_STEMS = {"être":"ét","avoir":"av","aller":"all","vouloir":"voul","boire":"buv","apprendre":"appren","comprendre":"compren","prendre":"pren","voir":"voy","perdre":"perd","savoir":"sav","venir":"ven","faire":"fais"};
 function imparfaitStem(verb){
   return IMPARFAIT_IRREGULAR_STEMS[verb.inf] || verb.inf.replace(/er$/,'');
 }
