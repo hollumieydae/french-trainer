@@ -2043,6 +2043,7 @@ function buildBackupPayload(){
   try{ logs.listening = listeningLog; }catch(e){}
   try{ logs.writing = writingLog; }catch(e){}
   try{ logs.quiz = quizLog; }catch(e){}
+  try{ logs.tcf = tcfLog; }catch(e){}
   return { exportedAt: new Date().toISOString(), progress, custom, stats, meta: loadMeta(), logs };
 }
 // Reading/listening/writing completions: once done on any device, done everywhere.
@@ -2058,6 +2059,9 @@ function mergeExtraLogs(logs){
       if(ch) save();
     }catch(e){}
   });
+  try{
+    if(Array.isArray(logs.tcf)){ const have = new Set(tcfLog.map(x=>x.id)); let ch2 = false; logs.tcf.forEach(x=>{ if(x && x.id && !have.has(x.id)){ tcfLog.push(x); ch2 = true; } }); if(ch2){ tcfLog.sort((a,b)=>String(a.id).localeCompare(String(b.id))); saveTcfLog(); } }
+  }catch(e){}
   try{
     const inc = logs.quiz || {}; let ch = false;
     Object.keys(inc).forEach(id=>{
@@ -2744,7 +2748,7 @@ function lockedCard(main, title, current, needed, explain, goTab, goLabel){
 
 /* ---------- Router ---------- */
 let currentTab = 'home';
-let examSkill = 'listening';
+let examSkill = 'tcf';
 let sessionQueue = [];
 let sessionPendingMode = false;
 let sessionPhase = 'stage1';
@@ -2769,6 +2773,7 @@ document.querySelectorAll('.footer-nav button').forEach(b=>{
   b.addEventListener('click', ()=>{
     document.querySelectorAll('.footer-nav button').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
+    try{ tcfStopAll(); }catch(e){}
     currentTab = b.dataset.tab;
     render();
   });
@@ -4375,14 +4380,430 @@ function renderMoi(main, nav){
   items.forEach(s=> main.appendChild(moiRow(s)));
 }
 
+/* ---------- TCF Canada mock-exam module ----------
+   Formats follow the published TCF Canada structure (as of Nov 2026, from secondary
+   guides; verify against France Éducation international before booking):
+   CO 39 MCQ / 35 min (audio once), CE 39 MCQ / 60 min, EE 3 tasks / 60 min
+   (60-120, 120-150, 120-180 words), EO 3 tasks / 12 min (2 min; 2 min prep + 3.5 min;
+   4.5 min). All prompts and passages below are original practice material. */
+const TCF_LOG_KEY = 'frt_tcf';
+function loadTcfLog(){ try{ const a = JSON.parse(localStorage.getItem(TCF_LOG_KEY)||'[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+let tcfLog = loadTcfLog();
+function saveTcfLog(){ try{ localStorage.setItem(TCF_LOG_KEY, JSON.stringify(tcfLog.slice(-300))); }catch(e){} scheduleFileBackup(); }
+function tcfAddLog(entry){ entry.id = Date.now()+'-'+Math.random().toString(36).slice(2,6); entry.date = todayStr(); tcfLog.push(entry); saveTcfLog(); }
+
+const TCF_SPEAK = {
+  1: { title:'Tâche 1 — Entretien dirigé', prep:0, talk:120, hint:'No preparation. Answer as fully as you can: give details, examples, reasons.', prompts:[
+    "Présentez-vous : votre nom, votre pays, votre travail, votre famille et vos loisirs.",
+    "Parlez de la ville ou du quartier où vous habitez. Qu'est-ce que vous aimez ? Qu'est-ce que vous n'aimez pas ?",
+    "Décrivez une journée typique pour vous, du matin au soir.",
+    "Parlez de votre travail : ce que vous faites, avec qui, et ce que vous aimez dans ce travail.",
+    "Pourquoi voulez-vous apprendre le français ? Et pourquoi voulez-vous aller au Canada ?",
+    "Parlez de vos loisirs et de ce que vous faites pendant le week-end."] },
+  2: { title:'Tâche 2 — Jeu de rôle', prep:120, talk:210, hint:'2 minutes to prepare, then 3.5 minutes. You must ask QUESTIONS to get information. Greet, state why you call, ask at least 5 questions, thank and close.', prompts:[
+    "Vous voulez vous inscrire à un cours de français. Vous téléphonez à l'école de langues. Posez des questions sur les horaires, le prix, la durée, le niveau et la date de début.",
+    "Vous cherchez un appartement à louer. Vous téléphonez à l'agence. Posez des questions sur le loyer, les charges, la surface, le quartier et la date de disponibilité.",
+    "Vous voulez organiser un voyage de trois jours avec des amis. Vous téléphonez à une agence. Posez des questions sur les transports, l'hôtel, le prix et les activités.",
+    "Vous voulez acheter un ordinateur dans un magasin. Posez des questions au vendeur sur le prix, la garantie, les caractéristiques et la livraison.",
+    "Vous êtes nouveau dans une ville. Vous allez à la mairie. Posez des questions sur les transports, les écoles, les associations et les démarches à faire."] },
+  3: { title:'Tâche 3 — Point de vue', prep:0, talk:270, hint:'No preparation. Give your opinion, give 2-3 reasons with examples, mention the other side, then conclude.', prompts:[
+    "« Le télétravail est meilleur que le travail au bureau. » Êtes-vous d'accord ? Expliquez votre point de vue.",
+    "« Il vaut mieux vivre en ville qu'à la campagne. » Qu'en pensez-vous ?",
+    "« Les jeunes passent trop de temps sur les réseaux sociaux. » Donnez votre opinion.",
+    "« Tout le monde devrait apprendre au moins deux langues étrangères. » Êtes-vous d'accord ?",
+    "« L'argent fait le bonheur. » Défendez votre point de vue."] }
+};
+
+const TCF_WRITE = {
+  1: { title:'Tâche 1 — Message court', min:60, max:120, mins:10, prompts:[
+    { p:"Vous invitez un ami à votre anniversaire. Écrivez-lui un message : donnez la date, le lieu, l'heure et demandez-lui de répondre." },
+    { p:"Vous ne pouvez pas aller à une réunion demain. Écrivez un message à votre collègue pour expliquer pourquoi et proposer une solution." },
+    { p:"Votre voisin fait beaucoup de bruit le soir. Écrivez-lui un message poli pour lui expliquer le problème et lui demander de faire attention." }] },
+  2: { title:'Tâche 2 — Récit ou lettre', min:120, max:150, mins:20, prompts:[
+    { p:"Racontez un voyage ou une sortie dont vous vous souvenez bien : où, avec qui, ce que vous avez fait et pourquoi c'était mémorable." },
+    { p:"Vous écrivez à la mairie pour demander l'installation d'une piste cyclable dans votre quartier. Expliquez vos raisons et proposez une solution." },
+    { p:"Vous avez eu un problème avec un produit acheté en ligne. Écrivez au service client pour expliquer la situation et dire ce que vous demandez." }] },
+  3: { title:'Tâche 3 — Texte argumenté', min:120, max:180, mins:30, prompts:[
+    { p:"Lisez les deux opinions puis donnez votre point de vue en comparant les deux avec des arguments.", docs:[
+      "Opinion A : « Travailler à la maison est idéal : on gagne du temps, on est plus calme et on peut mieux organiser sa vie. »",
+      "Opinion B : « Le bureau reste indispensable : on y travaille en équipe, on y partage des idées et on ne se sent pas seul. »"] },
+    { p:"Lisez les deux opinions puis donnez votre point de vue en comparant les deux avec des arguments.", docs:[
+      "Opinion A : « Étudier à l'étranger est la meilleure façon d'apprendre une langue et de découvrir une culture. »",
+      "Opinion B : « On peut très bien apprendre une langue chez soi, avec des applications, des cours en ligne et des films. »"] },
+    { p:"Lisez les deux opinions puis donnez votre point de vue en comparant les deux avec des arguments.", docs:[
+      "Opinion A : « La voiture est indispensable pour se déplacer librement. »",
+      "Opinion B : « Les transports en commun et le vélo sont plus économiques et meilleurs pour la ville. »"] }] }
+};
+
+const TCF_LISTEN = [
+  { lvl:'A2', type:'Annonce', script:"Mesdames et messieurs, en raison de travaux sur la voie, le train de huit heures quinze à destination de Lyon partira avec vingt minutes de retard. Nous vous prions de nous excuser pour la gêne occasionnée.",
+    q:"Pourquoi le train est-il en retard ?", options:["À cause d'une grève","À cause de travaux sur la voie","À cause d'un problème technique","À cause du mauvais temps"], correct:1 },
+  { lvl:'A2', type:'Message', script:"Bonjour, ici le cabinet du docteur Martin. Je vous appelle pour vous rappeler votre rendez-vous de jeudi prochain à quatorze heures trente. Si vous ne pouvez pas venir, merci de nous prévenir au moins vingt-quatre heures à l'avance.",
+    q:"Que doit faire le patient s'il ne peut pas venir ?", options:["Payer à l'avance","Venir quand même","Prévenir le cabinet un jour avant","Choisir un autre médecin"], correct:2 },
+  { lvl:'B1', type:'Dialogue', script:"Allô, je vous appelle pour l'appartement de la rue Victor-Hugo. Oui, il est toujours libre. Il fait cinquante mètres carrés et le loyer est de sept cents euros, charges comprises. Est-ce que les animaux sont acceptés ? Oui, mais il faut en parler au propriétaire.",
+    q:"Quel est le loyer ?", options:["Six cents euros","Sept cents euros, charges comprises","Sept cents euros, sans les charges","Cinq cents euros"], correct:1 },
+  { lvl:'B1', type:'Météo', script:"Demain, le temps sera instable sur la moitié nord du pays, avec des pluies fortes en fin d'après-midi. Dans le sud, le soleil dominera, mais le vent soufflera fort sur la côte. Les températures resteront douces pour la saison.",
+    q:"Quel temps fera-t-il dans le sud ?", options:["Il pleuvra toute la journée","Il fera très froid","Il y aura de la neige","Il y aura du soleil mais du vent sur la côte"], correct:3 },
+  { lvl:'B1', type:'Témoignage', script:"Depuis que je travaille à la maison trois jours par semaine, je gagne près de deux heures par jour, parce que je n'ai plus de transport. En revanche, je me sens parfois isolée, et je trouve difficile de séparer vie privée et vie professionnelle.",
+    q:"Quel inconvénient du télétravail la personne mentionne-t-elle ?", options:["Elle gagne moins d'argent","Elle se sent parfois isolée","Elle passe plus de temps dans les transports","Elle travaille moins"], correct:1 },
+  { lvl:'B2', type:'Annonce', script:"La mairie annonce que la bibliothèque municipale sera fermée pour rénovation du quinze mars au trente avril. Pendant cette période, les livres pourront être empruntés à la médiathèque du centre-ville, qui prolonge ses horaires jusqu'à vingt heures.",
+    q:"Que peut-on faire pendant la fermeture ?", options:["Emprunter des livres à la médiathèque du centre-ville","Rendre les livres avec des pénalités","Attendre mai pour emprunter","Utiliser la bibliothèque le soir"], correct:0 },
+  { lvl:'B2', type:'Conversation', script:"Tu as vu le planning ? La réunion de lundi est reportée à mercredi. Ah bon ? Pourquoi ? Le directeur est en déplacement à l'étranger, il ne revient que mardi soir. Du coup, il propose de la faire à dix heures plutôt qu'à quatorze heures.",
+    q:"Pourquoi la réunion est-elle reportée ?", options:["La salle est occupée","Le directeur est absent jusqu'à mardi soir","Il y a une grève","Personne n'est libre mercredi"], correct:1 },
+  { lvl:'B2', type:'Radio', script:"Selon une étude récente, un jeune sur trois dort moins de sept heures par nuit en semaine. Les chercheurs expliquent ce phénomène par l'usage des écrans le soir, et recommandent de les éteindre au moins une heure avant le coucher.",
+    q:"Que recommandent les chercheurs ?", options:["Dormir plus longtemps le week-end","Boire moins de café","Faire du sport le soir","Éteindre les écrans une heure avant de dormir"], correct:3 }
+];
+
+const TCF_READ = [
+  { lvl:'B1', type:'Courriel', text:"Objet : Changement de salle\nChers collègues, la formation de jeudi aura lieu en salle 204 au lieu de la salle 110, qui est en travaux. L'horaire ne change pas : 9 h 30. Merci d'apporter votre ordinateur portable. Cordialement, Claire Dubois, service formation.",
+    qs:[ { q:"Qu'est-ce qui change ?", options:["L'horaire","La salle","La date","Le formateur"], correct:1 },
+         { q:"Que doivent apporter les participants ?", options:["Un dossier papier","Leur déjeuner","Rien","Leur ordinateur portable"], correct:3 } ] },
+  { lvl:'B1', type:'Annonce', text:"À louer : studio meublé, 28 m², proche métro Gambetta. Cuisine équipée, internet inclus. Loyer : 620 € par mois, charges non comprises. Libre dès le 1er décembre. Non-fumeur uniquement. Visite sur rendez-vous.",
+    qs:[ { q:"Quelle condition le locataire doit-il respecter ?", options:["Avoir une voiture","Ne pas fumer","Avoir un animal","Travailler près du métro"], correct:1 },
+         { q:"Quand le studio est-il disponible ?", options:["Immédiatement","Le 1er janvier","Le 1er décembre","Seulement sur rendez-vous"], correct:2 } ] },
+  { lvl:'B1', type:'Article', text:"Le télétravail s'est installé durablement dans de nombreuses entreprises. Selon une enquête, 60 % des salariés concernés apprécient la souplesse des horaires, mais un sur trois reconnaît avoir du mal à déconnecter le soir. Certaines entreprises ont donc décidé d'interdire l'envoi de courriels après 19 heures.",
+    qs:[ { q:"Que font certaines entreprises pour résoudre le problème ?", options:["Elles suppriment le télétravail","Elles interdisent les courriels après 19 h","Elles augmentent les salaires","Elles réduisent les horaires"], correct:1 },
+         { q:"Quelle proportion des salariés a du mal à déconnecter ?", options:["Un sur dix","La moitié","Un sur trois","Soixante pour cent"], correct:2 } ] },
+  { lvl:'B2', type:'Lettre', text:"Madame, Monsieur, je me permets de vous écrire au sujet de la suppression de la ligne de bus 14, annoncée pour janvier. Cette ligne est la seule à desservir notre quartier, où vivent de nombreuses personnes âgées. Je vous demande donc de reconsidérer cette décision ou, à défaut, de proposer une solution de remplacement.",
+    qs:[ { q:"Quel est le but de la lettre ?", options:["Remercier la mairie","Annoncer un déménagement","Demander de revoir une décision","Proposer un nouveau trajet"], correct:2 },
+         { q:"Pourquoi cette ligne est-elle importante ?", options:["Elle est la moins chère","Elle est la seule dans le quartier","Elle va à l'aéroport","Elle est la plus rapide"], correct:1 } ] },
+  { lvl:'B2', type:'Article', text:"Longtemps réservée aux grandes villes, la livraison à vélo se développe désormais dans les villes moyennes. Les restaurants y voient un moyen de réduire leurs coûts, tandis que les municipalités espèrent diminuer la circulation automobile. Reste toutefois la question des conditions de travail des livreurs, souvent payés à la course.",
+    qs:[ { q:"Quel problème reste à régler ?", options:["Le prix des vélos","Le nombre de restaurants","La circulation en ville","Les conditions de travail des livreurs"], correct:3 } ] },
+  { lvl:'B2', type:'Opinion', text:"Certains affirment qu'apprendre une langue étrangère n'est plus nécessaire puisque les traducteurs automatiques progressent. Pourtant, ces outils ne remplacent ni la relation humaine ni la compréhension de la culture. Parler la langue de l'autre, c'est aussi montrer du respect.",
+    qs:[ { q:"Quelle est l'opinion de l'auteur ?", options:["Les traducteurs automatiques suffisent","Les traducteurs sont dangereux","Il vaut mieux étudier seulement la culture","Apprendre une langue reste utile"], correct:3 } ] }
+];
+
+const tcf = {
+  sub:'overview', deadline:0, onDeadline:null, ticker:null,
+  speak:{ task:1, idx:{1:0,2:0,3:0}, phase:'ready', transcript:'', startedAt:0, prepNotes:'', grammar:'' },
+  write:{ task:1, idx:{1:0,2:0,3:0}, texts:{}, timing:false, grammar:'' },
+  mock:{ kind:'', state:'idle', items:[], i:0, answers:[], played:false, total:0 }
+};
+function tcfFmt(s){ s = Math.max(0, Math.round(s)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
+function tcfStopTimer(){ if(tcf.ticker){ clearInterval(tcf.ticker); tcf.ticker = null; } tcf.deadline = 0; tcf.onDeadline = null; }
+function tcfStartTimer(seconds, onDeadline){
+  tcfStopTimer();
+  tcf.deadline = Date.now() + seconds*1000; tcf.onDeadline = onDeadline;
+  tcf.ticker = setInterval(()=>{
+    const rem = (tcf.deadline - Date.now())/1000;
+    const el = document.getElementById('tcfTimer');
+    if(el){ el.textContent = tcfFmt(rem); el.style.color = rem <= 30 ? 'var(--bad)' : ''; }
+    if(rem <= 0){ const cb = tcf.onDeadline; tcfStopTimer(); if(cb) cb(); }
+  }, 250);
+}
+let tcfRec = null, tcfRecActive = false;
+function tcfStopRec(){ tcfRecActive = false; if(tcfRec){ try{ tcfRec.onend = null; tcfRec.stop(); }catch(e){} tcfRec = null; } }
+function tcfStartRec(){
+  if(!SpeechRecognitionAPI) return false;
+  tcfStopRec();
+  const r = new SpeechRecognitionAPI();
+  r.lang = 'fr-FR'; r.continuous = true; r.interimResults = true;
+  r.onresult = (e)=>{
+    let interim = '';
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      const t = e.results[i][0].transcript;
+      if(e.results[i].isFinal) tcf.speak.transcript += (tcf.speak.transcript ? ' ' : '') + t.trim(); else interim += t;
+    }
+    const el = document.getElementById('tcfLive');
+    if(el) el.textContent = (tcf.speak.transcript + ' ' + interim).trim() || '…';
+  };
+  r.onend = ()=>{ if(tcfRecActive){ try{ r.start(); }catch(e){} } };
+  r.onerror = ()=>{};
+  tcfRec = r; tcfRecActive = true;
+  try{ r.start(); }catch(e){ return false; }
+  return true;
+}
+function tcfStopAll(){ tcfStopTimer(); tcfStopRec(); }
+function tcfWords(t){ return (t||'').trim().split(/\s+/).filter(Boolean).length; }
+function tcfBtn(label, cls, fn){ const b = document.createElement('button'); b.className = cls; b.textContent = label; b.onclick = fn; return b; }
+async function tcfGrammarInto(text, box, btn){
+  if(!text.trim()){ box.innerHTML = '<p class="small">Write or say something first.</p>'; return; }
+  btn.disabled = true; const old = btn.textContent; btn.textContent = 'Checking...'; box.innerHTML = '';
+  try{
+    const data = await checkGrammar(text);
+    if(!data.matches || !data.matches.length) box.innerHTML = '<div class="feedback good">✅ No grammar or spelling issues found!</div>';
+    else box.innerHTML = data.matches.slice(0,15).map(m=>{
+      const snip = m.context ? m.context.text.slice(Math.max(0,m.context.offset-15), m.context.offset+m.context.length+15) : '';
+      const sug = (m.replacements||[]).slice(0,3).map(r=>r.value).join(', ');
+      return '<div class="feedback bad" style="margin-bottom:8px;">❌ ' + m.message + (snip ? '<div class="heard">"...' + snip + '..."</div>' : '') + (sug ? '<div class="heard">Suggestion: <b>' + sug + '</b></div>' : '') + '</div>';
+    }).join('');
+  }catch(e){ box.innerHTML = '<p class="small">⚠️ Could not reach the grammar checker. Try again in a moment.</p>'; }
+  btn.disabled = false; btn.textContent = old;
+}
+function tcfTimerBox(label){
+  const d = document.createElement('div');
+  d.style.cssText = 'text-align:center; margin:10px 0;';
+  const rem = tcf.deadline ? (tcf.deadline - Date.now())/1000 : 0;
+  d.innerHTML = '<div class="small">' + label + '</div><div id="tcfTimer" style="font-size:2rem; font-weight:700; font-variant-numeric:tabular-nums;">' + tcfFmt(rem) + '</div>';
+  return d;
+}
+
+function renderTcf(main, nav){
+  nav.innerHTML = '';
+  main.innerHTML = '';
+  const subs = {overview:'Overview', speaking:'🗣 Speaking', writing:'📝 Writing', listening:'🎧 Listening', reading:'📖 Reading'};
+  const bar = document.createElement('div'); bar.className = 'sub-tabs';
+  Object.keys(subs).forEach(k=>{
+    const b = document.createElement('button'); b.textContent = subs[k];
+    if(k === tcf.sub) b.classList.add('active');
+    b.onclick = ()=>{ if(k !== tcf.sub){ tcfStopAll(); tcf.speak.phase = 'ready'; tcf.mock.state = 'idle'; tcf.sub = k; render(); } };
+    bar.appendChild(b);
+  });
+  main.appendChild(bar);
+  const body = document.createElement('div'); main.appendChild(body);
+  if(tcf.sub === 'overview') tcfOverview(body);
+  else if(tcf.sub === 'speaking') tcfSpeaking(body);
+  else if(tcf.sub === 'writing') tcfWriting(body);
+  else tcfMock(body, tcf.sub);
+}
+
+function tcfOverview(body){
+  const c = document.createElement('div'); c.className = 'card';
+  const done = tcfLog.length;
+  const best = (kind)=>{ const e = tcfLog.filter(x=>x.type===kind && x.total); if(!e.length) return '—'; const b = e.reduce((m,x)=>Math.max(m, x.score/x.total), 0); return Math.round(b*100)+'%'; };
+  c.innerHTML = `
+    <p class="item-en" style="margin-bottom:6px;">TCF Canada — mock practice</p>
+    <p class="small">Exam-style practice for your CLB/NCLC 7 goal. The real test, as published:</p>
+    <table class="small" style="width:100%; border-collapse:collapse; margin:8px 0;">
+      <tr><td><b>Listening (CO)</b></td><td>39 MCQ · 35 min · audio plays <b>once</b></td></tr>
+      <tr><td><b>Reading (CE)</b></td><td>39 MCQ · 60 min</td></tr>
+      <tr><td><b>Writing (EE)</b></td><td>3 tasks · 60 min · 60–120 / 120–150 / 120–180 words</td></tr>
+      <tr><td><b>Speaking (EO)</b></td><td>3 tasks · 12 min · 2 min / 2 min prep + 3.5 / 4.5 min</td></tr>
+    </table>
+    <p class="small"><b>NCLC 7 needs:</b> listening 458–502 · reading 453–498 · writing 10–11/20 · speaking 10–11/20. One point below drops that skill to NCLC 6, and the French category needs NCLC 7 in <b>all four</b>.</p>
+    <p class="small" style="margin-top:8px;">Practice here: <b>${done}</b> sessions logged. Best listening mock: ${best('listening')} · best reading mock: ${best('reading')}.</p>
+    <p class="small" style="margin-top:8px; color:var(--sub);">Formats and scores come from secondary guides (the official site blocked my lookup). Confirm them with France Éducation international and IRCC before you book or plan around them. This practice cannot predict your real score; with so few questions it only shows where you are strong or weak.</p>
+  `;
+  body.appendChild(c);
+  const tips = document.createElement('div'); tips.className = 'card';
+  tips.innerHTML = `
+    <p class="item-en" style="margin-bottom:6px; font-size:1rem;">How to use this</p>
+    <p class="small">1. <b>Speaking</b>: do each of the 3 tasks aloud. The app listens and shows what it heard, so you can see where you are unclear.</p>
+    <p class="small">2. <b>Writing</b>: stay inside the word range (it is enforced on the real test), use the timer, then run the grammar check.</p>
+    <p class="small">3. <b>Listening / Reading</b>: timed sets of rising difficulty (A2 → B2). Listening plays once, like the exam.</p>
+    <p class="small">4. Paste a writing or speaking answer into the chat with Claude to get it marked against the four official criteria.</p>
+  `;
+  body.appendChild(tips);
+}
+
+function tcfSpeaking(body){
+  const S = tcf.speak, cfg = TCF_SPEAK[S.task];
+  const idx = S.idx[S.task] % cfg.prompts.length;
+  const taskRow = document.createElement('div'); taskRow.className = 'sub-tabs';
+  [1,2,3].forEach(t=>{
+    const b = document.createElement('button'); b.textContent = 'Task ' + t;
+    if(t === S.task) b.classList.add('active');
+    b.onclick = ()=>{ if(S.phase==='ready' || S.phase==='review'){ tcfStopAll(); S.task = t; S.phase = 'ready'; S.transcript=''; S.grammar=''; render(); } };
+    taskRow.appendChild(b);
+  });
+  body.appendChild(taskRow);
+
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `<div class="pill">${cfg.title}</div>
+    <div class="progress-line" style="margin-top:8px;">Prompt ${idx+1} of ${cfg.prompts.length}</div>`;
+  { const p = document.createElement('p'); p.className = 'item-en'; p.style.cssText = 'font-size:1.05rem; margin:10px 0;'; p.textContent = cfg.prompts[idx];
+    card.appendChild(p); }
+  const hint = document.createElement('p'); hint.className = 'small'; hint.textContent = cfg.hint; card.appendChild(hint);
+
+  if(S.phase === 'ready'){
+    const timing = document.createElement('p'); timing.className = 'small'; timing.style.marginTop = '6px';
+    timing.textContent = (cfg.prep ? 'Preparation: ' + tcfFmt(cfg.prep) + ' · ' : '') + 'Speaking: ' + tcfFmt(cfg.talk);
+    card.appendChild(timing);
+    if(!SpeechRecognitionAPI){
+      const w = document.createElement('p'); w.className = 'small'; w.style.color = 'var(--bad)';
+      w.textContent = '⚠️ This browser has no speech recognition, so the app cannot show what it heard. The timer still works; speak aloud and use the self-check.';
+      card.appendChild(w);
+    }
+    const row = document.createElement('div'); row.className = 'btn-row';
+    row.appendChild(tcfBtn(cfg.prep ? '▶ Start preparation' : '🎤 Start speaking', 'big-btn', ()=>{
+      S.transcript = ''; S.grammar = ''; S.prepNotes = '';
+      if(cfg.prep){ S.phase = 'prep'; tcfStartTimer(cfg.prep, ()=>tcfBeginTalk()); }
+      else tcfBeginTalk();
+      render();
+    }));
+    row.appendChild(tcfBtn('Next prompt →', 'action btn-ghost', ()=>{ S.idx[S.task] = (idx+1) % cfg.prompts.length; render(); }));
+    card.appendChild(row);
+  } else if(S.phase === 'prep'){
+    card.appendChild(tcfTimerBox('Preparation time'));
+    const ta = document.createElement('textarea'); ta.rows = 4; ta.placeholder = 'Quick notes (keywords only, not full sentences)…'; ta.value = S.prepNotes;
+    ta.oninput = ()=>{ S.prepNotes = ta.value; };
+    card.appendChild(ta);
+    const row = document.createElement('div'); row.className = 'btn-row';
+    row.appendChild(tcfBtn('Skip to speaking →', 'action btn-ghost', ()=>{ tcfBeginTalk(); render(); }));
+    card.appendChild(row);
+  } else if(S.phase === 'talk'){
+    card.appendChild(tcfTimerBox('Speak now'));
+    const live = document.createElement('div'); live.id = 'tcfLive'; live.className = 'model-answer show'; live.style.minHeight = '60px';
+    live.textContent = SpeechRecognitionAPI ? ((S.transcript||'') || 'Listening…') : 'Speak aloud. (No speech recognition on this browser.)';
+    card.appendChild(live);
+    const row = document.createElement('div'); row.className = 'btn-row';
+    row.appendChild(tcfBtn('■ Finish', 'action btn-mic', ()=>{ tcfEndTalk(); render(); }));
+    card.appendChild(row);
+  } else if(S.phase === 'review'){
+    const secs = S.startedAt ? Math.max(1, Math.round((S.endedAt - S.startedAt)/1000)) : 0;
+    card.innerHTML += '<div class="feedback good" style="margin-top:10px;">Time is up. Review what you said.</div>';
+    const ta = document.createElement('textarea'); ta.rows = 6; ta.value = S.transcript;
+    ta.placeholder = 'What the app heard (edit freely)…';
+    ta.oninput = ()=>{ S.transcript = ta.value; wc.textContent = tcfWords(ta.value) + ' words'; };
+    card.appendChild(ta);
+    const wc = document.createElement('p'); wc.className = 'small'; wc.textContent = tcfWords(S.transcript) + ' words' + (secs ? ' in ' + secs + ' s (' + Math.round(tcfWords(S.transcript)/secs*60) + ' words/min; speaking flow is usually 90–130)' : '');
+    card.appendChild(wc);
+    const gbox = document.createElement('div'); gbox.style.marginTop = '8px';
+    const row = document.createElement('div'); row.className = 'btn-row';
+    const gb = tcfBtn('✓ Check grammar', 'action btn-mic', ()=>tcfGrammarInto(ta.value, gbox, gb));
+    row.appendChild(gb);
+    row.appendChild(tcfBtn('Copy for Claude to mark', 'action btn-ghost', ()=>{ const t = 'TCF speaking, ' + cfg.title + '\nPrompt: ' + cfg.prompts[idx] + '\nMy answer (transcribed):\n' + ta.value; try{ navigator.clipboard.writeText(t); }catch(e){} }));
+    row.appendChild(tcfBtn('Save session', 'action btn-next', ()=>{ tcfAddLog({type:'speaking', task:S.task, words:tcfWords(ta.value)}); S.phase='ready'; S.idx[S.task]=(idx+1)%cfg.prompts.length; render(); }));
+    card.appendChild(row); card.appendChild(gbox);
+    const chk = document.createElement('div'); chk.className = 'card'; chk.style.marginTop = '10px';
+    chk.innerHTML = `<p class="small"><b>Self-check (official-style criteria)</b></p>
+      <p class="small">☐ Did I answer the question and stay on topic?</p>
+      <p class="small">☐ Was it organised: opening → reasons → conclusion?</p>
+      <p class="small">☐ Did I use varied vocabulary and linking words (d'abord, ensuite, par contre, en conclusion)?</p>
+      <p class="small">☐ Was I understandable (pronunciation, no long silences)?</p>`;
+    card.appendChild(chk);
+    card.appendChild(tcfBtn('Try again', 'action btn-ghost', ()=>{ S.phase = 'ready'; render(); }));
+  }
+  body.appendChild(card);
+}
+function tcfBeginTalk(){
+  const S = tcf.speak, cfg = TCF_SPEAK[S.task];
+  S.phase = 'talk'; S.startedAt = Date.now(); S.transcript = '';
+  tcfStartRec();
+  tcfStartTimer(cfg.talk, ()=>{ tcfEndTalk(); render(); });
+  render();
+}
+function tcfEndTalk(){
+  const S = tcf.speak; tcfStopTimer(); tcfStopRec();
+  S.endedAt = Date.now(); S.phase = 'review';
+}
+
+function tcfWriting(body){
+  const W = tcf.write, cfg = TCF_WRITE[W.task];
+  const idx = W.idx[W.task] % cfg.prompts.length, item = cfg.prompts[idx];
+  const key = W.task + ':' + idx;
+  const taskRow = document.createElement('div'); taskRow.className = 'sub-tabs';
+  [1,2,3].forEach(t=>{
+    const b = document.createElement('button'); b.textContent = 'Task ' + t;
+    if(t === W.task) b.classList.add('active');
+    b.onclick = ()=>{ tcfStopTimer(); W.timing = false; W.task = t; W.grammar = ''; render(); };
+    taskRow.appendChild(b);
+  });
+  body.appendChild(taskRow);
+  const card = document.createElement('div'); card.className = 'card';
+  card.innerHTML = `<div class="pill">${cfg.title}</div>
+    <div class="progress-line" style="margin-top:8px;">Prompt ${idx+1} of ${cfg.prompts.length} · ${cfg.min}–${cfg.max} words · suggested ${cfg.mins} min</div>
+    <p class="item-en" style="font-size:1.02rem; margin:10px 0;">${item.p}</p>` + (item.docs ? item.docs.map(d=>'<p class="small" style="font-style:italic; margin:4px 0;">' + d + '</p>').join('') : '');
+  if(W.timing) card.appendChild(tcfTimerBox('Time left (suggested)'));
+  const ta = document.createElement('textarea'); ta.rows = 10; ta.placeholder = 'Écrivez ici…'; ta.value = W.texts[key] || '';
+  const wc = document.createElement('p'); wc.className = 'small'; wc.style.margin = '2px 0';
+  function upd(){
+    const n = tcfWords(ta.value);
+    W.texts[key] = ta.value;
+    const ok = n >= cfg.min && n <= cfg.max;
+    wc.style.color = n > cfg.max ? 'var(--bad)' : (ok ? 'var(--good)' : '');
+    wc.textContent = n + ' words (target ' + cfg.min + '–' + cfg.max + ')' + (n > cfg.max ? ' — too long: over the limit' : (n < cfg.min ? ' — keep going' : ' — in range'));
+  }
+  ta.addEventListener('input', upd); card.appendChild(ta); card.appendChild(wc); upd();
+  const row = document.createElement('div'); row.className = 'btn-row';
+  if(!W.timing) row.appendChild(tcfBtn('⏱ Start timer', 'action btn-ghost', ()=>{ W.timing = true; tcfStartTimer(cfg.mins*60, ()=>{ W.timing = false; render(); }); render(); }));
+  else row.appendChild(tcfBtn('Stop timer', 'action btn-ghost', ()=>{ tcfStopTimer(); W.timing = false; render(); }));
+  const gbox = document.createElement('div'); gbox.style.marginTop = '8px';
+  const gb = tcfBtn('✓ Check grammar', 'action btn-mic', ()=>tcfGrammarInto(ta.value, gbox, gb));
+  row.appendChild(gb);
+  row.appendChild(tcfBtn('Copy for Claude to mark', 'action btn-ghost', ()=>{ const t = 'TCF writing, ' + cfg.title + '\nPrompt: ' + item.p + (item.docs ? '\n' + item.docs.join('\n') : '') + '\nMy answer (' + tcfWords(ta.value) + ' words):\n' + ta.value; try{ navigator.clipboard.writeText(t); }catch(e){} }));
+  row.appendChild(tcfBtn('Save attempt', 'action btn-next', ()=>{ tcfStopTimer(); W.timing = false; tcfAddLog({type:'writing', task:W.task, words:tcfWords(ta.value)}); render(); }));
+  card.appendChild(row); card.appendChild(gbox);
+  const nr = document.createElement('div'); nr.className = 'btn-row';
+  nr.appendChild(tcfBtn('Next prompt →', 'action btn-ghost', ()=>{ tcfStopTimer(); W.timing = false; W.idx[W.task] = (idx+1) % cfg.prompts.length; W.grammar = ''; render(); }));
+  card.appendChild(nr);
+  const chk = document.createElement('div'); chk.className = 'card'; chk.style.marginTop = '10px';
+  chk.innerHTML = `<p class="small"><b>Self-check</b></p>
+    <p class="small">☐ Adéquation: did I do everything the prompt asked (greet, give details, ask or request)?</p>
+    <p class="small">☐ Structure: opening, body, closing; paragraphs; linking words.</p>
+    <p class="small">☐ Lexique: varied words, not the same three repeated.</p>
+    <p class="small">☐ Within the word limit, with a re-read for agreements (genre, nombre) and verb tenses.</p>`;
+  card.appendChild(chk);
+  body.appendChild(card);
+}
+
+function tcfMock(body, kind){
+  const M = tcf.mock;
+  const bank = kind === 'listening' ? TCF_LISTEN : TCF_READ;
+  const nQ = kind === 'listening' ? TCF_LISTEN.length : TCF_READ.reduce((n,p)=>n+p.qs.length, 0);
+  const secs = Math.round(nQ * (kind === 'listening' ? 54 : 92));
+  if(M.kind !== kind){ M.kind = kind; M.state = 'idle'; }
+  const card = document.createElement('div'); card.className = 'card';
+  if(M.state === 'idle'){
+    card.innerHTML = `<p class="item-en" style="margin-bottom:6px;">${kind==='listening' ? 'Compréhension orale' : 'Compréhension écrite'} — timed set</p>
+      <p class="small">${nQ} questions from A2 up to B2, in rising difficulty like the real test. Time: ${tcfFmt(secs)} (the real test allows about ${kind==='listening' ? '54' : '92'} seconds per question).
+      ${kind==='listening' ? '<b>Each recording plays once only.</b> No transcript until the end.' : 'Read the passage, then answer.'} No penalty for a wrong answer on the real test, so always answer.</p>`;
+    card.appendChild(tcfBtn('▶ Start timed set', 'big-btn', ()=>{
+      M.state = 'run'; M.i = 0; M.answers = []; M.played = false; M.total = nQ;
+      M.items = kind === 'listening' ? TCF_LISTEN.map(x=>({lvl:x.lvl, type:x.type, script:x.script, qs:[{q:x.q, options:x.options, correct:x.correct}]}))
+                                     : TCF_READ.map(x=>({lvl:x.lvl, type:x.type, text:x.text, qs:x.qs}));
+      tcfStartTimer(secs, ()=>{ M.state = 'done'; tcfFinishMock(); render(); });
+      render();
+    }));
+    const hist = tcfLog.filter(x=>x.type===kind).slice(-5).reverse();
+    if(hist.length){
+      const h = document.createElement('p'); h.className = 'small'; h.style.marginTop = '10px';
+      h.innerHTML = '<b>Recent:</b> ' + hist.map(x=>x.date + ' ' + x.score + '/' + x.total).join(' · ');
+      card.appendChild(h);
+    }
+  } else if(M.state === 'run'){
+    const it = M.items[M.i];
+    card.innerHTML = `<div class="pill">${it.type} · ${it.lvl}</div><div class="progress-line" style="margin-top:8px;">Item ${M.i+1} of ${M.items.length}</div>`;
+    card.appendChild(tcfTimerBox('Time left'));
+    if(kind === 'listening'){
+      const pb = tcfBtn(M.played ? '✓ Played (one time only)' : '🎧 Play recording (once)', 'action btn-play', ()=>{ if(M.played) return; M.played = true; pb.textContent = '✓ Played (one time only)'; speak(it.script); });
+      pb.disabled = false; card.appendChild(pb);
+    } else {
+      const t = document.createElement('div'); t.className = 'model-answer show'; t.style.whiteSpace = 'pre-line'; t.textContent = it.text; card.appendChild(t);
+    }
+    const sel = {};
+    it.qs.forEach((qq, qi)=>{
+      const qh = document.createElement('p'); qh.className = 'item-en'; qh.style.cssText = 'font-weight:600; margin-top:12px;'; qh.textContent = qq.q; card.appendChild(qh);
+      qq.options.forEach((o, oi)=>{
+        const ob = document.createElement('button'); ob.className = 'action btn-ghost'; ob.style.cssText = 'display:block; width:100%; text-align:left; margin-top:4px;'; ob.textContent = o;
+        ob.onclick = ()=>{ sel[qi] = oi; card.querySelectorAll('[data-q="'+qi+'"]').forEach(b=>b.style.background=''); ob.style.background = 'var(--chip)'; };
+        ob.setAttribute('data-q', qi); card.appendChild(ob);
+      });
+    });
+    card.appendChild(tcfBtn(M.i + 1 < M.items.length ? 'Next →' : 'Finish', 'big-btn', ()=>{
+      it.qs.forEach((qq, qi)=>{ M.answers.push({q:qq.q, options:qq.options, correct:qq.correct, picked: sel[qi] === undefined ? -1 : sel[qi], lvl:it.lvl, script:it.script}); });
+      if(M.i + 1 < M.items.length){ M.i++; M.played = false; render(); }
+      else { tcfStopTimer(); M.state = 'done'; tcfFinishMock(); render(); }
+    }));
+  } else if(M.state === 'done'){
+    const got = M.answers.filter(a=>a.picked === a.correct).length;
+    const unanswered = M.total - M.answers.length;
+    card.innerHTML = `<p class="item-en" style="margin-bottom:6px;">Result: ${got} / ${M.total}</p>
+      <p class="small">${unanswered > 0 ? unanswered + ' question(s) left unanswered when time ran out. ' : ''}Review each item below. On the real test the later, harder questions are worth more, so an A2-level miss matters less than a B2-level miss, but a mistake on the easy ones still shows a gap.</p>`;
+    M.answers.forEach((a, n)=>{
+      const ok = a.picked === a.correct;
+      const d = document.createElement('div'); d.className = 'feedback ' + (ok ? 'good' : 'bad'); d.style.margin = '8px 0';
+      d.innerHTML = (ok ? '✅ ' : '❌ ') + '<b>' + (n+1) + '. [' + a.lvl + '] ' + a.q + '</b><div class="heard">Your answer: ' + (a.picked < 0 ? '(none)' : a.options[a.picked]) + '</div>' + (ok ? '' : '<div class="heard">Correct: <b>' + a.options[a.correct] + '</b></div>') + (a.script ? '<div class="heard"><i>' + a.script + '</i></div>' : '');
+      card.appendChild(d);
+    });
+    card.appendChild(tcfBtn('Try again', 'big-btn', ()=>{ M.state = 'idle'; render(); }));
+  }
+  body.appendChild(card);
+}
+function tcfFinishMock(){
+  const M = tcf.mock;
+  const got = M.answers.filter(a=>a.picked === a.correct).length;
+  tcfAddLog({type:M.kind, score:got, total:M.total});
+}
+
 function renderExamPrep(main, nav){
   nav.innerHTML = '';
-  const SKILLS = {listening:'🎧 Listen', reading:'📖 Read', writing:'📝 Write', conversation:'🗣 Speak', quiz:'✅ Quiz'};
+  const SKILLS = {tcf:'🎯 TCF', listening:'🎧 Listen', reading:'📖 Read', writing:'📝 Write', conversation:'🗣 Speak', quiz:'✅ Quiz'};
   Object.keys(SKILLS).forEach(sk=>{
     const b = document.createElement('button');
     b.textContent = SKILLS[sk];
     if(sk===examSkill) b.classList.add('active');
-    b.onclick = ()=>{ examSkill=sk; render(); };
+    b.onclick = ()=>{ tcfStopAll(); examSkill=sk; render(); };
     nav.appendChild(b);
   });
 
@@ -4393,7 +4814,8 @@ function renderExamPrep(main, nav){
   main.appendChild(subNav);
   main.appendChild(subMain);
 
-  if(examSkill==='listening') renderListening(subMain, subNav);
+  if(examSkill==='tcf') renderTcf(subMain, subNav);
+  else if(examSkill==='listening') renderListening(subMain, subNav);
   else if(examSkill==='reading') renderReading(subMain, subNav);
   else if(examSkill==='writing') renderWriting(subMain, subNav);
   else if(examSkill==='conversation') renderConversation(subMain, subNav);
