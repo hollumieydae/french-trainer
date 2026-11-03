@@ -1476,6 +1476,32 @@ const VOCAB = [
   {cat:"Temps", fr:"la semaine prochaine", en:"next week", p:"lah suh-men proh-SHEN", lvl:"A1"},
   {cat:"Salutations", fr:"à la semaine prochaine", en:"see you next week", p:"ah lah suh-men proh-SHEN", lvl:"A1"},
   {cat:"Salutations", fr:"je t'en prie", en:"you're welcome (informal, to a friend)", p:"zhuh tah(n) PREE", lvl:"A1", pri:1},
+  {cat:"Nourriture", fr:"bio", en:"organic", p:"bee-OH", lvl:"A1"},
+  {cat:"Nature & Animaux", fr:"la campagne", en:"the countryside", p:"lah kah(n)-PAHN-yuh", lvl:"A1"},
+  {cat:"Nourriture", fr:"le bonbon", en:"candy / sweet", p:"luh boh(n)-BOH(n)", lvl:"A1"},
+  {cat:"Nourriture", fr:"les bonbons", en:"candies / sweets", p:"lay boh(n)-BOH(n)", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"la vidéo", en:"the video", p:"lah vee-day-OH", lvl:"A1"},
+  {cat:"Sport & Loisirs", fr:"YouTube", en:"YouTube", p:"yoo-TEWB", lvl:"A1"},
+  {cat:"Ville", fr:"la région", en:"the region", p:"lah ray-zhee-OH(n)", lvl:"A1"},
+  {cat:"Pays", fr:"l'Écosse", en:"Scotland", p:"lay-KOS", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"le paquet", en:"the packet / pack", p:"luh pah-KAY", lvl:"A1"},
+  {cat:"Objets du quotidien", fr:"l'allumette", en:"the match (for fire)", p:"lah-lew-MET", lvl:"A1"},
+  {cat:"Nourriture", fr:"l'ananas", en:"pineapple", p:"lah-nah-NAH", lvl:"A1"},
+  {cat:"Nourriture", fr:"le pamplemousse", en:"grapefruit", p:"luh pah(n)-pluh-MOOS", lvl:"A1"},
+  {cat:"Nourriture", fr:"le jus d'orange", en:"orange juice", p:"luh zhew doh-RAH(n)ZH", lvl:"A1"},
+  {cat:"Nourriture", fr:"le jus d'ananas", en:"pineapple juice", p:"luh zhew dah-nah-NAH", lvl:"A1"},
+  {cat:"Nourriture", fr:"le jus de pamplemousse", en:"grapefruit juice", p:"luh zhew duh pah(n)-pluh-MOOS", lvl:"A1"},
+  {cat:"Expressions", fr:"des légumes bio dans mon jardin", en:"organic vegetables in my garden", p:"day lay-gewm bee-oh dah(n) moh(n) zhar-DA(n)", lvl:"A1"},
+  {cat:"Expressions", fr:"du lait dans ma campagne", en:"milk in my countryside", p:"dew leh dah(n) mah kah(n)-PAHN-yuh", lvl:"A1"},
+  {cat:"Expressions", fr:"des bonbons en France", en:"candies in France", p:"day boh(n)-boh(n) ah(n) FRAH(n)S", lvl:"A1"},
+  {cat:"Expressions", fr:"des vidéos pour YouTube", en:"videos for YouTube", p:"day vee-day-oh poor yoo-TEWB", lvl:"A1"},
+  {cat:"Expressions", fr:"du vin dans notre région", en:"wine in our region", p:"dew va(n) dah(n) notr ray-zhee-OH(n)", lvl:"A1"},
+  {cat:"Expressions", fr:"des ceintures en Écosse", en:"belts in Scotland", p:"day sa(n)-tewr ah(n) ay-KOS", lvl:"A1"},
+  {cat:"Expressions", fr:"des paquets d'allumettes", en:"packets of matches", p:"day pah-keh dah-lew-MET", lvl:"A1"},
+  {cat:"Expressions", fr:"des jus d'orange", en:"orange juices", p:"day zhew doh-RAH(n)ZH", lvl:"A1"},
+  {cat:"Expressions", fr:"des jus d'ananas", en:"pineapple juices", p:"day zhew dah-nah-NAH", lvl:"A1"},
+  {cat:"Expressions", fr:"des jus de pamplemousse", en:"grapefruit juices", p:"day zhew duh pah(n)-pluh-MOOS", lvl:"A1"},
+  {cat:"Verbes courants", fr:"produire", en:"to produce", p:"proh-DWEER", lvl:"A1", forms:"produis produit produisons produisez produisent"},
 ];
 
 const VERBS = [
@@ -1585,6 +1611,10 @@ const VERBS = [
     present:{je:"porte",tu:"portes",il:"porte",nous:"portons",vous:"portez",ils:"portent"},
     pc:{je:"ai porté",tu:"as porté",il:"a porté",nous:"avons porté",vous:"avez porté",ils:"ont porté"},
     imperative:{tu:"Porte",nous:"Portons",vous:"Portez"}},
+  {inf:"produire", en:"to produce", irregular:true,
+    present:{je:"produis",tu:"produis",il:"produit",nous:"produisons",vous:"produisez",ils:"produisent"},
+    pc:{je:"ai produit",tu:"as produit",il:"a produit",nous:"avons produit",vous:"avez produit",ils:"ont produit"},
+    imperative:{tu:"Produis",nous:"Produisons",vous:"Produisez"}},
   {inf:"manger", en:"to eat",
     present:{je:"mange",tu:"manges",il:"mange",nous:"mangeons",vous:"mangez",ils:"mangent"},
     pc:{je:"ai mangé",tu:"as mangé",il:"a mangé",nous:"avons mangé",vous:"avez mangé",ils:"ont mangé"},
@@ -1614,7 +1644,7 @@ const ALLER_PRESENT = {je:"vais",tu:"vas",il:"va",nous:"allons",vous:"allez",ils
 // everything else, including avoir/aller, follows the regular rule even though
 // they're irregular in présent tense.
 const IMPARFAIT_ENDINGS = {je:"ais",tu:"ais",il:"ait",nous:"ions",vous:"iez",ils:"aient"};
-const IMPARFAIT_IRREGULAR_STEMS = {"être":"ét","avoir":"av","aller":"all","vouloir":"voul","boire":"buv","apprendre":"appren","comprendre":"compren","prendre":"pren","voir":"voy","perdre":"perd","savoir":"sav","venir":"ven","faire":"fais"};
+const IMPARFAIT_IRREGULAR_STEMS = {"être":"ét","avoir":"av","aller":"all","vouloir":"voul","boire":"buv","apprendre":"appren","comprendre":"compren","prendre":"pren","voir":"voy","perdre":"perd","produire":"produis","savoir":"sav","venir":"ven","faire":"fais"};
 function imparfaitStem(verb){
   return IMPARFAIT_IRREGULAR_STEMS[verb.inf] || verb.inf.replace(/er$/,'');
 }
